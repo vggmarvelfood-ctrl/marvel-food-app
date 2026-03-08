@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+    <title>Marvel Food | Delivery App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #e23636;
+            --primary-dark: #b91c1c;
+            --bg: #f8fafc;
+            --white: #ffffff;
+            --text: #0f172a;
+            --text-light: #64748b;
+            --shadow: 0 4px 20px rgba(0,0,0,0.05);
+            --shadow-hover: 0 10px 25px rgba(226, 54, 54, 0.15);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg); color: var(--text); overflow-x: hidden; }
+
+        /* --- ANIMACIONES --- */
+        @keyframes slideUp { from { opacity:0; transform: translateY(30px); } to { opacity:1; transform: translateY(0); } }
+        @keyframes modalSlide { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .anim-up { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+        .pop-anim { animation: pop 0.3s ease; }
+
+        /* --- SPINNER / LOADER --- */
+        #global-loader {
+            position: fixed; inset: 0; background: var(--bg); z-index: 10000;
+            display: none; align-items: center; justify-content: center; flex-direction: column; gap: 15px;
+        }
+        .spinner { width: 45px; height: 45px; border: 4px solid #e2e8f0; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        .loader-text { font-weight: 700; color: var(--text-light); font-size: 14px; animation: pop 1.5s infinite; }
+
+        /* --- PANTALLA INICIAL --- */
+        #splash { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 15px; }
+        .setup-card { width: 100%; max-width: 500px; background: white; border-radius: 24px; padding: 30px 25px; box-shadow: var(--shadow); max-height: 95vh; overflow-y: auto; }
+        .setup-card::-webkit-scrollbar { display: none; }
+        .logo-header { text-align: center; margin-bottom: 25px; }
+        .logo-header img { width: 85px; height: 85px; border-radius: 22px; box-shadow: var(--shadow); margin-bottom: 10px; }
+
+        .ui-label { font-size: 12px; font-weight: 800; color: var(--text-light); text-transform: uppercase; margin-bottom: 8px; display: block; letter-spacing: 0.5px; }
+        .ui-input { width: 100%; padding: 16px; border-radius: 14px; border: 1.5px solid #e2e8f0; font-size: 15px; outline: none; transition: 0.3s; background: #f8fafc; margin-bottom: 20px; font-weight: 600; color: var(--text); }
+        .ui-input:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 4px rgba(226, 54, 54, 0.1); }
+
+        /* INFO RANGOS DE ENVIO */
+        .range-card { background: #fff; border: 1.5px solid #fed7d7; border-radius: 16px; padding: 18px; margin-bottom: 20px; display: none; animation: slideUp 0.3s ease; }
+        .range-item { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; font-weight: 600; color: #475569; }
+        .range-item b { color: var(--primary); font-weight: 800; }
+        .map-img { width: 100%; border-radius: 12px; margin-top: 15px; display: none; border: 1px solid #f1f5f9; box-shadow: var(--shadow); }
+
+        /* --- APP INTERFACE --- */
+        #app { display: none; max-width: 500px; margin: 0 auto; background: var(--bg); min-height: 100vh; position: relative; padding-bottom: 110px; }
+        .header-bg { height: 160px; background: url('https://images.cdn.pency.app/marvelfoodabasto/1760661227946.jpg') center/cover; position: relative; }
+        .header-bg::after { content:''; position: absolute; inset: 0; background: linear-gradient(to top, var(--bg), transparent); }
+        .store-info { padding: 0 20px; margin-top: -40px; display: flex; align-items: flex-end; gap: 15px; margin-bottom: 20px; position: relative; z-index: 2; }
+        .store-logo { width: 90px; height: 90px; border-radius: 22px; border: 4px solid var(--bg); background: url('https://pency-images.nyc3.digitaloceanspaces.com/marvelfoodabasto/1760661165087.jpg') center/cover; box-shadow: var(--shadow); }
+        
+        .nav-cats { position: sticky; top: 0; background: rgba(248,250,252,0.95); backdrop-filter: blur(12px); z-index: 100; display: flex; overflow-x: auto; padding: 15px 20px; gap: 12px; scrollbar-width: none; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .nav-cats::-webkit-scrollbar { display: none; }
+        .cat-tag { padding: 12px 22px; border-radius: 50px; background: white; border: 1.5px solid #e2e8f0; font-size: 14px; font-weight: 700; color: var(--text-light); white-space: nowrap; cursor: pointer; transition: 0.3s; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        .cat-tag.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: var(--shadow-hover); }
+
+        /* PRODUCTOS */
+        .card-p { display: flex; padding: 18px; margin: 0 20px 15px; background: white; border-radius: 20px; box-shadow: var(--shadow); cursor: pointer; transition: 0.2s; border: 1px solid transparent; }
+        .card-p:active { transform: scale(0.97); }
+        .p-txt { flex: 1; padding-right: 15px; display: flex; flex-direction: column; justify-content: center; }
+        .p-txt h3 { font-size: 17px; margin-bottom: 6px; font-weight: 800; }
+        .p-txt p { font-size: 13px; color: var(--text-light); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .p-price { margin-top: 10px; font-weight: 800; color: var(--primary); font-size: 17px; }
+        .p-img { width: 105px; height: 105px; border-radius: 16px; background-size: cover; background-position: center; box-shadow: 0 4px 10px rgba(0,0,0,0.08); background-color: #f1f5f9; }
+
+        /* MODAL */
+        .modal { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 2000; display: none; justify-content: center; align-items: flex-end; }
+        .modal-sheet { background: white; width: 100%; max-width: 500px; height: 92vh; border-radius: 32px 32px 0 0; overflow-y: auto; position: relative; display: flex; flex-direction: column; animation: modalSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .drag-handle { width: 40px; height: 5px; background: rgba(255,255,255,0.8); border-radius: 10px; position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 20; }
+        .m-hero { height: 280px; background-size: cover; background-position: center; position: relative; flex-shrink: 0; }
+        .m-hero::after { content:''; position:absolute; inset:0; background: linear-gradient(to top, white, transparent); }
+        .m-close { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.9); backdrop-filter: blur(5px); width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; z-index: 10; box-shadow: var(--shadow); transition: 0.2s; }
+        .m-content { padding: 25px; margin-top: -40px; position: relative; z-index: 2; flex: 1; }
+        .m-section { font-size: 13px; font-weight: 800; color: var(--text); margin: 25px 0 15px; display: flex; align-items: center; gap: 10px; }
+        .m-section::after { content: ''; flex: 1; height: 1.5px; background: #f1f5f9; }
+
+        .custom-check { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1.5px solid #f8fafc; cursor: pointer; font-weight: 600; font-size: 15px; }
+        .custom-check input { display: none; }
+        .check-box { width: 24px; height: 24px; border: 2px solid #cbd5e1; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .custom-check input:checked + .check-box { background: var(--primary); border-color: var(--primary); }
+        .custom-check input:checked + .check-box::after { content: '✓'; color: white; font-weight: bold; font-size: 14px; }
+
+        /* FOOTER / CARRITO */
+        .cart-bar { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; background: var(--text); color: white; padding: 18px 25px; border-radius: 50px; display: flex; justify-content: space-between; align-items: center; font-weight: 700; cursor: pointer; box-shadow: 0 15px 35px rgba(15, 23, 42, 0.4); z-index: 500; transition: 0.3s; }
+        .cart-bar:active { transform: translateX(-50%) scale(0.97); }
+        .badge-qty { background: var(--primary); color: white; border-radius: 50%; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; margin-left: 8px; }
+
+        #cart-view { position: fixed; top: 0; right: 0; width: 100%; max-width: 500px; height: 100dvh; background: white; z-index: 3000; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: -10px 0 50px rgba(0,0,0,0.1); }
+        #cart-view.open { transform: translateX(0); }
+
+        .btn-action { background: var(--primary); color: white; border: none; padding: 18px; border-radius: 16px; font-weight: 800; cursor: pointer; width: 100%; font-size: 16px; transition: 0.2s; box-shadow: var(--shadow-hover); }
+        .btn-action:active { transform: scale(0.98); }
+        
+        .qty-wrap { display: flex; align-items: center; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 5px; height: 55px; }
+        .qty-btn { width: 45px; height: 100%; border: none; background: transparent; font-size: 22px; font-weight: bold; cursor: pointer; color: var(--text); }
+
+        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: #10b981; color: white; padding: 14px 28px; border-radius: 50px; font-weight: 700; font-size: 14px; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3); z-index: 4000; transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); opacity: 0; display: flex; align-items: center; gap: 8px; }
+        #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        .hidden { display: none !important; }
+
+        /* NUEVOS ESTILOS PARA DELIVERY/RETIRO */
+        .delivery-toggle { display: flex; background: #f1f5f9; border-radius: 14px; padding: 5px; margin-bottom: 20px; }
+        .delivery-toggle button { flex: 1; padding: 14px; border: none; background: transparent; border-radius: 10px; font-weight: 800; font-size: 14px; color: var(--text-light); cursor: pointer; transition: 0.3s; }
+        .delivery-toggle button.active { background: white; color: var(--text); box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        
+        .btn-gps { background: #f8fafc; color: var(--text); border: 2px solid #e2e8f0; padding: 14px; border-radius: 14px; width: 100%; font-weight: 700; cursor: pointer; margin-bottom: 15px; font-size: 14px; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-gps:active { transform: scale(0.98); }
+        .btn-gps.success { background: #d1fae5; border-color: #10b981; color: #047857; }
+    </style>
+</head>
+<body>
+
+    <div id="toast">¡Agregado al pedido!</div>
+
+    <div id="global-loader">
+        <div class="spinner"></div>
+        <div class="loader-text">Preparando menú...</div>
+    </div>
+
+    <div id="splash">
+        <div class="setup-card anim-up">
+            <div class="logo-header">
+                <img src="https://pency-images.nyc3.digitaloceanspaces.com/marvelfoodabasto/1760661165087.jpg">
+                <h1 style="font-weight: 800; font-size: 26px;">Marvel Food</h1>
+                <p style="color: var(--text-light); font-size: 15px; margin-top: 5px;">Configurá tu envío para empezar</p>
+            </div>
+
+            <label class="ui-label">Nombre Completo</label>
+            <input type="text" id="in-name" class="ui-input" placeholder="Ej: Tony Stark">
+
+            <label class="ui-label">WhatsApp</label>
+            <input type="number" id="in-tel" class="ui-input" placeholder="Ej: 3416107498">
+
+            <label class="ui-label">Elegir Sucursal</label>
+            <select id="in-suc" class="ui-input" onchange="updateLocalities()">
+                <option value="" disabled selected>Seleccioná una sucursal</option>
+                <option value="Centro">Rosario Centro (Pellegrini)</option>
+                <option value="Norte">Zona Norte (Alberdi)</option>
+                <option value="Sur">Zona Sur / VGG</option>
+                <option value="Funes">Funes (Ruta 9)</option>
+            </select>
+
+            <div id="range-info" class="range-card">
+                <h4 style="font-size: 12px; margin-bottom: 12px; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px;">Rangos y Costos:</h4>
+                <div id="range-list"></div>
+                <img id="suc-map-img" class="map-img" src="" alt="Mapa de cobertura">
+            </div>
+
+            <label class="ui-label">Tu Localidad</label>
+            <select id="in-loc" class="ui-input">
+                <option value="" disabled selected>Primero elegí sucursal</option>
+            </select>
+
+            <label class="ui-label">Dirección (Calle y Altura)</label>
+            <input type="text" id="in-dir" class="ui-input" placeholder="Ej: Av. Pellegrini 1500">
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                    <label class="ui-label">Piso</label>
+                    <input type="text" id="in-piso" class="ui-input" placeholder="Opcional">
+                </div>
+                <div>
+                    <label class="ui-label">Depto</label>
+                    <input type="text" id="in-depto" class="ui-input" placeholder="Opcional">
+                </div>
+            </div>
+
+            <button class="btn-action" onclick="startApp()" style="margin-top: 10px;">VER MENÚ</button>
+        </div>
+    </div>
+
+    <div id="app">
+        <div class="header-bg"></div>
+        <div class="store-info">
+            <div class="store-logo"></div>
+            <div style="padding-bottom: 5px;">
+                <h2 style="font-weight: 800; font-size: 22px;">Marvel Food</h2>
+                <div style="font-size: 13px; color: var(--text-light); font-weight: 600; margin-top: 4px;">
+                     <span id="lbl-sucursal"></span> • <span onclick="location.reload()" style="color:var(--primary); cursor:pointer;">Cambiar</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-cats" id="cat-list"></div>
+        <div id="menu-container"></div>
+
+        <div class="cart-bar" onclick="toggleCart()">
+            <div style="display: flex; align-items: center;">
+                <span>🛒 Ver Pedido</span>
+                <span id="cart-badge" class="badge-qty">0</span>
+            </div>
+            <span id="cart-total-float">$ 0</span>
+        </div>
+    </div>
+
+    <div class="modal" id="m-prod">
+        <div class="modal-sheet">
+            <div class="drag-handle"></div>
+            <div class="m-close" onclick="closeModal()">✕</div>
+            <div class="m-hero" id="m-img"></div>
+            <div class="m-content">
+                <h2 id="m-title" style="font-weight: 800; font-size: 26px;"></h2>
+                <p id="m-desc" style="color: var(--text-light); margin-top: 10px; font-size: 15px; line-height: 1.5;"></p>
+
+                <div id="m-sec-ings">
+                    <div class="m-section">QUITAR INGREDIENTES</div>
+                    <div id="m-list-ings"></div>
+                </div>
+
+                <div id="m-sec-extras">
+                    <div class="m-section">EXTRAS PARA TU BURGER</div>
+                    <div id="m-list-extras"></div>
+                </div>
+
+                <div class="m-section">OBSERVACIONES</div>
+                <textarea id="m-obs" class="ui-input" style="height: 100px; resize: none; margin-bottom: 0;" placeholder="Ej: Sin sal en las papas, carne bien cocida..."></textarea>
+            </div>
+            <div style="padding: 20px 25px 30px; border-top: 1px solid #f1f5f9; display: flex; gap: 15px; background: white; position: sticky; bottom: 0; z-index: 10;">
+                <div class="qty-wrap">
+                    <button class="qty-btn" onclick="updateMQty(-1)">-</button>
+                    <span id="m-qty" style="width: 35px; text-align: center; font-weight: 800; font-size: 18px;">1</span>
+                    <button class="qty-btn" onclick="updateMQty(1)">+</button>
+                </div>
+                <button class="btn-action" id="m-btn-add" onclick="confirmAdd()">AGREGAR</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="cart-view">
+        <div style="padding: 25px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: white; position: sticky; top:0; z-index:10;">
+            <h2 style="font-weight: 800; font-size: 22px;">Mi Pedido</h2>
+            <button onclick="toggleCart()" style="background: #f1f5f9; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.2s;">✕</button>
+        </div>
+        
+        <div id="cart-items-list" style="flex: 1; overflow-y: auto; padding: 25px;"></div>
+        
+        <div style="padding: 25px; background: white; box-shadow: 0 -10px 20px rgba(0,0,0,0.03); overflow-y:auto;">
+            
+            <div class="m-section" style="margin-top: 0;">¿CÓMO LO QUERÉS?</div>
+            <div class="delivery-toggle">
+                <button id="btn-delivery" class="active" onclick="setDeliveryMode(true)"> Envío a domicilio</button>
+                <button id="btn-retiro" onclick="setDeliveryMode(false)"> Retirar en local</button>
+            </div>
+
+            <div id="box-envio" style="background: #f8fafc; padding: 20px; border-radius: 16px; margin-bottom: 20px; border: 1.5px solid #e2e8f0;">
+                <label class="ui-label">Dirección de entrega</label>
+                <input type="text" id="c-dir" class="ui-input" style="background: white;" placeholder="Calle y Altura">
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <input type="text" id="c-piso" class="ui-input" style="background: white; margin-bottom:15px;" placeholder="Piso (Opc.)">
+                    <input type="text" id="c-depto" class="ui-input" style="background: white; margin-bottom:15px;" placeholder="Depto (Opc.)">
+                </div>
+
+                <button id="btn-gps-action" class="btn-gps" onclick="getGPS()">
+                     Compartir mi ubicación exacta
+                </button>
+                <p style="font-size: 12px; color: var(--text-light); text-align: center; margin-top: -5px; line-height: 1.4;">
+                    Recomendado para que el cadete llegue directo usando Google Maps.
+                </p>
+            </div>
+
+            <div class="m-section">MÉTODO DE PAGO</div>
+            <select id="p-metodo" class="ui-input" onchange="toggleVuelto()">
+                <option value="Efectivo">Efectivo</option>
+                <option value="Transferencia">Transferencia bancaria</option>
+                <option value="Link de Pago">Link de Pago (Mercado Pago)</option>
+            </select>
+            <div id="vuelto-box">
+                <label class="ui-label">¿Con cuánto abonás?</label>
+                <input type="number" id="p-vuelto" class="ui-input" placeholder="Ej: 20000" style="margin-bottom: 15px;">
+            </div>
+
+            <div style="background: #f8fafc; padding: 20px; border-radius: 16px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: var(--text-light); font-weight: 600;">
+                    <span>Subtotal</span>
+                    <span id="res-sub">$ 0</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 15px; color: var(--text-light); font-weight: 600; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px;">
+                    <span id="txt-envio-tipo">Envío (<span id="res-loc"></span>)</span>
+                    <span id="res-envio">$ 0</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 22px; font-weight: 800; color: var(--text);">
+                    <span>Total</span>
+                    <span id="res-total">$ 0</span>
+                </div>
+            </div>
+            
+            <button class="btn-action" onclick="sendWsp()" style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
+                ENVIAR PEDIDO A WHATSAPP
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const SUC_MAP = {
+            Centro: { n: "Zona Centro", wsp: "3413315885", mapImg: "https://i.ibb.co/231rcdfJ/CENTRO.png", locs: { "Rosario": 2000 } },
+            Norte: { n: "Zona Norte", wsp: "3413315885", mapImg: "https://i.ibb.co/tM1NSHTv/NORTE.png", locs: { "Rosario Norte": 2200, "Gdor. Baigorria": 3500 } },
+            Sur: { n: "Zona Sur", wsp: "3413315885", mapImg: "https://i.ibb.co/1BNnzX5/VGG.png", locs: { "Villa Gdor. Gálvez": 3000, "Rosario Sur": 2500 } },
+            Funes: { n: "Funes", wsp: "3413315885", mapImg: "https://i.ibb.co/84MNBwGC/mapas-2026-5-Funes.png", locs: { "Funes": 1800, "Fisherton": 2500 } }
+        };
+
+        const MENU = [
+            { cat: "Hamburguesas Marvel", items: [
+                { id: 1, n: "THOR", p: 12500, d: "Cuádruple medallón, cheddar, panceta, huevo frito y salsa Thor.", img: "https://pency-images.nyc3.digitaloceanspaces.com/marvelfoodabasto/1760658566420.jpg", ings: ["Panceta", "Huevo"] },
+                { id: 2, n: "HULK", p: 11800, d: "Doble carne, cheddar, cebolla caramelizada, panceta y BBQ.", img: "https://pency-images.nyc3.digitaloceanspaces.com/marvelfoodabasto/1760658566420.jpg", ings: ["Cebolla", "BBQ", "Cheddar", "Panceta"] }
+            ]},
+            { cat: "Smash Burgers", items: [
+                { id: 10, n: "WANDA SMASH", p: 8900, d: "Doble smash, doble cheddar, lechuga y alioli.", img: "https://pency-images.nyc3.digitaloceanspaces.com/marvelfoodabasto/1760659273628.jpg", ings: ["Lechuga", "Alioli"] }
+            ]},
+            { cat: "Papas y Snacks", items: [
+                { id: 20, n: "PAPAS CHEDDAR", p: 7800, d: "Bañadas en nuestra salsa de queso cheddar y verdeo.", img: "https://pency-images.nyc3.digitaloceanspaces.com/marvelfoodabasto/1760659556157.jpg", ings: ["Verdeo"] }
+            ]}
+        ];
+
+        const EXTRAS = [{ id: "e1", n: "Extra Queso", p: 1500 }, { id: "e2", n: "Extra Carne", p: 3500 }, { id: "e3", n: "Extra Bacon", p: 2000 }];
+
+        let carrito = [];
+        let config = {};
+        let tProd = null;
+        let isDelivery = true; // Controla si es envío a domicilio o retiro
+        let gpsLink = ""; // Guarda el link de Google Maps si el cliente lo autoriza
+
+        function updateLocalities() {
+            const sucId = document.getElementById('in-suc').value;
+            const locSelect = document.getElementById('in-loc');
+            const rangeBox = document.getElementById('range-info');
+            const rangeList = document.getElementById('range-list');
+            const mapImg = document.getElementById('suc-map-img');
+            
+            locSelect.innerHTML = `<option value="" disabled selected>Seleccioná localidad</option>`;
+            rangeList.innerHTML = "";
+            rangeBox.style.display = "block";
+
+            const data = SUC_MAP[sucId];
+            for(let l in data.locs) {
+                locSelect.innerHTML += `<option value="${l}">${l}</option>`;
+                rangeList.innerHTML += `<div class="range-item"><span>${l}</span> <b>$${data.locs[l]}</b></div>`;
+            }
+
+            if(data.mapImg) { mapImg.src = data.mapImg; mapImg.style.display = "block"; } else { mapImg.style.display = "none"; }
+        }
+
+        function startApp() {
+            const n = document.getElementById('in-name').value;
+            const t = document.getElementById('in-tel').value;
+            const s = document.getElementById('in-suc').value;
+            const l = document.getElementById('in-loc').value;
+            const d = document.getElementById('in-dir').value;
+
+            if(!n || !t || !s || !l || !d) return alert("Por favor, completá todos los datos de envío.");
+
+            config = { nombre: n, tel: t, sucId: s, loc: l, dir: d, 
+                       piso: document.getElementById('in-piso').value, 
+                       depto: document.getElementById('in-depto').value,
+                       sucData: SUC_MAP[s] };
+
+            // Pre-llenar los campos del carrito con lo que puso en el splash
+            document.getElementById('c-dir').value = config.dir;
+            document.getElementById('c-piso').value = config.piso;
+            document.getElementById('c-depto').value = config.depto;
+
+            document.getElementById('global-loader').style.display = 'flex';
+            setTimeout(() => {
+                document.getElementById('global-loader').style.display = 'none';
+                document.getElementById('splash').style.display = 'none';
+                document.getElementById('app').style.display = 'block';
+                document.getElementById('lbl-sucursal').innerText = `${config.sucData.n} (${config.loc})`;
+                renderMenu();
+            }, 800);
+        }
+
+        function renderMenu() {
+            const cats = document.getElementById('cat-list');
+            const menu = document.getElementById('menu-container');
+            MENU.forEach((c, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `cat-tag ${idx===0?'active':''}`;
+                btn.innerText = c.cat;
+                btn.onclick = () => {
+                    document.querySelector('.cat-tag.active').classList.remove('active');
+                    btn.classList.add('active');
+                    const element = document.getElementById(`sec-${idx}`);
+                    const y = element.getBoundingClientRect().top + window.scrollY - 80;
+                    window.scrollTo({top: y, behavior: 'smooth'});
+                };
+                cats.appendChild(btn);
+
+                const sec = document.createElement('div');
+                sec.id = `sec-${idx}`;
+                sec.innerHTML = `<h3 style="padding:25px 20px 15px; font-weight:800; font-size:18px;">${c.cat}</h3>`;
+                c.items.forEach(p => {
+                    sec.innerHTML += `
+                        <div class="card-p" onclick="openModal(${JSON.stringify(p).replace(/"/g, '&quot;')}, '${c.cat}')">
+                            <div class="p-txt">
+                                <h3>${p.n}</h3>
+                                <p>${p.d}</p>
+                                <div class="p-price">$ ${p.p.toLocaleString()}</div>
+                            </div>
+                            <div class="p-img" style="background-image:url('${p.img}')"></div>
+                        </div>
+                    `;
+                });
+                menu.appendChild(sec);
+            });
+        }
+
+        function openModal(p, cat) {
+            tProd = { ...p, cant: 1, sin: [], con: [], obs: "" };
+            document.getElementById('m-title').innerText = p.n;
+            document.getElementById('m-desc').innerText = p.d;
+            document.getElementById('m-img').style.backgroundImage = `url('${p.img}')`;
+            document.getElementById('m-qty').innerText = "1";
+            document.getElementById('m-obs').value = "";
+
+            const ingList = document.getElementById('m-list-ings');
+            if(p.ings.length > 0) {
+                document.getElementById('m-sec-ings').classList.remove('hidden');
+                ingList.innerHTML = p.ings.map(i => `
+                    <label class="custom-check">
+                        <span>Sin ${i}</span>
+                        <input type="checkbox" onchange="toggleSin('${i}')">
+                        <div class="check-box"></div>
+                    </label>
+                `).join('');
+            } else document.getElementById('m-sec-ings').classList.add('hidden');
+
+            const extList = document.getElementById('m-list-extras');
+            if(cat.toLowerCase().includes("hamburguesa") || cat.toLowerCase().includes("smash")) {
+                document.getElementById('m-sec-extras').classList.remove('hidden');
+                extList.innerHTML = EXTRAS.map(e => `
+                    <label class="custom-check">
+                        <span>${e.n} <span style="color:var(--text-light); font-weight:400;">(+$${e.p})</span></span>
+                        <input type="checkbox" onchange="toggleExt('${e.id}')">
+                        <div class="check-box"></div>
+                    </label>
+                `).join('');
+            } else document.getElementById('m-sec-extras').classList.add('hidden');
+
+            updateModalBtn();
+            document.getElementById('m-prod').style.display = 'flex';
+        }
+
+        function toggleSin(i) { const idx = tProd.sin.indexOf(i); if(idx > -1) tProd.sin.splice(idx,1); else tProd.sin.push(i); }
+        function toggleExt(id) { 
+            const ex = EXTRAS.find(x => x.id === id);
+            const idx = tProd.con.findIndex(x => x.id === id);
+            if(idx > -1) tProd.con.splice(idx,1); else tProd.con.push(ex);
+            updateModalBtn();
+        }
+
+        function updateMQty(v) { tProd.cant = Math.max(1, tProd.cant + v); document.getElementById('m-qty').innerText = tProd.cant; updateModalBtn(); }
+        function updateModalBtn() {
+            let u = tProd.p; tProd.con.forEach(e => u += e.p);
+            document.getElementById('m-btn-add').innerText = `AGREGAR $ ${(u * tProd.cant).toLocaleString()}`;
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerHTML = ` ${msg}`;
+            t.classList.add('show');
+            setTimeout(() => { t.classList.remove('show'); }, 2500);
+        }
+
+        function confirmAdd() {
+            tProd.obs = document.getElementById('m-obs').value;
+            let u = tProd.p; tProd.con.forEach(e => u += e.p);
+            carrito.push({ ...tProd, totalItem: u * tProd.cant });
+            updateCartUI();
+            closeModal();
+            
+            const badge = document.getElementById('cart-badge');
+            badge.classList.remove('pop-anim');
+            void badge.offsetWidth;
+            badge.classList.add('pop-anim');
+            showToast(`¡${tProd.cant}x ${tProd.n} al carrito!`);
+        }
+
+        function closeModal() { document.getElementById('m-prod').style.display = 'none'; }
+        function toggleCart() { document.getElementById('cart-view').classList.toggle('open'); renderCartItems(); }
+        function toggleVuelto() { document.getElementById('vuelto-box').style.display = (document.getElementById('p-metodo').value === 'Efectivo') ? 'block' : 'none'; }
+
+        // MODO DELIVERY O RETIRO
+        function setDeliveryMode(isDel) {
+            isDelivery = isDel;
+            document.getElementById('btn-delivery').classList.toggle('active', isDelivery);
+            document.getElementById('btn-retiro').classList.toggle('active', !isDelivery);
+            document.getElementById('box-envio').style.display = isDelivery ? 'block' : 'none';
+            renderCartItems(); // Recalcula totales
+        }
+
+        // GEOLOCALIZACION GOOGLE MAPS
+        function getGPS() {
+            const btn = document.getElementById('btn-gps-action');
+            btn.innerHTML = "Esperando GPS...";
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        gpsLink = `https://maps.google.com/?q=${lat},${lon}`;
+                        btn.classList.add('success');
+                        btn.innerHTML = " Ubicación exacta guardada";
+                    }, 
+                    (error) => {
+                        alert("No pudimos obtener tu ubicación. Asegurate de tener el GPS activado y dar permisos al navegador.");
+                        btn.innerHTML = " Reintentar compartir GPS";
+                    },
+                    { enableHighAccuracy: true }
+                );
+            } else {
+                alert("Tu navegador no soporta la función de ubicación.");
+                btn.innerHTML = "GPS no disponible";
+            }
+        }
+
+        function renderCartItems() {
+            const list = document.getElementById('cart-items-list');
+            let sub = 0;
+            
+            if(carrito.length === 0) {
+                list.innerHTML = `<div style="text-align:center; color:var(--text-light); margin-top:40px; font-weight:600;">Tu pedido está vacío 🍔</div>`;
+            } else {
+                list.innerHTML = carrito.map((i, idx) => {
+                    sub += i.totalItem;
+                    return `
+                        <div style="margin-bottom:20px; border:1px solid #f1f5f9; border-radius:16px; padding:18px; box-shadow: 0 4px 10px rgba(0,0,0,0.02);">
+                            <div style="display:flex; justify-content:space-between; font-weight:800; font-size:16px;">
+                                <span>${i.cant}x ${i.n}</span>
+                                <span>$${i.totalItem.toLocaleString()}</span>
+                            </div>
+                            <div style="font-size:13px; color:var(--text-light); margin-top:8px; line-height:1.4;">
+                                ${i.sin.length ? '<b>Sin:</b> '+i.sin.join(', ')+'<br>' : ''} 
+                                ${i.con.length ? '<b>Extras:</b> '+i.con.map(x=>x.n).join(', ')+'<br>' : ''}
+                                ${i.obs ? '<i>Nota: '+i.obs+'</i>' : ''}
+                            </div>
+                            <div style="text-align:right; margin-top:10px;">
+                                <span onclick="delItem(${idx})" style="color:var(--primary); font-size:12px; font-weight:800; cursor:pointer; padding:5px 10px; background:#fff5f5; border-radius:8px;">ELIMINAR</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Calculo de envío según modo
+            let costoEnvio = 0;
+            if(isDelivery) {
+                costoEnvio = config.sucData.locs[config.loc];
+                document.getElementById('txt-envio-tipo').innerHTML = `Envío (<span id="res-loc">${config.loc}</span>)`;
+                document.getElementById('res-envio').innerText = `$ ${costoEnvio.toLocaleString()}`;
+            } else {
+                document.getElementById('txt-envio-tipo').innerHTML = `Retiro por local`;
+                document.getElementById('res-envio').innerText = `Gratis`;
+            }
+
+            document.getElementById('res-sub').innerText = `$ ${sub.toLocaleString()}`;
+            document.getElementById('res-total').innerText = `$ ${(sub + costoEnvio).toLocaleString()}`;
+            document.getElementById('cart-total-float').innerText = `$ ${(sub + costoEnvio).toLocaleString()}`;
+        }
+
+        function delItem(i) { carrito.splice(i,1); updateCartUI(); renderCartItems(); }
+        function updateCartUI() { document.getElementById('cart-badge').innerText = carrito.reduce((s,i)=>s+i.cant,0); }
+
+        function sendWsp() {
+            if(carrito.length === 0) return alert("Agregá productos a tu pedido primero.");
+            
+            const pago = document.getElementById('p-metodo').value;
+            const vueltoRaw = document.getElementById('p-vuelto').value;
+            const vuelto = parseFloat(vueltoRaw);
+            
+            let sub = carrito.reduce((s,i)=>s+i.totalItem,0);
+            let envio = isDelivery ? config.sucData.locs[config.loc] : 0;
+            let total = sub + envio;
+
+            // VALIDACIONES DE PAGO EN EFECTIVO
+            if(pago === 'Efectivo') {
+                if(!vueltoRaw || isNaN(vuelto)) return alert("Por favor, indicanos con cuánto vas a abonar el pedido.");
+                if(vuelto < total) return alert(`El monto con el que abonás ($${vuelto}) no puede ser menor al total del pedido ($${total}).`);
+            }
+
+            // Actualizar variables de dirección si las cambió en el carrito
+            if(isDelivery) {
+                const newDir = document.getElementById('c-dir').value.trim();
+                if(!newDir) return alert("Por favor, ingresá la dirección de entrega.");
+                config.dir = newDir;
+                config.piso = document.getElementById('c-piso').value.trim();
+                config.depto = document.getElementById('c-depto').value.trim();
+            }
+
+// ARMADO DEL MENSAJE DE WHATSAPP
+            let t = ` *NUEVO PEDIDO | MARVEL FOOD* \n`;
+            t += `---------------------------------\n`;
+			      t += `*Teléfono:* ${config.tel}\n`;
+            t += ` *Cliente:* ${config.nombre.toUpperCase()}\n`;
+     
+            t += ` *Sucursal:* ${config.sucData.n}\n`;
+            
+            if(isDelivery) {
+                t += ` *Tipo:* Delivery\n`;
+                t += ` *Localidad:* ${config.loc}\n`;
+                t += ` *Dirección:* ${config.dir}\n`;
+                if(config.piso || config.depto) t += ` *Piso/Depto:* ${config.piso} ${config.depto}\n`;
+                if(gpsLink) t += ` *Ubicación Exacta:* ${gpsLink}\n`;
+            } else {
+                t += ` *Tipo:* Pasa a retirar por sucursal\n`;
+            }
+            
+            t += `---------------------------------\n\n`;
+
+            carrito.forEach(i => {
+                t += ` *${i.cant}x ${i.n}* ($${i.totalItem})\n`;
+                if(i.sin.length) t += `    _Sin: ${i.sin.join(', ')}_\n`;
+                if(i.con.length) t += `    _Extras: ${i.con.map(x=>x.n).join(', ')}_\n`;
+                if(i.obs) t += `    _Nota: ${i.obs}_\n`;
+                t += `\n`;
+            });
+
+            t += `---------------------------------\n`;
+            t += ` *Subtotal:* $${sub}\n`;
+            if(isDelivery) t += ` *Envío:* $${envio}\n`;
+            t += `*TOTAL:* $${total}\n`;
+            t += `---------------------------------\n`;
+            t += `*Pago:* ${pago}\n`;
+            if(pago === 'Efectivo') t += ` *Abona con:* $${vuelto} (Vuelto: $${vuelto - total})\n`;
+
+            window.open(`https://wa.me/${config.sucData.wsp}?text=${encodeURIComponent(t)}`);
+			 }
+    </script>
+</body>
+</html>

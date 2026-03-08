@@ -320,10 +320,11 @@
         </div>
     </div>
 
-    <script type="module">
-        // 1. Inicialización de Firebase (Versión 10.8.1 para evitar errores de despliegue)
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+<script type="module">
+        // 1. Inicialización de Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        
         const firebaseConfig = {
             apiKey: "AIzaSyAeRlE9S5pnEUuhxRXoOX6lMX4Ryky0uSI",
             authDomain: "marvel-food-fa570.firebaseapp.com",
@@ -336,12 +337,14 @@ import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, serverTim
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         
-        // Exportamos db y las funciones para la Parte 2 (Admin)
+        // EXPORTACIÓN CRÍTICA: Registramos las funciones en window para que estén disponibles en todo el código
         window.db = db;
-        window.onSnapshot = onSnapshot;
         window.collection = collection;
+        window.addDoc = addDoc;
+        window.onSnapshot = onSnapshot;
         window.doc = doc;
         window.updateDoc = updateDoc;
+        window.serverTimestamp = serverTimestamp;
 
         // 2. Variables Globales y Datos
         const SUC_MAP = {
@@ -372,16 +375,15 @@ import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, serverTim
         let isDelivery = true;
         let gpsLink = "";
 
-        // Lógica de enrutamiento (Cliente vs Admin)
         const urlParams = new URLSearchParams(window.location.search);
         if(urlParams.get('admin') === 'true') {
             document.getElementById('splash').style.display = 'none';
             document.getElementById('app').style.display = 'none';
             document.getElementById('admin-view').style.display = 'block';
-            // Aquí cargaremos la Parte 2 luego
+            iniciarPanelAdmin();
         }
 
-        // 3. Funciones de Interfaz Cliente (Expuestas a window para que el HTML pueda llamarlas)
+        // 3. Funciones de Interfaz Cliente
         window.updateLocalities = () => {
             const sucId = document.getElementById('in-suc').value;
             const locSelect = document.getElementById('in-loc');
@@ -398,7 +400,6 @@ import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, serverTim
                 locSelect.innerHTML += `<option value="${l}">${l}</option>`;
                 rangeList.innerHTML += `<div class="range-item"><span>${l}</span> <b>$${data.locs[l]}</b></div>`;
             }
-
             if(data.mapImg) { mapImg.src = data.mapImg; mapImg.style.display = "block"; } else { mapImg.style.display = "none"; }
         };
 
@@ -427,7 +428,7 @@ import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, serverTim
                 document.getElementById('app').style.display = 'block';
                 document.getElementById('lbl-sucursal').innerText = `${config.sucData.n} (${config.loc})`;
                 renderMenu();
-                actualizarHorariosHTML(); // Inyecta la función de horarios
+                actualizarHorariosHTML();
             }, 800);
         };
 
@@ -522,12 +523,10 @@ import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, serverTim
             carrito.push({ ...tProd, totalItem: u * tProd.cant });
             updateCartUI();
             window.closeModal();
-            
             const badge = document.getElementById('cart-badge');
             badge.classList.remove('pop-anim');
             void badge.offsetWidth;
             badge.classList.add('pop-anim');
-            
             const t = document.getElementById('toast');
             t.innerHTML = ` ¡${tProd.cant}x ${tProd.n} al carrito!`;
             t.classList.add('show');
@@ -547,19 +546,55 @@ import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, serverTim
             renderCartItems(); 
         };
 
-        function actualizarHorariosHTML() {
-            const ahora = new Date();
-            const rangosEnvio = ["12:00 a 12:45", "12:45 a 13:30", "13:30 a 14:15", "14:15 a 15:00", "15:00 a 15:45", "15:45 a 16:30", "20:15 a 21:00", "21:00 a 21:45", "21:45 a 22:30", "22:30 a 23:15", "23:15 a 00:00"];
-            
+function actualizarHorariosHTML() {
+            // 1. Obtener la hora real de Buenos Aires
+            const ahoraBSAS = new Date(new Date().toLocaleString("en-US", {timeZone: "America/Argentina/Buenos_Aires"}));
+            const ahoraMins = (ahoraBSAS.getHours() * 60) + ahoraBSAS.getMinutes();
+
             let html = `<label class="ui-label">Horario de entrega/retiro</label><select id="p-horario" class="ui-input">`;
 
             if (isDelivery) {
-                rangosEnvio.forEach(r => html += `<option value="${r}">${r}</option>`);
+                // Definimos los bloques de 45 minutos
+                const todosLosRangos = [
+                    "12:00 a 12:45", "12:45 a 13:30", "13:30 a 14:15", "14:15 a 15:00", 
+                    "15:00 a 15:45", "15:45 a 16:30", "20:15 a 21:00", "21:00 a 21:45", 
+                    "21:45 a 22:30", "22:30 a 23:15", "23:15 a 00:00"
+                ];
+
+                let rangosDisponibles = todosLosRangos.filter(rango => {
+                    // Extraemos la hora de inicio del rango (ej: "20:15")
+                    const inicioStr = rango.split(" a ")[0];
+                    const [h, m] = inicioStr.split(":").map(Number);
+                    const inicioMins = (h * 60) + m;
+
+                    // Si la hora es "00:00", la tratamos como minutos finales del día
+                    const comparadorInicio = (h === 0) ? 1440 : inicioMins;
+
+                    // LÓGICA: Mostramos el rango si faltan al menos 5 minutos para que empiece
+                    // o si estamos justo en el momento (margen de gracia).
+                    return ahoraMins <= (comparadorInicio - 5);
+                });
+
+                // Si por la hora ya no quedan rangos, avisamos que estamos cerrados
+                if (rangosDisponibles.length === 0) {
+                    html += `<option value="CERRADO">Cerrado por hoy</option>`;
+                } else {
+                    rangosDisponibles.forEach(r => {
+                        html += `<option value="${r}">${r} hs</option>`;
+                    });
+                }
+
             } else {
-                const h15 = new Date(ahora.getTime() + 15*60000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                const h30 = new Date(ahora.getTime() + 30*60000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                html += `<option value="${h15}">${h15} hs (En 15 min)</option><option value="${h30}">${h30} hs (En 30 min)</option>`;
+                // LÓGICA RETIRO: Hora actual + 30 minutos
+                const tiempoRetiro = new Date(ahoraBSAS.getTime() + 30 * 60000);
+                const hRetiro = tiempoRetiro.getHours().toString().padStart(2, '0');
+                const mRetiro = tiempoRetiro.getMinutes().toString().padStart(2, '0');
+                
+                const horaFinal = `${hRetiro}:${mRetiro}`;
+                html += `<option value="${horaFinal}">${horaFinal} hs (Aprox. 30 min)</option>`;
+                html += `<option value="Más tarde">Retirar más tarde</option>`;
             }
+
             html += `</select>`;
             document.getElementById('box-horarios').innerHTML = html;
         }
@@ -570,7 +605,7 @@ import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, serverTim
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
-                        gpsLink = `https://maps.google.com/?q=$${position.coords.latitude},${position.coords.longitude}`;
+                        gpsLink = `https://www.google.com/maps?q=${position.coords.latitude},${position.coords.longitude}`;
                         btn.classList.add('success');
                         btn.innerHTML = " Ubicación exacta guardada";
                     }, 
@@ -606,7 +641,6 @@ import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, serverTim
                     `;
                 }).join('');
             }
-
             let costoEnvio = isDelivery ? config.sucData.locs[config.loc] : 0;
             document.getElementById('txt-envio-tipo').innerHTML = isDelivery ? `Envío (<span id="res-loc">${config.loc}</span>)` : `Retiro por local`;
             document.getElementById('res-envio').innerText = isDelivery ? `$ ${costoEnvio.toLocaleString()}` : `Gratis`;
@@ -618,32 +652,24 @@ import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, serverTim
         window.delItem = (i) => { carrito.splice(i,1); updateCartUI(); renderCartItems(); };
         function updateCartUI() { document.getElementById('cart-badge').innerText = carrito.reduce((s,i)=>s+i.cant,0); }
 
-        // 4. Integración Firebase: Guardar Pedido y Enviar a WhatsApp
-window.procesarPedido = async () => {
+        // 4. Función de Procesar Pedido (Firebase + WhatsApp)
+        window.procesarPedido = async () => {
             if (carrito.length === 0) return alert("Agregá productos a tu pedido primero.");
 
-            // Referencias a elementos de la UI
             const pago = document.getElementById('p-metodo').value;
             const vueltoRaw = document.getElementById('p-vuelto').value;
             const vuelto = parseFloat(vueltoRaw) || 0;
-            const horarioSelect = document.getElementById('p-horario');
-            const horario = horarioSelect ? horarioSelect.value : 'Lo antes posible';
+            const horario = document.getElementById('p-horario') ? document.getElementById('p-horario').value : 'Lo antes posible';
 
             let sub = carrito.reduce((s, i) => s + i.totalItem, 0);
             let envio = isDelivery ? config.sucData.locs[config.loc] : 0;
             let total = sub + envio;
 
-            // Validaciones de Pago
             if (pago === 'Efectivo') {
-                if (!vueltoRaw || isNaN(vuelto)) {
-                    return alert("Por favor, indicanos con cuánto vas a abonar.");
-                }
-                if (vuelto < total) {
-                    return alert(`El monto ($${vuelto}) no puede ser menor al total ($${total}).`);
-                }
+                if (!vueltoRaw || isNaN(vuelto)) return alert("Por favor, indicanos con cuánto vas a abonar.");
+                if (vuelto < total) return alert(`El monto ($${vuelto}) no puede ser menor al total ($${total}).`);
             }
 
-            // Validaciones de Dirección si es Delivery
             if (isDelivery) {
                 const newDir = document.getElementById('c-dir').value.trim();
                 if (!newDir) return alert("Por favor, ingresá la dirección de entrega.");
@@ -652,14 +678,10 @@ window.procesarPedido = async () => {
                 config.depto = document.getElementById('c-depto').value.trim();
             }
 
-            // 1. Mostrar Loading
             const loader = document.getElementById('global-loader');
-            const loaderText = document.querySelector('.loader-text');
             loader.style.display = 'flex';
-            loaderText.innerText = "Guardando pedido en Central...";
+            document.querySelector('.loader-text').innerText = "Guardando pedido...";
 
-            // 2. Preparar el Objeto de Datos para Firebase
-            // Nota: usamos window.serverTimestamp() definido en la inicialización
             const ordenDatos = {
                 cliente: config.nombre.toUpperCase(),
                 telefono: config.tel,
@@ -675,7 +697,7 @@ window.procesarPedido = async () => {
                     cant: i.cant,
                     totalItem: i.totalItem,
                     sin: i.sin,
-                    con: i.con.map(e => e.n), // Guardamos solo nombres de extras
+                    con: i.con.map(e => e.n),
                     obs: i.obs
                 })),
                 subtotal: sub,
@@ -684,126 +706,95 @@ window.procesarPedido = async () => {
                 metodoPago: pago,
                 abonaCon: pago === 'Efectivo' ? vuelto : 0,
                 estado: "Pendiente",
-                fechaCreacion: new Date() // Usamos Date local si serverTimestamp falla
+                fechaCreacion: window.serverTimestamp()
             };
 
             try {
-                // 3. Guardar en Firebase Firestore
-                // Usamos las referencias globales que definimos en la Parte 1
-                const docRef = await window.addDoc(window.collection(window.db, "pedidos"), ordenDatos);
-                console.log("Pedido guardado con ID: ", docRef.id);
+                // Guardar en Firebase
+                await window.addDoc(window.collection(window.db, "pedidos"), ordenDatos);
 
-                // 4. Armar el mensaje de WhatsApp
-                let mensajeWsp = `*NUEVO PEDIDO | MARVEL FOOD*%0A`;
-                mensajeWsp += `---------------------------------%0A`;
-                mensajeWsp += `*Cliente:* ${ordenDatos.cliente}%0A`;
-                mensajeWsp += `*Teléfono:* ${config.tel}%0A`;
-                mensajeWsp += `*Sucursal:* ${ordenDatos.sucursal}%0A`;
-                mensajeWsp += `*Tipo:* ${ordenDatos.tipo}%0A`;
-                mensajeWsp += `*Horario:* ${horario}%0A`;
+                // Armar mensaje WhatsApp
+                let t = `*NUEVO PEDIDO | MARVEL FOOD*%0A`;
+                t += `---------------------------------%0A`;
+                t += `*Cliente:* ${ordenDatos.cliente}%0A`;
+                t += `*Teléfono:* ${config.tel}%0A`;
+                t += `*Sucursal:* ${ordenDatos.sucursal}%0A`;
+                t += `*Tipo:* ${ordenDatos.tipo}%0A`;
+                t += `*Horario:* ${horario}%0A`;
 
                 if (isDelivery) {
-                    mensajeWsp += `*Dirección:* ${config.dir} ${ordenDatos.pisoDepto}%0A`;
-                    mensajeWsp += `*Localidad:* ${config.loc}%0A`;
-                    if (gpsLink) mensajeWsp += `*Ubicación:* ${gpsLink}%0A`;
+                    t += `*Dirección:* ${config.dir} ${ordenDatos.pisoDepto}%0A`;
+                    t += `*Localidad:* ${config.loc}%0A`;
+                    if (gpsLink) t += `*Ubicación:* ${gpsLink}%0A`;
                 }
 
-                mensajeWsp += `---------------------------------%0A`;
+                t += `---------------------------------%0A`;
                 carrito.forEach(i => {
-                    mensajeWsp += `*${i.cant}x ${i.n}* ($${i.totalItem})%0A`;
-                    if (i.sin.length) mensajeWsp += `_Sin: ${i.sin.join(', ')}_%0A`;
-                    if (i.con.length) mensajeWsp += `_Extras: ${i.con.map(x => x.n).join(', ')}_%0A`;
-                    if (i.obs) mensajeWsp += `_Nota: ${i.obs}_%0A`;
-                    mensajeWsp += `%0A`;
+                    t += `*${i.cant}x ${i.n}* ($${i.totalItem})%0A`;
+                    if (i.sin.length) t += `_Sin: ${i.sin.join(', ')}_%0A`;
+                    if (i.con.length) t += `_Extras: ${i.con.map(x => x.n).join(', ')}_%0A`;
+                    if (i.obs) t += `_Nota: ${i.obs}_%0A`;
+                    t += `%0A`;
                 });
 
-                mensajeWsp += `---------------------------------%0A`;
-                mensajeWsp += `*Subtotal:* $${sub}%0A`;
-                if (isDelivery) mensajeWsp += `*Envío:* $${envio}%0A`;
-                mensajeWsp += `*TOTAL:* $${total}%0A`;
-                mensajeWsp += `*Pago:* ${pago}%0A`;
+                t += `---------------------------------%0A`;
+                t += `*Subtotal:* $${sub}%0A`;
+                if (isDelivery) t += `*Envío:* $${envio}%0A`;
+                t += `*TOTAL:* $${total}%0A`;
+                t += `*Pago:* ${pago}%0A`;
                 if (pago === 'Efectivo') {
-                    mensajeWsp += `*Abona con:* $${vuelto}%0A`;
-                    mensajeWsp += `*Vuelto:* $${vuelto - total}%0A`;
+                    t += `*Abona con:* $${vuelto}%0A`;
+                    t += `*Vuelto:* $${vuelto - total}%0A`;
                 }
 
-                // 5. Finalizar
                 loader.style.display = 'none';
-                
-                // Redirigir a WhatsApp (usamos href para evitar bloqueos de popups)
-                const urlWsp = `https://wa.me/${config.sucData.wsp}?text=${mensajeWsp}`;
-                window.location.href = urlWsp;
+                window.location.href = `https://wa.me/${config.sucData.wsp}?text=${t}`;
 
             } catch (error) {
-                console.error("Error al guardar pedido:", error);
+                console.error("Error Firebase:", error);
                 loader.style.display = 'none';
-                alert("Error crítico al conectar con el servidor: " + error.message + ". Tu pedido no se guardó en el panel admin, pero puedes enviarlo por WhatsApp igualmente.");
-                
-                // Opción de rescate: Enviar WhatsApp aunque falle Firebase
-                const fallbackUrl = `https://wa.me/${config.sucData.wsp}?text=ERROR_SERVER_FALLBACK`;
-                window.open(fallbackUrl, '_blank');
+                alert("Error de conexión: " + error.message);
             }
         };
-		
-		// ==========================================
-        // PARTE 2: LÓGICA DEL PANEL DE ADMINISTRACIÓN
-        // ==========================================
-        
-        if (urlParams.get('admin') === 'true') {
-            iniciarPanelAdmin();
-        }
 
+        // 5. Panel de Administración
         function iniciarPanelAdmin() {
             const listaPedidos = document.getElementById('admin-orders-list');
-            
-            // Escuchar la colección "pedidos" en tiempo real
             window.onSnapshot(window.collection(window.db, "pedidos"), (snapshot) => {
                 listaPedidos.innerHTML = "";
-                
                 if (snapshot.empty) {
-                    listaPedidos.innerHTML = "<p style='text-align:center; color:var(--text-light); margin-top:40px; font-weight:600;'>No hay pedidos registrados aún 🍔</p>";
+                    listaPedidos.innerHTML = "<p style='text-align:center; color:var(--text-light); margin-top:40px; font-weight:600;'>No hay pedidos aún 🍔</p>";
                     return;
                 }
-
                 let pedidos = [];
-                snapshot.forEach(doc => {
-                    pedidos.push({ id: doc.id, ...doc.data() });
-                });
-                
-                // Ordenar por fecha de creación (los más recientes primero)
+                snapshot.forEach(doc => pedidos.push({ id: doc.id, ...doc.data() }));
                 pedidos.sort((a, b) => {
                     const timeA = a.fechaCreacion ? a.fechaCreacion.toMillis() : 0;
                     const timeB = b.fechaCreacion ? b.fechaCreacion.toMillis() : 0;
                     return timeB - timeA; 
                 });
-
-                pedidos.forEach(pedido => {
-                    renderizarPedidoAdmin(pedido, listaPedidos);
-                });
+                pedidos.forEach(p => renderizarPedidoAdmin(p, listaPedidos));
             });
         }
 
         function renderizarPedidoAdmin(pedido, contenedor) {
-            let badgeColor = "#cbd5e1"; // Color por defecto (Gris)
-            if (pedido.estado === "Pendiente") badgeColor = "#f59e0b"; // Naranja
-            if (pedido.estado === "Aceptado") badgeColor = "#3b82f6"; // Azul
-            if (pedido.estado === "Enviado" || pedido.estado === "Entregado") badgeColor = "#10b981"; // Verde
+            let badgeColor = "#cbd5e1";
+            if (pedido.estado === "Pendiente") badgeColor = "#f59e0b";
+            if (pedido.estado === "Aceptado") badgeColor = "#3b82f6";
+            if (pedido.estado === "Enviado") badgeColor = "#10b981";
 
             const div = document.createElement('div');
-            // Usamos las clases de CSS que ya preparamos en la Parte 1
             div.className = `order-card ${pedido.estado.toLowerCase()}`;
             
-            // Armamos la lista de items (Hamburguesas, papas, extras, sin ingredientes)
             let itemsHTML = pedido.items.map(i => `
                 <div style="margin-top: 8px; font-size: 14px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
                     <b style="font-size: 15px;">${i.cant}x ${i.n}</b>
                     ${i.sin && i.sin.length ? `<br><span style="color:var(--primary); font-size:13px; font-weight:600;">⛔ Sin: ${i.sin.join(', ')}</span>` : ''}
-                    ${i.con && i.con.length ? `<br><span style="color:#10b981; font-size:13px; font-weight:600;">✨ Extras: ${i.con.map(e=>e.n).join(', ')}</span>` : ''}
+                    ${i.con && i.con.length ? `<br><span style="color:#10b981; font-size:13px; font-weight:600;">✨ Extras: ${i.con.join(', ')}</span>` : ''}
                     ${i.obs ? `<br><span style="color:var(--text-light); font-size:13px; font-style:italic;">📝 Nota: ${i.obs}</span>` : ''}
                 </div>
             `).join('');
 
-            // Estructura visual de la tarjeta del pedido
             div.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 12px;">
                     <div>
@@ -812,49 +803,31 @@ window.procesarPedido = async () => {
                     </div>
                     <span class="admin-badge" style="background: ${badgeColor}; color: white;">${pedido.estado}</span>
                 </div>
-                
                 <div style="margin-bottom: 15px; background: #f8fafc; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0;">
                     <span style="font-weight: 800; font-size: 14px; color: var(--text); text-transform: uppercase;">${pedido.tipo}</span>
                     <span style="font-size: 13px; color: var(--text-light); font-weight: 700;"> • ⏰ ${pedido.horario}</span>
-                    ${pedido.tipo === 'Delivery' ? `
-                        <p style="font-size: 14px; margin-top: 8px; font-weight: 600;">📍 ${pedido.direccion} ${pedido.pisoDepto} (${pedido.localidad})</p>
-                        ${pedido.gps ? `<a href="${pedido.gps}" target="_blank" style="color: #3b82f6; font-size: 13px; font-weight: 700; text-decoration: none; display: inline-block; margin-top: 5px;">🗺️ Abrir en Google Maps</a>` : ''}
-                    ` : ''}
+                    ${pedido.tipo === 'Delivery' ? `<p style="font-size: 14px; margin-top: 8px; font-weight: 600;">📍 ${pedido.direccion} ${pedido.pisoDepto} (${pedido.localidad})</p>
+                    ${pedido.gps ? `<a href="${pedido.gps}" target="_blank" style="color: #3b82f6; font-size: 13px; font-weight: 700; text-decoration: none;">🗺️ Ver Maps</a>` : ''}` : ''}
                 </div>
-                
-                <div style="margin-bottom: 15px;">
-                    ${itemsHTML}
-                </div>
-                
-                <div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 16px; background: #f1f5f9; padding: 12px; border-radius: 10px;">
+                <div style="margin-bottom: 15px;">${itemsHTML}</div>
+                <div style="display: flex; justify-content: space-between; font-weight: 800; background: #f1f5f9; padding: 12px; border-radius: 10px;">
                     <span>Total (${pedido.metodoPago}):</span>
                     <span>$${pedido.total.toLocaleString()}</span>
                 </div>
-                ${pedido.metodoPago === 'Efectivo' ? `<p style="font-size:13px; color:var(--text-light); text-align:right; margin-top:5px; font-weight:600;">Abona con: $${pedido.abonaCon}</p>` : ''}
-
                 <div class="admin-actions">
-                    ${pedido.estado === 'Pendiente' ? `<button class="admin-btn btn-blue" onclick="window.cambiarEstadoPedido('${pedido.id}', 'Aceptado')">Cocina: Empezar a Preparar</button>` : ''}
-                    ${pedido.estado === 'Aceptado' ? `<button class="admin-btn btn-green" onclick="window.cambiarEstadoPedido('${pedido.id}', 'Enviado')">${pedido.tipo === 'Delivery' ? 'Marcar como Enviado' : 'Marcar Listo para Retiro'}</button>` : ''}
+                    ${pedido.estado === 'Pendiente' ? `<button class="admin-btn btn-blue" onclick="window.cambiarEstadoPedido('${pedido.id}', 'Aceptado')">Cocina: Aceptar</button>` : ''}
+                    ${pedido.estado === 'Aceptado' ? `<button class="admin-btn btn-green" onclick="window.cambiarEstadoPedido('${pedido.id}', 'Enviado')">Listo / Enviado</button>` : ''}
                 </div>
             `;
             contenedor.appendChild(div);
         }
 
-        // Función para actualizar el estado en Firebase
         window.cambiarEstadoPedido = async (id, nuevoEstado) => {
             try {
-                // Mostrar un pequeño indicador de carga si lo deseas, aunque la actualización es instantánea
                 const pedidoRef = window.doc(window.db, "pedidos", id);
-                await window.updateDoc(pedidoRef, {
-                    estado: nuevoEstado
-                });
-            } catch(error) {
-                console.error("Error al actualizar:", error);
-                alert("Hubo un error al actualizar el estado de este pedido. Revisá la conexión.");
-            }
+                await window.updateDoc(pedidoRef, { estado: nuevoEstado });
+            } catch(error) { alert("Error al actualizar."); }
         };
-		
-		
     </script>
 </body>
 </html>

@@ -322,9 +322,8 @@
 
     <script type="module">
         // 1. Inicialización de Firebase (Versión 10.8.1 para evitar errores de despliegue)
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
         const firebaseConfig = {
             apiKey: "AIzaSyAeRlE9S5pnEUuhxRXoOX6lMX4Ryky0uSI",
             authDomain: "marvel-food-fa570.firebaseapp.com",
@@ -620,89 +619,129 @@
         function updateCartUI() { document.getElementById('cart-badge').innerText = carrito.reduce((s,i)=>s+i.cant,0); }
 
         // 4. Integración Firebase: Guardar Pedido y Enviar a WhatsApp
-        window.procesarPedido = async () => {
-            if(carrito.length === 0) return alert("Agregá productos a tu pedido primero.");
-            
+window.procesarPedido = async () => {
+            if (carrito.length === 0) return alert("Agregá productos a tu pedido primero.");
+
+            // Referencias a elementos de la UI
             const pago = document.getElementById('p-metodo').value;
             const vueltoRaw = document.getElementById('p-vuelto').value;
-            const vuelto = parseFloat(vueltoRaw);
-            const horario = document.getElementById('p-horario') ? document.getElementById('p-horario').value : 'Lo antes posible';
-            
-            let sub = carrito.reduce((s,i)=>s+i.totalItem,0);
+            const vuelto = parseFloat(vueltoRaw) || 0;
+            const horarioSelect = document.getElementById('p-horario');
+            const horario = horarioSelect ? horarioSelect.value : 'Lo antes posible';
+
+            let sub = carrito.reduce((s, i) => s + i.totalItem, 0);
             let envio = isDelivery ? config.sucData.locs[config.loc] : 0;
             let total = sub + envio;
 
-            if(pago === 'Efectivo') {
-                if(!vueltoRaw || isNaN(vuelto)) return alert("Por favor, indicanos con cuánto vas a abonar.");
-                if(vuelto < total) return alert(`El monto ($${vuelto}) no puede ser menor al total ($${total}).`);
+            // Validaciones de Pago
+            if (pago === 'Efectivo') {
+                if (!vueltoRaw || isNaN(vuelto)) {
+                    return alert("Por favor, indicanos con cuánto vas a abonar.");
+                }
+                if (vuelto < total) {
+                    return alert(`El monto ($${vuelto}) no puede ser menor al total ($${total}).`);
+                }
             }
 
-            if(isDelivery) {
+            // Validaciones de Dirección si es Delivery
+            if (isDelivery) {
                 const newDir = document.getElementById('c-dir').value.trim();
-                if(!newDir) return alert("Por favor, ingresá la dirección de entrega.");
+                if (!newDir) return alert("Por favor, ingresá la dirección de entrega.");
                 config.dir = newDir;
                 config.piso = document.getElementById('c-piso').value.trim();
                 config.depto = document.getElementById('c-depto').value.trim();
             }
 
-            // CREAR OBJETO PARA FIREBASE
+            // 1. Mostrar Loading
+            const loader = document.getElementById('global-loader');
+            const loaderText = document.querySelector('.loader-text');
+            loader.style.display = 'flex';
+            loaderText.innerText = "Guardando pedido en Central...";
+
+            // 2. Preparar el Objeto de Datos para Firebase
+            // Nota: usamos window.serverTimestamp() definido en la inicialización
             const ordenDatos = {
                 cliente: config.nombre.toUpperCase(),
                 telefono: config.tel,
                 sucursal: config.sucData.n,
                 tipo: isDelivery ? 'Delivery' : 'Retiro por local',
-                localidad: isDelivery ? config.loc : '',
-                direccion: isDelivery ? config.dir : '',
+                localidad: isDelivery ? config.loc : 'N/A',
+                direccion: isDelivery ? config.dir : 'Retiro en sucursal',
                 pisoDepto: isDelivery ? `${config.piso} ${config.depto}`.trim() : '',
-                gps: gpsLink,
+                gps: gpsLink || '',
                 horario: horario,
-                items: carrito,
+                items: carrito.map(i => ({
+                    n: i.n,
+                    cant: i.cant,
+                    totalItem: i.totalItem,
+                    sin: i.sin,
+                    con: i.con.map(e => e.n), // Guardamos solo nombres de extras
+                    obs: i.obs
+                })),
                 subtotal: sub,
                 envio: envio,
                 total: total,
                 metodoPago: pago,
                 abonaCon: pago === 'Efectivo' ? vuelto : 0,
-                estado: "Pendiente", // Estado inicial para el Admin
-                fechaCreacion: serverTimestamp()
+                estado: "Pendiente",
+                fechaCreacion: new Date() // Usamos Date local si serverTimestamp falla
             };
 
-            // Mostrar Loading Animado
-            document.getElementById('global-loader').style.display = 'flex';
-            document.querySelector('.loader-text').innerText = "Guardando pedido...";
-
             try {
-                // 1. Guardar en Firestore
-                await addDoc(collection(db, "pedidos"), ordenDatos);
-                
-                // 2. Armar y Enviar el WhatsApp (Notificación para vos)
-                let t = ` *NUEVO PEDIDO | MARVEL FOOD* \n---------------------------------\n`;
-                t += `*Teléfono:* ${config.tel}\n *Cliente:* ${ordenDatos.cliente}\n *Sucursal:* ${ordenDatos.sucursal}\n`;
-                if(isDelivery) {
-                    t += ` *Tipo:* Delivery\n *Horario:* ${horario}\n *Localidad:* ${config.loc}\n *Dirección:* ${config.dir}\n`;
-                    if(ordenDatos.pisoDepto) t += ` *Piso/Depto:* ${ordenDatos.pisoDepto}\n`;
-                    if(gpsLink) t += ` *Ubicación Exacta:* ${gpsLink}\n`;
-                } else { t += ` *Tipo:* Pasa a retirar\n *Horario:* ${horario}\n`; }
-                t += `---------------------------------\n\n`;
+                // 3. Guardar en Firebase Firestore
+                // Usamos las referencias globales que definimos en la Parte 1
+                const docRef = await window.addDoc(window.collection(window.db, "pedidos"), ordenDatos);
+                console.log("Pedido guardado con ID: ", docRef.id);
 
+                // 4. Armar el mensaje de WhatsApp
+                let mensajeWsp = `*NUEVO PEDIDO | MARVEL FOOD*%0A`;
+                mensajeWsp += `---------------------------------%0A`;
+                mensajeWsp += `*Cliente:* ${ordenDatos.cliente}%0A`;
+                mensajeWsp += `*Teléfono:* ${config.tel}%0A`;
+                mensajeWsp += `*Sucursal:* ${ordenDatos.sucursal}%0A`;
+                mensajeWsp += `*Tipo:* ${ordenDatos.tipo}%0A`;
+                mensajeWsp += `*Horario:* ${horario}%0A`;
+
+                if (isDelivery) {
+                    mensajeWsp += `*Dirección:* ${config.dir} ${ordenDatos.pisoDepto}%0A`;
+                    mensajeWsp += `*Localidad:* ${config.loc}%0A`;
+                    if (gpsLink) mensajeWsp += `*Ubicación:* ${gpsLink}%0A`;
+                }
+
+                mensajeWsp += `---------------------------------%0A`;
                 carrito.forEach(i => {
-                    t += ` *${i.cant}x ${i.n}* ($${i.totalItem})\n`;
-                    if(i.sin.length) t += `    _Sin: ${i.sin.join(', ')}_\n`;
-                    if(i.con.length) t += `    _Extras: ${i.con.map(x=>x.n).join(', ')}_\n`;
-                    if(i.obs) t += `    _Nota: ${i.obs}_\n\n`;
+                    mensajeWsp += `*${i.cant}x ${i.n}* ($${i.totalItem})%0A`;
+                    if (i.sin.length) mensajeWsp += `_Sin: ${i.sin.join(', ')}_%0A`;
+                    if (i.con.length) mensajeWsp += `_Extras: ${i.con.map(x => x.n).join(', ')}_%0A`;
+                    if (i.obs) mensajeWsp += `_Nota: ${i.obs}_%0A`;
+                    mensajeWsp += `%0A`;
                 });
 
-                t += `---------------------------------\n *Subtotal:* $${sub}\n`;
-                if(isDelivery) t += ` *Envío:* $${envio}\n`;
-                t += `*TOTAL:* $${total}\n---------------------------------\n*Pago:* ${pago}\n`;
-                if(pago === 'Efectivo') t += ` *Abona con:* $${vuelto} (Vuelto: $${vuelto - total})\n`;
+                mensajeWsp += `---------------------------------%0A`;
+                mensajeWsp += `*Subtotal:* $${sub}%0A`;
+                if (isDelivery) mensajeWsp += `*Envío:* $${envio}%0A`;
+                mensajeWsp += `*TOTAL:* $${total}%0A`;
+                mensajeWsp += `*Pago:* ${pago}%0A`;
+                if (pago === 'Efectivo') {
+                    mensajeWsp += `*Abona con:* $${vuelto}%0A`;
+                    mensajeWsp += `*Vuelto:* $${vuelto - total}%0A`;
+                }
 
-                document.getElementById('global-loader').style.display = 'none';
-                window.open(`https://wa.me/${config.sucData.wsp}?text=${encodeURIComponent(t)}`);
+                // 5. Finalizar
+                loader.style.display = 'none';
+                
+                // Redirigir a WhatsApp (usamos href para evitar bloqueos de popups)
+                const urlWsp = `https://wa.me/${config.sucData.wsp}?text=${mensajeWsp}`;
+                window.location.href = urlWsp;
 
             } catch (error) {
-                console.error("Error al guardar:", error);
-                document.getElementById('global-loader').style.display = 'none';
-                alert("Hubo un problema de conexión al guardar el pedido. Intentá de nuevo.");
+                console.error("Error al guardar pedido:", error);
+                loader.style.display = 'none';
+                alert("Error crítico al conectar con el servidor: " + error.message + ". Tu pedido no se guardó en el panel admin, pero puedes enviarlo por WhatsApp igualmente.");
+                
+                // Opción de rescate: Enviar WhatsApp aunque falle Firebase
+                const fallbackUrl = `https://wa.me/${config.sucData.wsp}?text=ERROR_SERVER_FALLBACK`;
+                window.open(fallbackUrl, '_blank');
             }
         };
 		

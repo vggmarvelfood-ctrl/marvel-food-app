@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+
+    <script type="text/javascript">
+       (function(){
+          emailjs.init("sATMMVYtIbZLT1tMD"); 
+       })();
+    </script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
     <title>Marvel Food | Tienda Online</title>
@@ -144,7 +151,11 @@
         .old-price { color: var(--text-light); text-decoration: line-through; font-size: 12px; opacity: 0.7; }
         .new-price { color: #10b981; font-weight: 800; font-size: 20px; }
     </style>
+
+
 </head>
+
+
 <body>
 
     <div id="toast">¡Agregado al pedido!</div>
@@ -882,17 +893,56 @@
             }
         }
 
-        window.enviarCodigoVerificacion = () => {
-            const mail = document.getElementById('reg-mail').value.trim();
-            const nom = document.getElementById('reg-nom').value.trim();
-            if(!mail || !nom) return alert("Por favor completa nombre y email");
+window.enviarCodigoVerificacion = async () => {
+    const mail = document.getElementById('reg-mail').value.trim();
+    const nom = document.getElementById('reg-nom').value.trim();
+    const tel = document.getElementById('reg-tel').value.trim();
+    const btn = document.querySelector('#registro-paso-1 .btn-action');
 
-            codigoSimulado = Math.floor(1000 + Math.random() * 9000).toString();
-            alert(`[SIMULACIÓN MAIL] De: Marvel Food\nPara: ${mail}\nTu código de acceso es: ${codigoSimulado}`);
+    if(!mail || !nom || !tel) return alert("Por favor completa todos los campos (Nombre, Email y WhatsApp)");
 
-            document.getElementById('registro-paso-1').classList.add('hidden');
-            document.getElementById('registro-paso-2').classList.remove('hidden');
-        };
+    // Bloqueo visual del botón
+    btn.disabled = true;
+    btn.innerText = "ENVIANDO CÓDIGO...";
+    document.body.style.cursor = 'wait';
+
+    // Generamos el código de 4 dígitos
+    codigoSimulado = Math.floor(1000 + Math.random() * 9000).toString();
+
+    // Estos nombres (nombre, email_cliente, codigo) deben ser IGUALES en tu plantilla de EmailJS
+    const templateParams = {
+        nombre: nom,
+        email_cliente: mail, 
+        codigo: codigoSimulado
+    };
+
+    try {
+        const response = await emailjs.send(
+            'service_2y6217j', 
+            'template_1qepw99', 
+            templateParams
+        );
+        
+        console.log("Correo enviado con éxito", response.status, response.text);
+        
+        // Cambiar de pantalla si tuvo éxito
+        document.getElementById('registro-paso-1').classList.add('hidden');
+        document.getElementById('registro-paso-2').classList.remove('hidden');
+        
+    } catch (error) {
+        console.error("Error detallado:", error);
+        
+        if (error.status === 412 || error.text?.includes("insufficient authentication scopes")) {
+            alert("ERROR DE PERMISOS: Debes ir a EmailJS, desconectar tu Gmail y volverlo a conectar marcando la casilla 'Enviar correos en tu nombre'.");
+        } else {
+            alert("No se pudo enviar el correo. Revisa que tu Public Key sea correcta en el código.");
+        }
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "ENVIAR CÓDIGO AL MAIL";
+        document.body.style.cursor = 'default';
+    }
+};
 
         window.verificarCodigoYGuardar = async () => {
             const inputCodigo = document.getElementById('reg-codigo').value.trim();

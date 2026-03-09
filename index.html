@@ -4,230 +4,199 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
     <title>Marvel Food Central Pedidos</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* === TUS ESTILOS ORIGINALES INTACTOS === */
         :root {
-            --primary: #e23636;
-            --primary-dark: #b91c1c;
-            --bg: #f8fafc;
+            --primary: #e23636; /* Mantenemos el rojo Marvel para acentos */
+            --dark: #1a1a1a; /* Negro de la referencia */
+            --bg: #f9fafb;
             --white: #ffffff;
-            --text: #0f172a;
-            --text-light: #64748b;
-            --shadow: 0 4px 20px rgba(0,0,0,0.05);
-            --shadow-hover: 0 10px 25px rgba(226, 54, 54, 0.15);
+            --text: #111827;
+            --text-light: #6b7280;
+            --border: #e5e7eb;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            --shadow-card: 0 2px 12px rgba(0,0,0,0.06);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background-color: var(--bg); color: var(--text); overflow-x: hidden; }
+        body { background-color: var(--white); color: var(--text); overflow-x: hidden; padding-bottom: 80px; /* Espacio para el nav inferior */ }
 
-        @keyframes slideUp { from { opacity:0; transform: translateY(30px); } to { opacity:1; transform: translateY(0); } }
+        /* Utilidades y Animaciones */
+        @keyframes slideUp { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
         @keyframes modalSlide { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        .anim-up { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
-        .pop-anim { animation: pop 0.3s ease; }
-
-        #global-loader { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 15px; }
-        .spinner { width: 45px; height: 45px; border: 4px solid #e2e8f0; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
-        .loader-text { font-weight: 700; color: var(--text-light); font-size: 14px; animation: pop 1.5s infinite; }
-
-        #splash { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 15px; }
-        .setup-card { width: 100%; max-width: 500px; background: white; border-radius: 24px; padding: 30px 25px; box-shadow: var(--shadow); max-height: 95vh; overflow-y: auto; }
-        .setup-card::-webkit-scrollbar { display: none; }
-        .logo-header { text-align: center; margin-bottom: 25px; }
-        .logo-header img { width: 85px; height: 85px; border-radius: 22px; box-shadow: var(--shadow); margin-bottom: 10px; }
-
-        .ui-label { font-size: 12px; font-weight: 800; color: var(--text-light); text-transform: uppercase; margin-bottom: 8px; display: block; letter-spacing: 0.5px; }
-        .ui-input { width: 100%; padding: 16px; border-radius: 14px; border: 1.5px solid #e2e8f0; font-size: 15px; outline: none; transition: 0.3s; background: #f8fafc; margin-bottom: 20px; font-weight: 600; color: var(--text); }
-        .ui-input:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 4px rgba(226, 54, 54, 0.1); }
-
-        .range-card { background: #fff; border: 1.5px solid #fed7d7; border-radius: 16px; padding: 18px; margin-bottom: 20px; display: none; animation: slideUp 0.3s ease; }
-        .range-item { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; font-weight: 600; color: #475569; }
-        .range-item b { color: var(--primary); font-weight: 800; }
-        .map-img { width: 100%; border-radius: 12px; margin-top: 15px; display: none; border: 1px solid #f1f5f9; box-shadow: var(--shadow); }
-
-        #app { display: none; max-width: 500px; margin: 0 auto; background: var(--bg); min-height: 100vh; position: relative; padding-bottom: 110px; }
-        .header-bg { height: 160px; background: url('https://images.cdn.pency.app/marvelfoodabasto/1760661227946.jpg') center/cover; position: relative; }
-        .header-bg::after { content:''; position: absolute; inset: 0; background: linear-gradient(to top, var(--bg), transparent); }
-        .store-info { padding: 0 20px; margin-top: -40px; display: flex; align-items: flex-end; gap: 15px; margin-bottom: 20px; position: relative; z-index: 2; }
-        .store-logo { width: 90px; height: 90px; border-radius: 22px; border: 4px solid var(--bg); background: url('https://pency-images.nyc3.digitaloceanspaces.com/marvelfoodabasto/1760661165087.jpg') center/cover; box-shadow: var(--shadow); }
-        
-        .nav-cats { position: sticky; top: 0; background: rgba(248,250,252,0.95); backdrop-filter: blur(12px); z-index: 100; display: flex; overflow-x: auto; padding: 15px 20px; gap: 12px; scrollbar-width: none; border-bottom: 1px solid rgba(0,0,0,0.05); }
-        .nav-cats::-webkit-scrollbar { display: none; }
-        .cat-tag { padding: 12px 22px; border-radius: 50px; background: white; border: 1.5px solid #e2e8f0; font-size: 14px; font-weight: 700; color: var(--text-light); white-space: nowrap; cursor: pointer; transition: 0.3s; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
-        .cat-tag.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: var(--shadow-hover); }
-
-        .card-p { display: flex; padding: 18px; margin: 0 20px 15px; background: white; border-radius: 20px; box-shadow: var(--shadow); cursor: pointer; transition: 0.2s; border: 1px solid transparent; }
-        .card-p:active { transform: scale(0.97); }
-        .p-txt { flex: 1; padding-right: 15px; display: flex; flex-direction: column; justify-content: center; }
-        .p-txt h3 { font-size: 17px; margin-bottom: 6px; font-weight: 800; }
-        .p-txt p { font-size: 13px; color: var(--text-light); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .p-price { margin-top: 10px; font-weight: 800; color: var(--primary); font-size: 17px; }
-        .p-img { width: 105px; height: 105px; border-radius: 16px; background-size: cover; background-position: center; box-shadow: 0 4px 10px rgba(0,0,0,0.08); background-color: #f1f5f9; }
-
-        .modal { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 2000; display: none; justify-content: center; align-items: flex-end; }
-        .modal-sheet { background: white; width: 100%; max-width: 500px; height: 92vh; border-radius: 32px 32px 0 0; overflow-y: auto; position: relative; display: flex; flex-direction: column; animation: modalSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-        .drag-handle { width: 40px; height: 5px; background: rgba(255,255,255,0.8); border-radius: 10px; position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 20; }
-        .m-hero { height: 280px; background-size: cover; background-position: center; position: relative; flex-shrink: 0; }
-        .m-hero::after { content:''; position:absolute; inset:0; background: linear-gradient(to top, white, transparent); }
-        .m-close { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.9); backdrop-filter: blur(5px); width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; z-index: 10; box-shadow: var(--shadow); transition: 0.2s; }
-        .m-content { padding: 25px; margin-top: -40px; position: relative; z-index: 2; flex: 1; }
-        .m-section { font-size: 13px; font-weight: 800; color: var(--text); margin: 25px 0 15px; display: flex; align-items: center; gap: 10px; }
-        .m-section::after { content: ''; flex: 1; height: 1.5px; background: #f1f5f9; }
-
-        .custom-check { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1.5px solid #f8fafc; cursor: pointer; font-weight: 600; font-size: 15px; }
-        .custom-check input { display: none; }
-        .check-box { width: 24px; height: 24px; border: 2px solid #cbd5e1; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
-        .custom-check input:checked + .check-box { background: var(--primary); border-color: var(--primary); }
-        .custom-check input:checked + .check-box::after { content: '✓'; color: white; font-weight: bold; font-size: 14px; }
-
-        .cart-bar { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; background: var(--text); color: white; padding: 18px 25px; border-radius: 50px; display: flex; justify-content: space-between; align-items: center; font-weight: 700; cursor: pointer; box-shadow: 0 15px 35px rgba(15, 23, 42, 0.4); z-index: 500; transition: 0.3s; }
-        .cart-bar:active { transform: translateX(-50%) scale(0.97); }
-        .badge-qty { background: var(--primary); color: white; border-radius: 50%; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; margin-left: 8px; }
-
-        #cart-view { position: fixed; top: 0; right: 0; width: 100%; max-width: 500px; height: 100dvh; background: white; z-index: 3000; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: -10px 0 50px rgba(0,0,0,0.1); }
-        #cart-view.open { transform: translateX(0); }
-
-        .btn-action { background: var(--primary); color: white; border: none; padding: 18px; border-radius: 16px; font-weight: 800; cursor: pointer; width: 100%; font-size: 16px; transition: 0.2s; box-shadow: var(--shadow-hover); }
-        .btn-action:active { transform: scale(0.98); }
-        
-        .qty-wrap { display: flex; align-items: center; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 5px; height: 55px; }
-        .qty-btn { width: 45px; height: 100%; border: none; background: transparent; font-size: 22px; font-weight: bold; cursor: pointer; color: var(--text); }
-
-        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: #10b981; color: white; padding: 14px 28px; border-radius: 50px; font-weight: 700; font-size: 14px; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3); z-index: 4000; transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); opacity: 0; display: flex; align-items: center; gap: 8px; }
-        #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
         .hidden { display: none !important; }
 
-        .delivery-toggle { display: flex; background: #f1f5f9; border-radius: 14px; padding: 5px; margin-bottom: 20px; }
-        .delivery-toggle button { flex: 1; padding: 14px; border: none; background: transparent; border-radius: 10px; font-weight: 800; font-size: 14px; color: var(--text-light); cursor: pointer; transition: 0.3s; }
-        .delivery-toggle button.active { background: white; color: var(--text); box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        
-        .btn-gps { background: #f8fafc; color: var(--text); border: 2px solid #e2e8f0; padding: 14px; border-radius: 14px; width: 100%; font-weight: 700; cursor: pointer; margin-bottom: 15px; font-size: 14px; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-gps:active { transform: scale(0.98); }
-        .btn-gps.success { background: #d1fae5; border-color: #10b981; color: #047857; }
+        /* Header (Estilo Referencia) */
+        .top-header { display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; background: var(--white); position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--border); }
+        .brand-container { display: flex; align-items: center; gap: 12px; }
+        .brand-logo { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+        .brand-name { font-weight: 800; font-size: 18px; color: var(--dark); }
+        .login-btn { display: flex; align-items: center; gap: 6px; background: none; border: none; font-weight: 600; font-size: 14px; color: var(--text); cursor: pointer; }
+        .login-btn svg { width: 20px; height: 20px; }
 
-        /* === NUEVOS ESTILOS ADMIN === */
-        #admin-view { display: none; min-height: 100vh; background: var(--bg); padding: 20px; max-width: 800px; margin: 0 auto; }
-        .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 20px; border-radius: 16px; box-shadow: var(--shadow); }
-        .order-card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 15px; border-left: 5px solid #cbd5e1; box-shadow: var(--shadow); }
-        .order-card.pendiente { border-left-color: #f59e0b; }
-        .order-card.aceptado { border-left-color: #3b82f6; }
-        .order-card.enviado { border-left-color: #10b981; }
-        .admin-badge { padding: 5px 10px; border-radius: 8px; font-size: 12px; font-weight: 800; text-transform: uppercase; }
-        .admin-actions { display: flex; gap: 10px; margin-top: 15px; border-top: 1px solid #f1f5f9; padding-top: 15px; }
-        .admin-btn { flex: 1; padding: 12px; border-radius: 10px; font-weight: 800; border: none; cursor: pointer; transition: 0.2s; }
-        .btn-green { background: #10b981; color: white; }
-        .btn-blue { background: #3b82f6; color: white; }
+        /* Selector Delivery/Retiro (Estilo Referencia) */
+        .type-toggle { display: flex; gap: 10px; padding: 15px 20px 5px; background: var(--white); }
+        .type-btn { flex: 1; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 14px; border: 1px solid var(--border); background: var(--white); color: var(--text); cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: 0.2s; }
+        .type-btn.active { background: var(--dark); color: var(--white); border-color: var(--dark); }
+
+        /* Selector de Sucursal y Dirección (Estilo Referencia) */
+        .address-bar { display: flex; align-items: center; margin: 10px 20px; border: 1px solid var(--border); border-radius: 8px; background: var(--white); overflow: hidden; }
+        .address-bar select { flex: 1; padding: 12px 15px; border: none; outline: none; font-weight: 500; font-size: 14px; color: var(--text); background: transparent; cursor: pointer; border-right: 1px solid var(--border); }
+        .address-bar button { padding: 0 15px; background: none; border: none; cursor: pointer; color: var(--text-light); }
+
+        /* Categorías Nav (Estilo Referencia) */
+        .nav-cats { display: flex; overflow-x: auto; padding: 15px 20px; gap: 10px; scrollbar-width: none; background: var(--white); }
+        .nav-cats::-webkit-scrollbar { display: none; }
+        .cat-tag { padding: 8px 16px; border-radius: 20px; background: var(--white); border: 1px solid var(--border); font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; cursor: pointer; transition: 0.2s; }
+        .cat-tag.active { border-color: var(--dark); box-shadow: 0 0 0 1px var(--dark); }
+
+        /* Tarjetas de Producto (Estilo Referencia Móvil) */
+        #menu-container { padding: 0 20px; background: var(--white); }
+        .cat-title { font-size: 20px; font-weight: 700; margin: 20px 0 15px; color: var(--dark); }
+        
+        .card-p { display: flex; gap: 15px; background: var(--white); border-radius: 12px; padding: 12px; margin-bottom: 15px; border: 1px solid var(--border); box-shadow: var(--shadow-card); cursor: pointer; transition: 0.2s; align-items: center; }
+        .card-p:active { transform: scale(0.98); }
+        .p-img { width: 90px; height: 90px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+        .p-txt { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+        .p-txt h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; color: var(--dark); }
+        .p-txt p { font-size: 13px; color: var(--text-light); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 8px; }
+        .p-action-row { display: flex; align-items: center; gap: 8px; }
+        .add-btn { width: 24px; height: 24px; border-radius: 50%; background: var(--dark); color: var(--white); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; border: none; }
+        .p-price { font-weight: 800; font-size: 16px; color: var(--dark); }
+
+        /* Bottom Navigation */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--white); border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; z-index: 500; overflow-x: auto; scrollbar-width: none; }
+        .bottom-nav::-webkit-scrollbar { display: none; }
+        .nav-item { flex: 1; min-width: 70px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: var(--text-light); text-decoration: none; cursor: pointer; font-size: 10px; font-weight: 600; text-align: center; }
+        .nav-item svg { width: 22px; height: 22px; }
+        .nav-item.active { color: var(--dark); }
+
+        /* Botón de Carrito Flotante */
+        .cart-float { position: fixed; bottom: 85px; right: 20px; background: var(--primary); color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(226, 54, 54, 0.4); z-index: 400; cursor: pointer; transition: 0.3s; }
+        .cart-float:active { transform: scale(0.9); }
+        .badge-qty { position: absolute; top: 0; right: 0; background: var(--dark); color: white; border-radius: 50%; width: 22px; height: 22px; font-size: 12px; font-weight: bold; display: flex; align-items: center; justify-content: center; border: 2px solid white; }
+
+        /* Modal y UI (Adaptado) */
+        .ui-label { font-size: 12px; font-weight: 700; color: var(--text-light); text-transform: uppercase; margin-bottom: 8px; display: block; }
+        .ui-input { width: 100%; padding: 14px; border-radius: 8px; border: 1px solid var(--border); font-size: 14px; outline: none; background: var(--white); margin-bottom: 15px; font-weight: 500; }
+        .ui-input:focus { border-color: var(--dark); box-shadow: 0 0 0 2px rgba(26, 26, 26, 0.1); }
+        .btn-action { background: var(--dark); color: var(--white); border: none; padding: 16px; border-radius: 8px; font-weight: 700; cursor: pointer; width: 100%; font-size: 16px; transition: 0.2s; }
+        
+        /* Modal de Producto */
+        .modal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(2px); z-index: 2000; display: none; justify-content: center; align-items: flex-end; }
+        .modal-sheet { background: var(--white); width: 100%; max-width: 500px; height: 90vh; border-radius: 24px 24px 0 0; overflow-y: auto; display: flex; flex-direction: column; animation: modalSlide 0.3s ease-out; position: relative; }
+        .m-close { position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.9); width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; z-index: 10; box-shadow: var(--shadow); border: 1px solid var(--border); }
+        .m-hero { height: 250px; background-size: cover; background-position: center; }
+        .m-content { padding: 20px; flex: 1; }
+        .m-section { font-size: 14px; font-weight: 700; color: var(--dark); margin: 20px 0 10px; }
+        .custom-check { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 14px; font-weight: 500; }
+        .custom-check input { display: none; }
+        .check-box { width: 20px; height: 20px; border: 2px solid var(--text-light); border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+        .custom-check input:checked + .check-box { background: var(--dark); border-color: var(--dark); }
+        .custom-check input:checked + .check-box::after { content: '✓'; color: white; font-size: 12px; }
+
+        /* Carrito Vista Lateral */
+        #cart-view { position: fixed; top: 0; right: 0; width: 100%; max-width: 450px; height: 100dvh; background: var(--bg); z-index: 3000; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s ease-out; box-shadow: -5px 0 25px rgba(0,0,0,0.1); }
+        #cart-view.open { transform: translateX(0); }
+
+        /* Modal Genérico de Información (Rangos, Medios de pago, etc) */
+        #info-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 4000; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .info-card { background: white; width: 100%; max-width: 400px; border-radius: 16px; padding: 25px; position: relative; max-height: 80vh; overflow-y: auto; }
+
+        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 12px 24px; border-radius: 50px; font-weight: 600; font-size: 14px; z-index: 5000; opacity: 0; transition: 0.3s; pointer-events: none; }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(10px); }
+        #global-loader { position: fixed; inset: 0; background: var(--white); z-index: 10000; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .spinner { width: 40px; height: 40px; border: 3px solid #e5e7eb; border-top: 3px solid var(--dark); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
     <div id="toast">¡Agregado al pedido!</div>
 
-    <div id="global-loader">
+    <div id="global-loader" style="display:none;">
         <div class="spinner"></div>
-        <div class="loader-text">Cargando...</div>
+        <div style="margin-top: 15px; font-weight: 600;">Cargando...</div>
     </div>
 
-    <div id="admin-view">
-        <div class="admin-header">
-            <div>
-                <h1 style="font-size: 24px; font-weight: 800;">Panel Central</h1>
-                <p style="color: var(--text-light); font-size: 14px;">Gestión de Pedidos en Tiempo Real</p>
-            </div>
-            <button onclick="window.location.href=window.location.pathname" class="btn-action" style="width: auto; padding: 10px 20px;">Salir</button>
+    <header class="top-header">
+        <div class="brand-container">
+            <img src="https://pency-images.nyc3.digitaloceanspaces.com/marvelfoodabasto/1760661165087.jpg" alt="Logo" class="brand-logo">
+            <span class="brand-name">Marvel Food</span>
         </div>
-        <div id="admin-orders-list">
-            <p style="text-align: center; color: var(--text-light); margin-top: 40px;">Cargando pedidos de Firebase...</p>
-        </div>
+        <button class="login-btn" onclick="mostrarInfo('Ingreso', 'Próximamente podrás crear tu cuenta para guardar tus direcciones.')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            Acceder
+        </button>
+    </header>
+
+    <div class="type-toggle">
+        <button id="btn-tipo-del" class="type-btn active" onclick="setGeneralDelivery(true)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h2a2 2 0 0 1 2 2l2.6 3.6a2 2 0 0 1 .4 1.2V16a2 2 0 0 1-2 2h-2M15 18H9M19 22a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM7 22a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/></svg>
+            Reparto
+        </button>
+        <button id="btn-tipo-ret" class="type-btn" onclick="setGeneralDelivery(false)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l8-4 8 4v14M9 21v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4"/></svg>
+            Recogida
+        </button>
     </div>
 
-    <div id="splash">
-        <div class="setup-card anim-up">
-            <div class="logo-header">
-                <img src="https://pency-images.nyc3.digitaloceanspaces.com/marvelfoodabasto/1760661165087.jpg">
-                <h1 style="font-weight: 800; font-size: 26px;">Marvel Food</h1>
-                <p style="color: var(--text-light); font-size: 15px; margin-top: 5px;">Configurá tu envío para empezar</p>
-            </div>
-
-            <label class="ui-label">Nombre Completo</label>
-            <input type="text" id="in-name" class="ui-input" placeholder="Ej: Tony Stark">
-
-            <label class="ui-label">WhatsApp</label>
-            <input type="number" id="in-tel" class="ui-input" placeholder="Ej: 3416107498">
-
-            <label class="ui-label">Elegir Sucursal</label>
-            <select id="in-suc" class="ui-input" onchange="window.updateLocalities()">
-                <option value="" disabled selected>Seleccioná una sucursal</option>
-                <option value="Centro">Rosario Centro (Pellegrini)</option>
-                <option value="Norte">Zona Norte (Alberdi)</option>
-                <option value="Sur">Zona Sur / VGG</option>
-                <option value="Funes">Funes (Ruta 9)</option>
-            </select>
-
-            <div id="range-info" class="range-card">
-                <h4 style="font-size: 12px; margin-bottom: 12px; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px;">Rangos y Costos:</h4>
-                <div id="range-list"></div>
-                <img id="suc-map-img" class="map-img" src="" alt="Mapa de cobertura">
-            </div>
-
-            <label class="ui-label">Tu Localidad</label>
-            <select id="in-loc" class="ui-input">
-                <option value="" disabled selected>Primero elegí sucursal</option>
-            </select>
-
-            <label class="ui-label">Dirección (Calle y Altura)</label>
-            <input type="text" id="in-dir" class="ui-input" placeholder="Ej: Av. Pellegrini 1500">
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <div>
-                    <label class="ui-label">Piso</label>
-                    <input type="text" id="in-piso" class="ui-input" placeholder="Opcional">
-                </div>
-                <div>
-                    <label class="ui-label">Depto</label>
-                    <input type="text" id="in-depto" class="ui-input" placeholder="Opcional">
-                </div>
-            </div>
-
-            <button class="btn-action" onclick="window.startApp()" style="margin-top: 10px;">VER MENÚ</button>
-        </div>
+    <div class="address-bar">
+        <select id="main-sucursal" onchange="cambiarSucursalPrincipal()">
+            <option value="" disabled selected>Seleccioná tu sucursal...</option>
+            <option value="Centro">Rosario Centro (Pellegrini)</option>
+            <option value="Norte">Zona Norte (Alberdi)</option>
+            <option value="Sur">Zona Sur / VGG</option>
+            <option value="Funes">Funes (Ruta 9)</option>
+        </select>
+        <button onclick="verMapaRangos()" title="Ver Rangos de Envío">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+        </button>
     </div>
 
-    <div id="app">
-        <div class="header-bg"></div>
-        <div class="store-info">
-            <div class="store-logo"></div>
-            <div style="padding-bottom: 5px;">
-                <h2 style="font-weight: 800; font-size: 22px;">Marvel Food</h2>
-                <div style="font-size: 13px; color: var(--text-light); font-weight: 600; margin-top: 4px;">
-                     <span id="lbl-sucursal"></span> • <span onclick="location.reload()" style="color:var(--primary); cursor:pointer;">Cambiar</span>
-                </div>
-            </div>
-        </div>
+    <div class="nav-cats" id="cat-list"></div>
+    
+    <div id="menu-container"></div>
 
-        <div class="nav-cats" id="cat-list"></div>
-        <div id="menu-container"></div>
-
-        <div class="cart-bar" onclick="window.toggleCart()">
-            <div style="display: flex; align-items: center;">
-                <span>🛒 Ver Pedido</span>
-                <span id="cart-badge" class="badge-qty">0</span>
-            </div>
-            <span id="cart-total-float">$ 0</span>
-        </div>
+    <div class="cart-float" onclick="toggleCart()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+        <span id="cart-badge" class="badge-qty">0</span>
     </div>
+
+    <nav class="bottom-nav">
+        <div class="nav-item active" onclick="window.scrollTo(0,0)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            Inicio
+        </div>
+        <div class="nav-item" onclick="mostrarInfo('Descuentos', '¡Los jueves tenemos 15% OFF en Smash Burgers pagando en efectivo!')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="5" x2="5" y2="19"></line><circle cx="6.5" cy="6.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg>
+            Descuentos
+        </div>
+        <div class="nav-item" onclick="mostrarInfo('Promociones', 'Comprando 2 Combos Hulk, te llevás unas papas Cheddar de regalo.')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            Promociones
+        </div>
+        <div class="nav-item" onclick="mostrarInfo('Regalos', 'Acumulá puntos con tu número de teléfono y canjealos por productos gratis.')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg>
+            Regalos
+        </div>
+        <div class="nav-item" onclick="verMapaRangos()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path></svg>
+            Sucursales
+        </div>
+        <div class="nav-item" onclick="mostrarInfo('Medios de Pago', 'Aceptamos Efectivo, Transferencia Bancaria y Mercado Pago (Link de Pago).')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+            Pagos
+        </div>
+    </nav>
 
     <div class="modal" id="m-prod">
         <div class="modal-sheet">
-            <div class="drag-handle"></div>
-            <div class="m-close" onclick="window.closeModal()">✕</div>
+            <div class="m-close" onclick="closeModal()">✕</div>
             <div class="m-hero" id="m-img"></div>
             <div class="m-content">
-                <h2 id="m-title" style="font-weight: 800; font-size: 26px;"></h2>
-                <p id="m-desc" style="color: var(--text-light); margin-top: 10px; font-size: 15px; line-height: 1.5;"></p>
+                <h2 id="m-title" style="font-weight: 800; font-size: 22px; color: var(--dark);"></h2>
+                <p id="m-desc" style="color: var(--text-light); margin-top: 8px; font-size: 14px; line-height: 1.5;"></p>
 
                 <div id="m-sec-ings">
                     <div class="m-section">QUITAR INGREDIENTES</div>
@@ -235,95 +204,90 @@
                 </div>
 
                 <div id="m-sec-extras">
-                    <div class="m-section">EXTRAS PARA TU BURGER</div>
+                    <div class="m-section">EXTRAS</div>
                     <div id="m-list-extras"></div>
                 </div>
 
                 <div class="m-section">OBSERVACIONES</div>
-                <textarea id="m-obs" class="ui-input" style="height: 100px; resize: none; margin-bottom: 0;" placeholder="Ej: Sin sal en las papas, carne bien cocida..."></textarea>
+                <textarea id="m-obs" class="ui-input" style="height: 80px; resize: none;" placeholder="Ej: Sin sal en las papas..."></textarea>
             </div>
-            <div style="padding: 20px 25px 30px; border-top: 1px solid #f1f5f9; display: flex; gap: 15px; background: white; position: sticky; bottom: 0; z-index: 10;">
-                <div class="qty-wrap">
-                    <button class="qty-btn" onclick="window.updateMQty(-1)">-</button>
-                    <span id="m-qty" style="width: 35px; text-align: center; font-weight: 800; font-size: 18px;">1</span>
-                    <button class="qty-btn" onclick="window.updateMQty(1)">+</button>
+            
+            <div style="padding: 15px 20px; border-top: 1px solid var(--border); background: var(--white); position: sticky; bottom: 0; z-index: 10; display: flex; gap: 15px; align-items: center;">
+                <div style="display: flex; align-items: center; border: 1px solid var(--border); border-radius: 8px; height: 50px;">
+                    <button onclick="updateMQty(-1)" style="width: 40px; height: 100%; border: none; background: transparent; font-size: 20px; cursor: pointer;">-</button>
+                    <span id="m-qty" style="width: 30px; text-align: center; font-weight: 700;">1</span>
+                    <button onclick="updateMQty(1)" style="width: 40px; height: 100%; border: none; background: transparent; font-size: 20px; cursor: pointer;">+</button>
                 </div>
-                <button class="btn-action" id="m-btn-add" onclick="window.confirmAdd()">AGREGAR</button>
+                <button class="btn-action" id="m-btn-add" onclick="confirmAdd()">Agregar</button>
             </div>
+        </div>
+    </div>
+
+    <div class="modal" id="info-modal">
+        <div class="info-card">
+            <div class="m-close" onclick="document.getElementById('info-modal').style.display='none'" style="top: 10px; right: 10px; width: 30px; height: 30px;">✕</div>
+            <h3 id="info-title" style="margin-bottom: 15px; font-weight: 800; color: var(--dark);"></h3>
+            <div id="info-body" style="font-size: 14px; color: var(--text-light); line-height: 1.6;"></div>
         </div>
     </div>
 
     <div id="cart-view">
-        <div style="padding: 25px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: white; position: sticky; top:0; z-index:10;">
-            <h2 style="font-weight: 800; font-size: 22px;">Mi Pedido</h2>
-            <button onclick="window.toggleCart()" style="background: #f1f5f9; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.2s;">✕</button>
+        <div style="padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--white);">
+            <h2 style="font-weight: 800; font-size: 20px;">Tu Pedido</h2>
+            <button onclick="toggleCart()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text);">✕</button>
         </div>
         
-        <div id="cart-items-list" style="flex: 1; overflow-y: auto; padding: 20px;"></div>
+        <div id="cart-items-list" style="flex: 1; overflow-y: auto; padding: 20px; background: var(--bg);"></div>
         
-        <div style="padding: 25px; background: white; box-shadow: 0 -10px 20px rgba(0,0,0,0.03); overflow-y:auto;">
-            
-            <div class="m-section" style="margin-top: 0;">¿CÓMO LO QUERÉS?</div>
-            <div class="delivery-toggle">
-                <button id="btn-delivery" class="active" onclick="window.setDeliveryMode(true)"> Envío a domicilio</button>
-                <button id="btn-retiro" onclick="window.setDeliveryMode(false)"> Retirar en local</button>
-            </div>
+        <div style="padding: 20px; background: var(--white); box-shadow: 0 -4px 10px rgba(0,0,0,0.05); overflow-y:auto;">
+            <div id="checkout-form">
+                <div class="m-section" style="margin-top: 0;">DATOS DEL CLIENTE</div>
+                <input type="text" id="c-nombre" class="ui-input" placeholder="Nombre completo">
+                <input type="number" id="c-tel" class="ui-input" placeholder="WhatsApp (Ej: 3416107498)">
 
-            <div id="box-horarios" style="margin-bottom: 20px;"></div>
+                <div id="box-envio-checkout">
+                    <div class="m-section">DATOS DE ENVÍO</div>
+                    <select id="c-loc" class="ui-input" style="margin-bottom: 10px;">
+                        <option value="" disabled selected>Seleccioná localidad</option>
+                    </select>
+                    <input type="text" id="c-dir" class="ui-input" placeholder="Dirección (Calle y Altura)">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <input type="text" id="c-piso" class="ui-input" placeholder="Piso (Opc.)">
+                        <input type="text" id="c-depto" class="ui-input" placeholder="Depto (Opc.)">
+                    </div>
+                </div>
 
-            <div id="box-envio" style="background: #f8fafc; padding: 20px; border-radius: 16px; margin-bottom: 20px; border: 1.5px solid #e2e8f0;">
-                <label class="ui-label">Dirección de entrega</label>
-                <input type="text" id="c-dir" class="ui-input" style="background: white;" placeholder="Calle y Altura">
+                <div class="m-section">MÉTODO DE PAGO</div>
+                <select id="p-metodo" class="ui-input" onchange="toggleVuelto()">
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Transferencia">Transferencia bancaria</option>
+                    <option value="Link de Pago">Mercado Pago</option>
+                </select>
+                <div id="vuelto-box">
+                    <input type="number" id="p-vuelto" class="ui-input" placeholder="¿Con cuánto abonás en efectivo?">
+                </div>
+
+                <div style="border-top: 1px dashed var(--border); margin: 15px 0; padding-top: 15px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: var(--text-light);">
+                        <span>Subtotal</span> <span id="res-sub">$ 0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 15px; color: var(--text-light);">
+                        <span id="txt-envio-tipo">Envío</span> <span id="res-envio">$ 0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 20px; font-weight: 800; color: var(--dark);">
+                        <span>Total</span> <span id="res-total">$ 0</span>
+                    </div>
+                </div>
                 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <input type="text" id="c-piso" class="ui-input" style="background: white; margin-bottom:15px;" placeholder="Piso (Opc.)">
-                    <input type="text" id="c-depto" class="ui-input" style="background: white; margin-bottom:15px;" placeholder="Depto (Opc.)">
-                </div>
-
-                <button id="btn-gps-action" class="btn-gps" onclick="window.getGPS()">
-                     Compartir mi ubicación exacta
-                </button>
-                <p style="font-size: 12px; color: var(--text-light); text-align: center; margin-top: -5px; line-height: 1.4;">
-                    Recomendado para que el cadete llegue directo usando Google Maps.
-                </p>
+                <button class="btn-action" onclick="procesarPedido()">CONFIRMAR PEDIDO</button>
             </div>
-
-            <div class="m-section">MÉTODO DE PAGO</div>
-            <select id="p-metodo" class="ui-input" onchange="window.toggleVuelto()">
-                <option value="Efectivo">Efectivo</option>
-                <option value="Transferencia">Transferencia bancaria</option>
-                <option value="Link de Pago">Link de Pago (Mercado Pago)</option>
-            </select>
-            <div id="vuelto-box">
-                <label class="ui-label">¿Con cuánto abonás?</label>
-                <input type="number" id="p-vuelto" class="ui-input" placeholder="Ej: 20000" style="margin-bottom: 15px;">
-            </div>
-
-            <div style="background: #f8fafc; padding: 20px; border-radius: 16px; margin-bottom: 20px;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: var(--text-light); font-weight: 600;">
-                    <span>Subtotal</span>
-                    <span id="res-sub">$ 0</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 15px; color: var(--text-light); font-weight: 600; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px;">
-                    <span id="txt-envio-tipo">Envío (<span id="res-loc"></span>)</span>
-                    <span id="res-envio">$ 0</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-size: 22px; font-weight: 800; color: var(--text);">
-                    <span>Total</span>
-                    <span id="res-total">$ 0</span>
-                </div>
-            </div>
-            
-            <button class="btn-action" onclick="window.procesarPedido()" style="display: flex; align-items: center; justify-content: center; gap: 10px;">
-                CONFIRMAR PEDIDO
-            </button>
         </div>
     </div>
 
-<script type="module">
-        // 1. Inicialización de Firebase
+    <script type="module">
+        // Firebase Setup (Se mantiene igual)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
         
         const firebaseConfig = {
             apiKey: "AIzaSyAeRlE9S5pnEUuhxRXoOX6lMX4Ryky0uSI",
@@ -333,20 +297,10 @@
             messagingSenderId: "351263580699",
             appId: "1:351263580699:web:9ba99708a021e5eabecebe"
         };
-
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        
-        // EXPORTACIÓN CRÍTICA: Registramos las funciones en window para que estén disponibles en todo el código
-        window.db = db;
-        window.collection = collection;
-        window.addDoc = addDoc;
-        window.onSnapshot = onSnapshot;
-        window.doc = doc;
-        window.updateDoc = updateDoc;
-        window.serverTimestamp = serverTimestamp;
 
-        // 2. Variables Globales y Datos
+        // Datos del Sistema
         const SUC_MAP = {
             Centro: { n: "Zona Centro", wsp: "3413315885", mapImg: "https://i.ibb.co/231rcdfJ/CENTRO.png", locs: { "Rosario": 2000 } },
             Norte: { n: "Zona Norte", wsp: "3413315885", mapImg: "https://i.ibb.co/tM1NSHTv/NORTE.png", locs: { "Rosario Norte": 2200, "Gdor. Baigorria": 3500 } },
@@ -355,87 +309,89 @@
         };
 
         const MENU = [
-            { cat: "Hamburguesas Marvel", items: [
-                { id: 1, n: "THOR", p: 12500, d: "Cuádruple medallón, cheddar, panceta, huevo frito y salsa Thor.", img: "https://pency-images.nyc3.digitaloceanspaces.com/marvelfoodabasto/1760658566420.jpg", ings: ["Panceta", "Huevo"] },
-                { id: 2, n: "HULK", p: 11800, d: "Doble carne, cheddar, cebolla caramelizada, panceta y BBQ.", img: "https://pency-images.nyc3.digitaloceanspaces.com/marvelfoodabasto/1760658566420.jpg", ings: ["Cebolla", "BBQ", "Cheddar", "Panceta"] }
+            { cat: "Hamburguesas", items: [
+                { id: 1, n: "Hulk Burger", p: 11800, d: "Doble carne, cheddar, cebolla caramelizada, panceta y BBQ.", img: "https://pency-images.nyc3.digitaloceanspaces.com/marvelfoodabasto/1760658566420.jpg", ings: ["Cebolla", "BBQ", "Cheddar", "Panceta"] },
+                { id: 10, n: "Perfekta Smash", p: 8900, d: "Doble smash, doble cheddar, lechuga y alioli.", img: "https://pency-images.nyc3.digitaloceanspaces.com/marvelfoodabasto/1760659273628.jpg", ings: ["Lechuga", "tomate","cheddar","salsa marvel"] }
             ]},
-            { cat: "Smash Burgers", items: [
-                { id: 10, n: "WANDA SMASH", p: 8900, d: "Doble smash, doble cheddar, lechuga y alioli.", img: "https://pency-images.nyc3.digitaloceanspaces.com/marvelfoodabasto/1760659273628.jpg", ings: ["Lechuga", "Alioli"] }
-            ]},
-            { cat: "Papas y Snacks", items: [
-                { id: 20, n: "PAPAS CHEDDAR", p: 7800, d: "Bañadas en nuestra salsa de queso cheddar y verdeo.", img: "https://pency-images.nyc3.digitaloceanspaces.com/marvelfoodabasto/1760659556157.jpg", ings: ["Verdeo"] }
+            { cat: "Acompañamientos", items: [
+                { id: 20, n: "Papas Cheddar", p: 7800, d: "Bañadas en nuestra salsa de queso cheddar y verdeo.", img: "https://i.ibb.co/3mSTjbmW/Papas-cheddar.png" }
             ]}
         ];
 
         const EXTRAS = [{ id: "e1", n: "Extra Queso", p: 1500 }, { id: "e2", n: "Extra Carne", p: 3500 }, { id: "e3", n: "Extra Bacon", p: 2000 }];
 
+        // Variables Globales
         let carrito = [];
-        let config = {};
         let tProd = null;
         let isDelivery = true;
-        let gpsLink = "";
 
-        const urlParams = new URLSearchParams(window.location.search);
-        if(urlParams.get('admin') === 'true') {
-            document.getElementById('splash').style.display = 'none';
-            document.getElementById('app').style.display = 'none';
-            document.getElementById('admin-view').style.display = 'block';
-            iniciarPanelAdmin();
+        // Inicialización Directa
+        window.onload = () => {
+            renderMenu();
+            // Preseleccionar sucursal si hay una en localStorage (Opcional para mejorar UX)
+            const savedSuc = localStorage.getItem('marvel_sucursal');
+            if(savedSuc && SUC_MAP[savedSuc]) {
+                document.getElementById('main-sucursal').value = savedSuc;
+                actualizarLocalidadesCheckout();
+            }
+        };
+
+        // Lógica de UI Principal
+        window.setGeneralDelivery = (isDel) => {
+            isDelivery = isDel;
+            document.getElementById('btn-tipo-del').classList.toggle('active', isDelivery);
+            document.getElementById('btn-tipo-ret').classList.toggle('active', !isDelivery);
+            document.getElementById('box-envio-checkout').style.display = isDelivery ? 'block' : 'none';
+            renderCartItems();
+        };
+
+        window.cambiarSucursalPrincipal = () => {
+            const suc = document.getElementById('main-sucursal').value;
+            localStorage.setItem('marvel_sucursal', suc);
+            actualizarLocalidadesCheckout();
+            renderCartItems(); // Recalcular costos
+        };
+
+        function actualizarLocalidadesCheckout() {
+            const sucId = document.getElementById('main-sucursal').value;
+            const locSelect = document.getElementById('c-loc');
+            locSelect.innerHTML = `<option value="" disabled selected>Seleccioná localidad</option>`;
+            
+            if(sucId && SUC_MAP[sucId]) {
+                const locs = SUC_MAP[sucId].locs;
+                for(let l in locs) {
+                    locSelect.innerHTML += `<option value="${l}">${l} ($${locs[l]})</option>`;
+                }
+            }
         }
 
-        // 3. Funciones de Interfaz Cliente
-        window.updateLocalities = () => {
-            const sucId = document.getElementById('in-suc').value;
-            const locSelect = document.getElementById('in-loc');
-            const rangeBox = document.getElementById('range-info');
-            const rangeList = document.getElementById('range-list');
-            const mapImg = document.getElementById('suc-map-img');
+        window.verMapaRangos = () => {
+            const sucId = document.getElementById('main-sucursal').value;
+            if(!sucId) return mostrarInfo('Atención', 'Primero seleccioná una sucursal en la barra superior para ver sus zonas de entrega.');
             
-            locSelect.innerHTML = `<option value="" disabled selected>Seleccioná localidad</option>`;
-            rangeList.innerHTML = "";
-            rangeBox.style.display = "block";
-
             const data = SUC_MAP[sucId];
-            for(let l in data.locs) {
-                locSelect.innerHTML += `<option value="${l}">${l}</option>`;
-                rangeList.innerHTML += `<div class="range-item"><span>${l}</span> <b>$${data.locs[l]}</b></div>`;
-            }
-            if(data.mapImg) { mapImg.src = data.mapImg; mapImg.style.display = "block"; } else { mapImg.style.display = "none"; }
+            let html = `<div style="margin-bottom:15px;">`;
+            for(let l in data.locs) { html += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; border-bottom:1px solid #eee; padding-bottom:5px;"><span>${l}</span> <b>$${data.locs[l]}</b></div>`; }
+            html += `</div>`;
+            if(data.mapImg) html += `<img src="${data.mapImg}" style="width:100%; border-radius:12px; border:1px solid #eee;">`;
+            
+            mostrarInfo(`Cobertura ${data.n}`, html);
         };
 
-        window.startApp = () => {
-            const n = document.getElementById('in-name').value;
-            const t = document.getElementById('in-tel').value;
-            const s = document.getElementById('in-suc').value;
-            const l = document.getElementById('in-loc').value;
-            const d = document.getElementById('in-dir').value;
-
-            if(!n || !t || !s || !l || !d) return alert("Por favor, completá todos los datos de envío.");
-
-            config = { nombre: n, tel: t, sucId: s, loc: l, dir: d, 
-                       piso: document.getElementById('in-piso').value, 
-                       depto: document.getElementById('in-depto').value,
-                       sucData: SUC_MAP[s] };
-
-            document.getElementById('c-dir').value = config.dir;
-            document.getElementById('c-piso').value = config.piso;
-            document.getElementById('c-depto').value = config.depto;
-
-            document.getElementById('global-loader').style.display = 'flex';
-            setTimeout(() => {
-                document.getElementById('global-loader').style.display = 'none';
-                document.getElementById('splash').style.display = 'none';
-                document.getElementById('app').style.display = 'block';
-                document.getElementById('lbl-sucursal').innerText = `${config.sucData.n} (${config.loc})`;
-                renderMenu();
-                actualizarHorariosHTML();
-            }, 800);
+        window.mostrarInfo = (titulo, contenido) => {
+            document.getElementById('info-title').innerText = titulo;
+            document.getElementById('info-body').innerHTML = contenido;
+            document.getElementById('info-modal').style.display = 'flex';
         };
 
+        // Renderizado de Menú Estilo "Yellow Burgerine"
         function renderMenu() {
             const cats = document.getElementById('cat-list');
             const menu = document.getElementById('menu-container');
+            cats.innerHTML = ""; menu.innerHTML = "";
+
             MENU.forEach((c, idx) => {
+                // Pill de Categoría
                 const btn = document.createElement('button');
                 btn.className = `cat-tag ${idx===0?'active':''}`;
                 btn.innerText = c.cat;
@@ -443,23 +399,28 @@
                     document.querySelector('.cat-tag.active').classList.remove('active');
                     btn.classList.add('active');
                     const element = document.getElementById(`sec-${idx}`);
-                    const y = element.getBoundingClientRect().top + window.scrollY - 80;
+                    const y = element.getBoundingClientRect().top + window.scrollY - 140;
                     window.scrollTo({top: y, behavior: 'smooth'});
                 };
                 cats.appendChild(btn);
 
+                // Sección del Menú
                 const sec = document.createElement('div');
                 sec.id = `sec-${idx}`;
-                sec.innerHTML = `<h3 style="padding:25px 20px 15px; font-weight:800; font-size:18px;">${c.cat}</h3>`;
+                sec.innerHTML = `<h3 class="cat-title">${c.cat}</h3>`;
+                
                 c.items.forEach(p => {
                     sec.innerHTML += `
-                        <div class="card-p" onclick='window.openModal(${JSON.stringify(p)}, "${c.cat}")'>
+                        <div class="card-p" onclick='openModal(${JSON.stringify(p)})'>
+                            <img class="p-img" src="${p.img}" alt="${p.n}">
                             <div class="p-txt">
                                 <h3>${p.n}</h3>
                                 <p>${p.d}</p>
-                                <div class="p-price">$ ${p.p.toLocaleString()}</div>
+                                <div class="p-action-row">
+                                    <button class="add-btn">+</button>
+                                    <span class="p-price">${p.p.toLocaleString()} $</span> 
+                                    </div>
                             </div>
-                            <div class="p-img" style="background-image:url('${p.img}')"></div>
                         </div>
                     `;
                 });
@@ -467,7 +428,8 @@
             });
         }
 
-        window.openModal = (p, cat) => {
+        // Lógica de Modal de Producto
+        window.openModal = (p) => {
             tProd = { ...p, cant: 1, sin: [], con: [], obs: "" };
             document.getElementById('m-title').innerText = p.n;
             document.getElementById('m-desc').innerText = p.d;
@@ -479,25 +441,15 @@
             if(p.ings.length > 0) {
                 document.getElementById('m-sec-ings').classList.remove('hidden');
                 ingList.innerHTML = p.ings.map(i => `
-                    <label class="custom-check">
-                        <span>Sin ${i}</span>
-                        <input type="checkbox" onchange="window.toggleSin('${i}')">
-                        <div class="check-box"></div>
-                    </label>
+                    <label class="custom-check"><span>Sin ${i}</span><input type="checkbox" onchange="toggleSin('${i}')"><div class="check-box"></div></label>
                 `).join('');
             } else document.getElementById('m-sec-ings').classList.add('hidden');
 
             const extList = document.getElementById('m-list-extras');
-            if(cat.toLowerCase().includes("hamburguesa") || cat.toLowerCase().includes("smash")) {
-                document.getElementById('m-sec-extras').classList.remove('hidden');
-                extList.innerHTML = EXTRAS.map(e => `
-                    <label class="custom-check">
-                        <span>${e.n} <span style="color:var(--text-light); font-weight:400;">(+$${e.p})</span></span>
-                        <input type="checkbox" onchange="window.toggleExt('${e.id}')">
-                        <div class="check-box"></div>
-                    </label>
-                `).join('');
-            } else document.getElementById('m-sec-extras').classList.add('hidden');
+            document.getElementById('m-sec-extras').classList.remove('hidden');
+            extList.innerHTML = EXTRAS.map(e => `
+                <label class="custom-check"><span>${e.n} (+$${e.p})</span><input type="checkbox" onchange="toggleExt('${e.id}')"><div class="check-box"></div></label>
+            `).join('');
 
             updateModalBtn();
             document.getElementById('m-prod').style.display = 'flex';
@@ -514,319 +466,138 @@
         window.updateMQty = (v) => { tProd.cant = Math.max(1, tProd.cant + v); document.getElementById('m-qty').innerText = tProd.cant; updateModalBtn(); };
         function updateModalBtn() {
             let u = tProd.p; tProd.con.forEach(e => u += e.p);
-            document.getElementById('m-btn-add').innerText = `AGREGAR $ ${(u * tProd.cant).toLocaleString()}`;
+            document.getElementById('m-btn-add').innerText = `Agregar • $ ${(u * tProd.cant).toLocaleString()}`;
         }
 
+        window.closeModal = () => document.getElementById('m-prod').style.display = 'none';
+        
         window.confirmAdd = () => {
             tProd.obs = document.getElementById('m-obs').value;
             let u = tProd.p; tProd.con.forEach(e => u += e.p);
             carrito.push({ ...tProd, totalItem: u * tProd.cant });
             updateCartUI();
-            window.closeModal();
-            const badge = document.getElementById('cart-badge');
-            badge.classList.remove('pop-anim');
-            void badge.offsetWidth;
-            badge.classList.add('pop-anim');
+            closeModal();
             const t = document.getElementById('toast');
-            t.innerHTML = ` ¡${tProd.cant}x ${tProd.n} al carrito!`;
             t.classList.add('show');
-            setTimeout(() => { t.classList.remove('show'); }, 2500);
+            setTimeout(() => { t.classList.remove('show'); }, 2000);
         };
 
-        window.closeModal = () => document.getElementById('m-prod').style.display = 'none';
-        window.toggleCart = () => { document.getElementById('cart-view').classList.toggle('open'); renderCartItems(); };
-        window.toggleVuelto = () => document.getElementById('vuelto-box').style.display = (document.getElementById('p-metodo').value === 'Efectivo') ? 'block' : 'none';
-
-        window.setDeliveryMode = (isDel) => {
-            isDelivery = isDel;
-            document.getElementById('btn-delivery').classList.toggle('active', isDelivery);
-            document.getElementById('btn-retiro').classList.toggle('active', !isDelivery);
-            document.getElementById('box-envio').style.display = isDelivery ? 'block' : 'none';
-            actualizarHorariosHTML();
+        // Lógica del Carrito
+        window.toggleCart = () => { 
+            document.getElementById('cart-view').classList.toggle('open'); 
             renderCartItems(); 
         };
-
-function actualizarHorariosHTML() {
-            // 1. Obtener la hora real de Buenos Aires
-            const ahoraBSAS = new Date(new Date().toLocaleString("en-US", {timeZone: "America/Argentina/Buenos_Aires"}));
-            const ahoraMins = (ahoraBSAS.getHours() * 60) + ahoraBSAS.getMinutes();
-
-            let html = `<label class="ui-label">Horario de entrega/retiro</label><select id="p-horario" class="ui-input">`;
-
-            if (isDelivery) {
-                // Definimos los bloques de 45 minutos
-                const todosLosRangos = [
-                    "12:00 a 12:45", "12:45 a 13:30", "13:30 a 14:15", "14:15 a 15:00", 
-                    "15:00 a 15:45", "15:45 a 16:30", "20:15 a 21:00", "21:00 a 21:45", 
-                    "21:45 a 22:30", "22:30 a 23:15", "23:15 a 00:00"
-                ];
-
-                let rangosDisponibles = todosLosRangos.filter(rango => {
-                    // Extraemos la hora de inicio del rango (ej: "20:15")
-                    const inicioStr = rango.split(" a ")[0];
-                    const [h, m] = inicioStr.split(":").map(Number);
-                    const inicioMins = (h * 60) + m;
-
-                    // Si la hora es "00:00", la tratamos como minutos finales del día
-                    const comparadorInicio = (h === 0) ? 1440 : inicioMins;
-
-                    // LÓGICA: Mostramos el rango si faltan al menos 5 minutos para que empiece
-                    // o si estamos justo en el momento (margen de gracia).
-                    return ahoraMins <= (comparadorInicio - 5);
-                });
-
-                // Si por la hora ya no quedan rangos, avisamos que estamos cerrados
-                if (rangosDisponibles.length === 0) {
-                    html += `<option value="CERRADO">Cerrado por hoy</option>`;
-                } else {
-                    rangosDisponibles.forEach(r => {
-                        html += `<option value="${r}">${r} hs</option>`;
-                    });
-                }
-
-            } else {
-                // LÓGICA RETIRO: Hora actual + 30 minutos
-                const tiempoRetiro = new Date(ahoraBSAS.getTime() + 30 * 60000);
-                const hRetiro = tiempoRetiro.getHours().toString().padStart(2, '0');
-                const mRetiro = tiempoRetiro.getMinutes().toString().padStart(2, '0');
-                
-                const horaFinal = `${hRetiro}:${mRetiro}`;
-                html += `<option value="${horaFinal}">${horaFinal} hs (Aprox. 30 min)</option>`;
-                html += `<option value="Más tarde">Retirar más tarde</option>`;
-            }
-
-            html += `</select>`;
-            document.getElementById('box-horarios').innerHTML = html;
-        }
-
-        window.getGPS = () => {
-            const btn = document.getElementById('btn-gps-action');
-            btn.innerHTML = "Esperando GPS...";
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        gpsLink = `https://www.google.com/maps?q=${position.coords.latitude},${position.coords.longitude}`;
-                        btn.classList.add('success');
-                        btn.innerHTML = " Ubicación exacta guardada";
-                    }, 
-                    () => { alert("No pudimos obtener tu ubicación."); btn.innerHTML = " Reintentar compartir GPS"; },
-                    { enableHighAccuracy: true }
-                );
-            } else { alert("Tu navegador no soporta GPS."); btn.innerHTML = "GPS no disponible"; }
-        };
+        
+        function updateCartUI() { document.getElementById('cart-badge').innerText = carrito.reduce((s,i)=>s+i.cant,0); }
+        window.toggleVuelto = () => document.getElementById('vuelto-box').style.display = (document.getElementById('p-metodo').value === 'Efectivo') ? 'block' : 'none';
 
         function renderCartItems() {
             const list = document.getElementById('cart-items-list');
             let sub = 0;
             if(carrito.length === 0) {
-                list.innerHTML = `<div style="text-align:center; color:var(--text-light); margin-top:40px; font-weight:600;">Tu pedido está vacío 🍔</div>`;
+                list.innerHTML = `<div style="text-align:center; color:var(--text-light); margin-top:40px;">Tu pedido está vacío 🍔</div>`;
             } else {
                 list.innerHTML = carrito.map((i, idx) => {
                     sub += i.totalItem;
                     return `
-                        <div style="margin-bottom:20px; border:1px solid #f1f5f9; border-radius:16px; padding:18px; box-shadow: 0 4px 10px rgba(0,0,0,0.02);">
-                            <div style="display:flex; justify-content:space-between; font-weight:800; font-size:16px;">
+                        <div style="background:var(--white); border-radius:12px; padding:15px; margin-bottom:15px; border:1px solid var(--border);">
+                            <div style="display:flex; justify-content:space-between; font-weight:700; font-size:15px;">
                                 <span>${i.cant}x ${i.n}</span>
                                 <span>$${i.totalItem.toLocaleString()}</span>
                             </div>
-                            <div style="font-size:13px; color:var(--text-light); margin-top:8px; line-height:1.4;">
-                                ${i.sin.length ? '<b>Sin:</b> '+i.sin.join(', ')+'<br>' : ''} 
-                                ${i.con.length ? '<b>Extras:</b> '+i.con.map(x=>x.n).join(', ')+'<br>' : ''}
-                                ${i.obs ? '<i>Nota: '+i.obs+'</i>' : ''}
+                            <div style="font-size:13px; color:var(--text-light); margin-top:6px;">
+                                ${i.sin.length ? 'Sin: '+i.sin.join(', ')+'<br>' : ''} 
+                                ${i.con.length ? 'Extras: '+i.con.map(x=>x.n).join(', ')+'<br>' : ''}
                             </div>
-                            <div style="text-align:right; margin-top:10px;">
-                                <span onclick="window.delItem(${idx})" style="color:var(--primary); font-size:12px; font-weight:800; cursor:pointer; padding:5px 10px; background:#fff5f5; border-radius:8px;">ELIMINAR</span>
+                            <div style="text-align:right; margin-top:8px;">
+                                <span onclick="delItem(${idx})" style="color:var(--primary); font-size:12px; font-weight:700; cursor:pointer;">ELIMINAR</span>
                             </div>
                         </div>
                     `;
                 }).join('');
             }
-            let costoEnvio = isDelivery ? config.sucData.locs[config.loc] : 0;
-            document.getElementById('txt-envio-tipo').innerHTML = isDelivery ? `Envío (<span id="res-loc">${config.loc}</span>)` : `Retiro por local`;
-            document.getElementById('res-envio').innerText = isDelivery ? `$ ${costoEnvio.toLocaleString()}` : `Gratis`;
+
+            const sucId = document.getElementById('main-sucursal').value;
+            const locName = document.getElementById('c-loc') ? document.getElementById('c-loc').value : '';
+            
+            let costoEnvio = 0;
+            if (isDelivery && sucId && SUC_MAP[sucId] && locName && SUC_MAP[sucId].locs[locName]) {
+                costoEnvio = SUC_MAP[sucId].locs[locName];
+            }
+
+            document.getElementById('txt-envio-tipo').innerText = isDelivery ? `Envío a domicilio` : `Recogida en local`;
+            document.getElementById('res-envio').innerText = isDelivery ? (costoEnvio > 0 ? `$ ${costoEnvio.toLocaleString()}` : 'A calcular') : `Gratis`;
             document.getElementById('res-sub').innerText = `$ ${sub.toLocaleString()}`;
             document.getElementById('res-total').innerText = `$ ${(sub + costoEnvio).toLocaleString()}`;
-            document.getElementById('cart-total-float').innerText = `$ ${(sub + costoEnvio).toLocaleString()}`;
+            
+            // Re-vincular evento onChange a localidad para actualizar costos en vivo
+            document.getElementById('c-loc').addEventListener('change', renderCartItems);
         }
 
         window.delItem = (i) => { carrito.splice(i,1); updateCartUI(); renderCartItems(); };
-        function updateCartUI() { document.getElementById('cart-badge').innerText = carrito.reduce((s,i)=>s+i.cant,0); }
 
-        // 4. Función de Procesar Pedido (Firebase + WhatsApp)
+        // Procesar Pedido (Firebase + WhatsApp)
         window.procesarPedido = async () => {
             if (carrito.length === 0) return alert("Agregá productos a tu pedido primero.");
+            
+            const sucId = document.getElementById('main-sucursal').value;
+            if(!sucId) return alert("Por favor, seleccioná la sucursal arriba antes de pedir.");
+
+            const nombre = document.getElementById('c-nombre').value;
+            const tel = document.getElementById('c-tel').value;
+            if(!nombre || !tel) return alert("Completá tu nombre y teléfono.");
+
+            const loc = document.getElementById('c-loc').value;
+            const dir = document.getElementById('c-dir').value;
+            if(isDelivery && (!loc || !dir)) return alert("Completá localidad y dirección para el envío.");
 
             const pago = document.getElementById('p-metodo').value;
             const vueltoRaw = document.getElementById('p-vuelto').value;
             const vuelto = parseFloat(vueltoRaw) || 0;
-            const horario = document.getElementById('p-horario') ? document.getElementById('p-horario').value : 'Lo antes posible';
 
             let sub = carrito.reduce((s, i) => s + i.totalItem, 0);
-            let envio = isDelivery ? config.sucData.locs[config.loc] : 0;
+            let envio = isDelivery ? SUC_MAP[sucId].locs[loc] : 0;
             let total = sub + envio;
 
-            if (pago === 'Efectivo') {
-                if (!vueltoRaw || isNaN(vuelto)) return alert("Por favor, indicanos con cuánto vas a abonar.");
-                if (vuelto < total) return alert(`El monto ($${vuelto}) no puede ser menor al total ($${total}).`);
-            }
+            if (pago === 'Efectivo' && vuelto < total) return alert(`El monto a abonar debe ser mayor o igual al total ($${total}).`);
 
-            if (isDelivery) {
-                const newDir = document.getElementById('c-dir').value.trim();
-                if (!newDir) return alert("Por favor, ingresá la dirección de entrega.");
-                config.dir = newDir;
-                config.piso = document.getElementById('c-piso').value.trim();
-                config.depto = document.getElementById('c-depto').value.trim();
-            }
-
-            const loader = document.getElementById('global-loader');
-            loader.style.display = 'flex';
-            document.querySelector('.loader-text').innerText = "Guardando pedido...";
+            document.getElementById('global-loader').style.display = 'flex';
 
             const ordenDatos = {
-                cliente: config.nombre.toUpperCase(),
-                telefono: config.tel,
-                sucursal: config.sucData.n,
+                cliente: nombre.toUpperCase(),
+                telefono: tel,
+                sucursal: SUC_MAP[sucId].n,
                 tipo: isDelivery ? 'Delivery' : 'Retiro por local',
-                localidad: isDelivery ? config.loc : 'N/A',
-                direccion: isDelivery ? config.dir : 'Retiro en sucursal',
-                pisoDepto: isDelivery ? `${config.piso} ${config.depto}`.trim() : '',
-                gps: gpsLink || '',
-                horario: horario,
-                items: carrito.map(i => ({
-                    n: i.n,
-                    cant: i.cant,
-                    totalItem: i.totalItem,
-                    sin: i.sin,
-                    con: i.con.map(e => e.n),
-                    obs: i.obs
-                })),
-                subtotal: sub,
-                envio: envio,
-                total: total,
-                metodoPago: pago,
-                abonaCon: pago === 'Efectivo' ? vuelto : 0,
-                estado: "Pendiente",
-                fechaCreacion: window.serverTimestamp()
+                localidad: isDelivery ? loc : 'N/A',
+                direccion: isDelivery ? dir : 'Retiro en sucursal',
+                pisoDepto: isDelivery ? `${document.getElementById('c-piso').value} ${document.getElementById('c-depto').value}`.trim() : '',
+                items: carrito.map(i => ({ n: i.n, cant: i.cant, totalItem: i.totalItem, sin: i.sin, con: i.con.map(e => e.n), obs: i.obs })),
+                subtotal: sub, envio: envio, total: total, metodoPago: pago, abonaCon: pago === 'Efectivo' ? vuelto : 0,
+                estado: "Pendiente", fechaCreacion: serverTimestamp()
             };
 
             try {
-                // Guardar en Firebase
-                await window.addDoc(window.collection(window.db, "pedidos"), ordenDatos);
+                await addDoc(collection(db, "pedidos"), ordenDatos);
 
-                // Armar mensaje WhatsApp
-                let t = `*NUEVO PEDIDO | MARVEL FOOD*%0A`;
-                t += `---------------------------------%0A`;
-                t += `*Cliente:* ${ordenDatos.cliente}%0A`;
-                t += `*Teléfono:* ${config.tel}%0A`;
-                t += `*Sucursal:* ${ordenDatos.sucursal}%0A`;
-                t += `*Tipo:* ${ordenDatos.tipo}%0A`;
-                t += `*Horario:* ${horario}%0A`;
-
-                if (isDelivery) {
-                    t += `*Dirección:* ${config.dir} ${ordenDatos.pisoDepto}%0A`;
-                    t += `*Localidad:* ${config.loc}%0A`;
-                    if (gpsLink) t += `*Ubicación:* ${gpsLink}%0A`;
-                }
-
+                let t = `*NUEVO PEDIDO | MARVEL FOOD*%0A---------------------------------%0A`;
+                t += `*Cliente:* ${ordenDatos.cliente}%0A*Tel:* ${tel}%0A*Sucursal:* ${ordenDatos.sucursal}%0A*Tipo:* ${ordenDatos.tipo}%0A`;
+                if (isDelivery) t += `*Dirección:* ${dir} ${ordenDatos.pisoDepto}%0A*Localidad:* ${loc}%0A`;
                 t += `---------------------------------%0A`;
                 carrito.forEach(i => {
                     t += `*${i.cant}x ${i.n}* ($${i.totalItem})%0A`;
-                    if (i.sin.length) t += `_Sin: ${i.sin.join(', ')}_%0A`;
-                    if (i.con.length) t += `_Extras: ${i.con.map(x => x.n).join(', ')}_%0A`;
-                    if (i.obs) t += `_Nota: ${i.obs}_%0A`;
-                    t += `%0A`;
+                    if(i.sin.length) t += `_Sin: ${i.sin.join(', ')}_%0A`;
+                    if(i.con.length) t += `_Extras: ${i.con.map(x=>x.n).join(', ')}_%0A`;
+                    if(i.obs) t += `_Nota: ${i.obs}_%0A`;
                 });
+                t += `---------------------------------%0A*TOTAL:* $${total}%0A*Pago:* ${pago}%0A`;
+                if (pago === 'Efectivo') t += `*Abona con:* $${vuelto}%0A`;
 
-                t += `---------------------------------%0A`;
-                t += `*Subtotal:* $${sub}%0A`;
-                if (isDelivery) t += `*Envío:* $${envio}%0A`;
-                t += `*TOTAL:* $${total}%0A`;
-                t += `*Pago:* ${pago}%0A`;
-                if (pago === 'Efectivo') {
-                    t += `*Abona con:* $${vuelto}%0A`;
-                    t += `*Vuelto:* $${vuelto - total}%0A`;
-                }
-
-                loader.style.display = 'none';
-                window.location.href = `https://wa.me/${config.sucData.wsp}?text=${t}`;
-
+                document.getElementById('global-loader').style.display = 'none';
+                window.location.href = `https://wa.me/${SUC_MAP[sucId].wsp}?text=${t}`;
             } catch (error) {
-                console.error("Error Firebase:", error);
-                loader.style.display = 'none';
-                alert("Error de conexión: " + error.message);
+                document.getElementById('global-loader').style.display = 'none';
+                alert("Error: " + error.message);
             }
-        };
-
-        // 5. Panel de Administración
-        function iniciarPanelAdmin() {
-            const listaPedidos = document.getElementById('admin-orders-list');
-            window.onSnapshot(window.collection(window.db, "pedidos"), (snapshot) => {
-                listaPedidos.innerHTML = "";
-                if (snapshot.empty) {
-                    listaPedidos.innerHTML = "<p style='text-align:center; color:var(--text-light); margin-top:40px; font-weight:600;'>No hay pedidos aún 🍔</p>";
-                    return;
-                }
-                let pedidos = [];
-                snapshot.forEach(doc => pedidos.push({ id: doc.id, ...doc.data() }));
-                pedidos.sort((a, b) => {
-                    const timeA = a.fechaCreacion ? a.fechaCreacion.toMillis() : 0;
-                    const timeB = b.fechaCreacion ? b.fechaCreacion.toMillis() : 0;
-                    return timeB - timeA; 
-                });
-                pedidos.forEach(p => renderizarPedidoAdmin(p, listaPedidos));
-            });
-        }
-
-        function renderizarPedidoAdmin(pedido, contenedor) {
-            let badgeColor = "#cbd5e1";
-            if (pedido.estado === "Pendiente") badgeColor = "#f59e0b";
-            if (pedido.estado === "Aceptado") badgeColor = "#3b82f6";
-            if (pedido.estado === "Enviado") badgeColor = "#10b981";
-
-            const div = document.createElement('div');
-            div.className = `order-card ${pedido.estado.toLowerCase()}`;
-            
-            let itemsHTML = pedido.items.map(i => `
-                <div style="margin-top: 8px; font-size: 14px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
-                    <b style="font-size: 15px;">${i.cant}x ${i.n}</b>
-                    ${i.sin && i.sin.length ? `<br><span style="color:var(--primary); font-size:13px; font-weight:600;">⛔ Sin: ${i.sin.join(', ')}</span>` : ''}
-                    ${i.con && i.con.length ? `<br><span style="color:#10b981; font-size:13px; font-weight:600;">✨ Extras: ${i.con.join(', ')}</span>` : ''}
-                    ${i.obs ? `<br><span style="color:var(--text-light); font-size:13px; font-style:italic;">📝 Nota: ${i.obs}</span>` : ''}
-                </div>
-            `).join('');
-
-            div.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 12px;">
-                    <div>
-                        <h3 style="font-size: 18px; font-weight: 800; color: var(--text);">${pedido.cliente}</h3>
-                        <p style="font-size: 13px; color: var(--text-light); font-weight: 600; margin-top: 4px;">📞 ${pedido.telefono} • 🏪 ${pedido.sucursal}</p>
-                    </div>
-                    <span class="admin-badge" style="background: ${badgeColor}; color: white;">${pedido.estado}</span>
-                </div>
-                <div style="margin-bottom: 15px; background: #f8fafc; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0;">
-                    <span style="font-weight: 800; font-size: 14px; color: var(--text); text-transform: uppercase;">${pedido.tipo}</span>
-                    <span style="font-size: 13px; color: var(--text-light); font-weight: 700;"> • ⏰ ${pedido.horario}</span>
-                    ${pedido.tipo === 'Delivery' ? `<p style="font-size: 14px; margin-top: 8px; font-weight: 600;">📍 ${pedido.direccion} ${pedido.pisoDepto} (${pedido.localidad})</p>
-                    ${pedido.gps ? `<a href="${pedido.gps}" target="_blank" style="color: #3b82f6; font-size: 13px; font-weight: 700; text-decoration: none;">🗺️ Ver Maps</a>` : ''}` : ''}
-                </div>
-                <div style="margin-bottom: 15px;">${itemsHTML}</div>
-                <div style="display: flex; justify-content: space-between; font-weight: 800; background: #f1f5f9; padding: 12px; border-radius: 10px;">
-                    <span>Total (${pedido.metodoPago}):</span>
-                    <span>$${pedido.total.toLocaleString()}</span>
-                </div>
-                <div class="admin-actions">
-                    ${pedido.estado === 'Pendiente' ? `<button class="admin-btn btn-blue" onclick="window.cambiarEstadoPedido('${pedido.id}', 'Aceptado')">Cocina: Aceptar</button>` : ''}
-                    ${pedido.estado === 'Aceptado' ? `<button class="admin-btn btn-green" onclick="window.cambiarEstadoPedido('${pedido.id}', 'Enviado')">Listo / Enviado</button>` : ''}
-                </div>
-            `;
-            contenedor.appendChild(div);
-        }
-
-        window.cambiarEstadoPedido = async (id, nuevoEstado) => {
-            try {
-                const pedidoRef = window.doc(window.db, "pedidos", id);
-                await window.updateDoc(pedidoRef, { estado: nuevoEstado });
-            } catch(error) { alert("Error al actualizar."); }
         };
     </script>
 </body>

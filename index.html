@@ -7,8 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* Paleta Dark Premium basada en las referencias */
-            --primary: #f59e0b; /* Naranja/Amarillo vibrante */
+            --primary: #f59e0b;
             --dark: #000000;
             --bg: #121212;
             --surface: #1e1e1e;
@@ -23,98 +22,58 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background-color: var(--bg); color: var(--text); overflow-x: hidden; padding-bottom: 80px; }
 
-        /* Utilidades y Animaciones */
         @keyframes slideUp { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
         @keyframes modalSlide { from { transform: translateY(100%); } to { transform: translateY(0); } }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
         .hidden { display: none !important; }
 
-        /* HERO SLIDER (Carrusel Pantalla Completa) */
         .hero-slider {
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            overflow-x: auto;
-            scroll-snap-type: x mandatory;
-            scrollbar-width: none; /* Ocultar scrollbar Firefox */
-            position: relative;
+            width: 100vw; height: 100vh; display: flex; overflow-x: auto;
+            scroll-snap-type: x mandatory; scrollbar-width: none; position: relative;
         }
         .hero-slider::-webkit-scrollbar { display: none; }
         .hero-slide {
-            flex: 0 0 100vw;
-            height: 100vh;
-            scroll-snap-align: start;
-            background-size: cover;
-            background-position: center;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            padding: 40px 20px 100px 20px; /* Espacio inferior para el indicador */
+            flex: 0 0 100vw; height: 100vh; scroll-snap-align: start;
+            background-size: cover; background-position: center; position: relative;
+            display: flex; flex-direction: column; justify-content: flex-end; padding: 40px 20px 100px 20px;
         }
         .hero-slide::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.1) 100%);
-            z-index: 1;
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.1) 100%); z-index: 1;
         }
-        .hero-content {
-            position: relative;
-            z-index: 2;
-        }
+        .hero-content { position: relative; z-index: 2; }
         .hero-title { font-size: 42px; font-weight: 800; color: var(--white); line-height: 1.1; margin-bottom: 10px; text-transform: uppercase; }
         .hero-title span { color: var(--primary); }
         .hero-subtitle { font-size: 16px; color: #d1d5db; margin-bottom: 20px; max-width: 80%; }
         
         .scroll-indicator {
-            position: absolute;
-            bottom: 90px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 3;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: var(--white);
-            animation: bounce 2s infinite;
-            opacity: 0.8;
+            position: absolute; bottom: 90px; left: 50%; transform: translateX(-50%);
+            z-index: 3; display: flex; flex-direction: column; align-items: center;
+            color: var(--white); animation: bounce 2s infinite; opacity: 0.8; cursor: pointer;
         }
         .scroll-indicator svg { width: 30px; height: 30px; }
 
-        /* Top Header sobre el Hero */
         .top-header { position: fixed; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); z-index: 100; transition: background 0.3s; }
         .top-header.scrolled { background: rgba(18, 18, 18, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
         .brand-container { display: flex; align-items: center; gap: 12px; }
         .brand-logo { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); }
         .brand-name { font-weight: 800; font-size: 18px; color: var(--white); }
 
-        /* Contenedor Principal (Debajo del Hero) */
-        .main-content {
-            background: var(--bg);
-            position: relative;
-            z-index: 10;
-            padding-top: 20px;
-        }
+        .main-content { background: var(--bg); position: relative; z-index: 10; padding-top: 20px; }
 
-        /* Selector Delivery/Retiro */
         .type-toggle { display: flex; gap: 10px; padding: 0 20px 15px; }
         .type-btn { flex: 1; padding: 12px; border-radius: 12px; font-weight: 700; font-size: 14px; border: 2px solid var(--border); background: var(--surface); color: var(--text-light); cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: 0.3s; }
         .type-btn.active { background: rgba(245, 158, 11, 0.1); color: var(--primary); border-color: var(--primary); }
 
-        /* Selector de Sucursal y Dirección */
         .address-bar { display: flex; align-items: center; margin: 0 20px 20px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); overflow: hidden; }
         .address-bar select { flex: 1; padding: 14px 15px; border: none; outline: none; font-weight: 600; font-size: 14px; color: var(--white); background: transparent; cursor: pointer; border-right: 1px solid var(--border); }
         .address-bar select option { background: var(--surface); color: var(--white); }
-        .address-bar button { padding: 0 15px; background: transparent; border: none; cursor: pointer; color: var(--primary); }
 
-        /* Categorías Nav */
         .nav-cats { display: flex; overflow-x: auto; padding: 0 20px 20px; gap: 12px; scrollbar-width: none; position: sticky; top: 70px; background: var(--bg); z-index: 90; }
         .nav-cats::-webkit-scrollbar { display: none; }
         .cat-tag { padding: 10px 20px; border-radius: 25px; background: var(--surface); border: 1px solid var(--border); font-size: 14px; font-weight: 700; color: var(--text-light); white-space: nowrap; cursor: pointer; transition: 0.3s; }
         .cat-tag.active { background: var(--primary); color: var(--dark); border-color: var(--primary); }
 
-        /* Tarjetas de Producto (Grid Moderno) */
         #menu-container { padding: 0 20px; }
         .cat-title { font-size: 24px; font-weight: 800; margin: 10px 0 20px; color: var(--white); text-transform: uppercase; letter-spacing: 1px; }
         
@@ -122,42 +81,46 @@
         
         .card-p { background: var(--surface); border-radius: 16px; border: 1px solid var(--border); overflow: hidden; cursor: pointer; transition: 0.3s; display: flex; flex-direction: column; }
         .card-p:active { transform: scale(0.96); }
-        .p-img-wrapper { position: relative; padding-top: 100%; /* Aspect ratio 1:1 */ }
+        .p-img-wrapper { position: relative; padding-top: 100%; }
         .p-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
         .p-txt { padding: 15px; display: flex; flex-direction: column; flex: 1; justify-content: space-between; }
         .p-txt h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; color: var(--white); line-height: 1.2; }
-        .p-txt p { font-size: 12px; color: var(--text-light); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 12px; }
+        
+        /* FIX LINEA 129: Formateado correctamente y con ellipsis para mayor compatibilidad */
+.p-txt p { 
+    font-size: 12px; 
+    color: var(--text-light); 
+    line-height: 1.4; 
+    height: calc(12px * 1.4 * 2); /* Altura exacta para 2 líneas */
+    overflow: hidden; 
+    margin-bottom: 12px; 
+}
+        
         .p-action-row { display: flex; align-items: center; justify-content: space-between; margin-top: auto; }
         .p-price { font-weight: 800; font-size: 16px; color: var(--primary); }
         .add-btn { width: 32px; height: 32px; border-radius: 10px; background: var(--primary); color: var(--dark); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; border: none; }
 
-        /* Bottom Navigation */
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(30, 30, 30, 0.95); backdrop-filter: blur(10px); border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; z-index: 500; }
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: var(--text-light); text-decoration: none; cursor: pointer; font-size: 10px; font-weight: 600; }
         .nav-item svg { width: 22px; height: 22px; }
         .nav-item.active { color: var(--primary); }
 
-        /* Botón de Carrito Flotante */
         .cart-float { position: fixed; bottom: 85px; right: 20px; background: var(--primary); color: var(--dark); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(245, 158, 11, 0.4); z-index: 400; cursor: pointer; transition: 0.3s; }
         .cart-float:active { transform: scale(0.9); }
         .badge-qty { position: absolute; top: -2px; right: -2px; background: var(--white); color: var(--dark); border-radius: 50%; width: 24px; height: 24px; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; border: 2px solid var(--primary); }
 
-        /* UI Elements Globales */
         .ui-input { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid var(--border); font-size: 14px; outline: none; background: var(--bg); color: var(--white); margin-bottom: 15px; font-weight: 500; transition: 0.2s; }
         .ui-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2); }
         .btn-action { background: var(--primary); color: var(--dark); border: none; padding: 16px; border-radius: 12px; font-weight: 800; cursor: pointer; width: 100%; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; }
         .btn-action:active { transform: scale(0.98); }
         .m-section { font-size: 13px; font-weight: 800; color: var(--text-light); margin: 25px 0 10px; text-transform: uppercase; letter-spacing: 1px; }
 
-        /* GPS Button */
         .btn-gps { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px dashed #10b981; padding: 12px; border-radius: 10px; width: 100%; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px; cursor: pointer; }
         
-        /* Modal General */
         .modal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px); z-index: 2000; display: none; justify-content: center; align-items: flex-end; }
         .modal-sheet { background: var(--surface); width: 100%; max-width: 500px; height: 90vh; border-radius: 24px 24px 0 0; overflow-y: auto; display: flex; flex-direction: column; animation: modalSlide 0.3s ease-out; position: relative; }
         .m-close { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.5); color: white; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; z-index: 10; backdrop-filter: blur(4px); }
         
-        /* Contenido Modal Producto */
         .m-hero { height: 280px; background-size: cover; background-position: center; position: relative; }
         .m-hero::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 50px; background: linear-gradient(to top, var(--surface), transparent); }
         .m-content { padding: 20px; flex: 1; }
@@ -167,75 +130,20 @@
         .custom-check input:checked + .check-box { background: var(--primary); border-color: var(--primary); }
         .custom-check input:checked + .check-box::after { content: '✓'; color: var(--dark); font-size: 14px; font-weight: bold; }
 
-        /* Carrito Lateral */
         #cart-view { position: fixed; top: 0; right: 0; width: 100%; max-width: 450px; height: 100dvh; background: var(--bg); z-index: 3000; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s ease-out; box-shadow: -10px 0 30px rgba(0,0,0,0.5); }
         #cart-view.open { transform: translateX(0); }
         
         #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 12px 24px; border-radius: 50px; font-weight: 700; font-size: 14px; z-index: 5000; opacity: 0; transition: 0.3s; pointer-events: none; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
         #toast.show { opacity: 1; transform: translateX(-50%) translateY(10px); }
- /* Estilos para las Promos Corregidos */
-.promo-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 15px;
-    transition: transform 0.2s;
-    position: relative; /* ESTO ES LO QUE FALTA: Mantiene el badge dentro */
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    min-height: 210px;
-    overflow: hidden;
-}
-
-.promo-card:active {
-    transform: scale(0.98);
-}
-
-.badge-promo {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    background: var(--primary); /* El naranja/amarillo que usas */
-    color: var(--dark);
-    font-size: 10px;
-    font-weight: 800;
-    padding: 4px 10px;
-    border-radius: 6px;
-    text-transform: uppercase;
-    z-index: 5;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-
-/* Variante para el badge Veggie */
-.badge-promo.badge-veggie {
-    background: #10b981; /* Verde */
-    color: white;
-}
-
-.price-container {
-    display: flex;
-    flex-direction: column; /* Cambiado a columna para mejor lectura en móviles */
-    align-items: flex-start;
-    gap: 2px;
-    margin-top: 10px;
-}
-
-.old-price {
-    color: var(--text-light);
-    text-decoration: line-through;
-    font-size: 12px;
-    opacity: 0.7;
-}
-
-.new-price {
-    color: #10b981; 
-    font-weight: 800;
-    font-size: 20px;
-}
-   
-   
-   </style>
+        
+        .promo-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 15px; transition: transform 0.2s; position: relative; display: flex; flex-direction: column; justify-content: space-between; min-height: 210px; overflow: hidden; }
+        .promo-card:active { transform: scale(0.98); }
+        .badge-promo { position: absolute; top: 12px; left: 12px; background: var(--primary); color: var(--dark); font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 6px; text-transform: uppercase; z-index: 5; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        .badge-promo.badge-veggie { background: #10b981; color: white; }
+        .price-container { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; margin-top: 10px; }
+        .old-price { color: var(--text-light); text-decoration: line-through; font-size: 12px; opacity: 0.7; }
+        .new-price { color: #10b981; font-weight: 800; font-size: 20px; }
+    </style>
 </head>
 <body>
 
@@ -256,7 +164,6 @@
                 <button class="btn-action" style="width: auto; padding: 12px 24px;" onclick="scrollToMenu()">Pedir Ahora</button>
             </div>
         </div>
-
         <div class="hero-slide" style="background-image: url('https://i.ibb.co/ZzmPkFFY/Hulk-x2-papas.png');">
             <div class="hero-content">
                 <h1 class="hero-title">ESPECIAL<br><span>COMPARTIR UNA MARVEL</span></h1>
@@ -264,7 +171,6 @@
                 <button class="btn-action" style="width: auto; padding: 12px 24px;" onclick="scrollToMenu()">Aprovechar</button>
             </div>
         </div>
-        
         <div class="hero-slide" style="background-image: url('https://i.ibb.co/gbVs3Lw1/Peter-Pepsi.png');">
             <div class="hero-content">
                 <h1 class="hero-title">Arma tu combo<br><span>Corta la semana</span></h1>
@@ -272,8 +178,7 @@
                 <button class="btn-action" style="width: auto; padding: 12px 24px;" onclick="scrollToMenu()">Aprovechar</button>
             </div>
         </div>
-
-                <div class="hero-slide" style="background-image: url('https://i.ibb.co/gLS3147F/Thanos.png');">
+        <div class="hero-slide" style="background-image: url('https://i.ibb.co/gLS3147F/Thanos.png');">
             <div class="hero-content">
                 <h1 class="hero-title">PROMOS<br><span>PARA VOS</span></h1>
                 <p class="hero-subtitle">Aprovecha las mejores promos del momento y disfruta de marvel!.</p>
@@ -305,14 +210,15 @@
         </div>
 
         <div class="nav-cats" id="cat-list"></div>
-        <div id="section-cena-hoy" style="margin-bottom: 30px;">
-    <div class="m-section" style="display: flex; align-items: center; gap: 10px;">
-        <span style="background: var(--primary); color: black; padding: 2px 8px; border-radius: 4px; font-size: 12px;">EN PROMO</span>
-        ¿QUÉ ALMORZAMOS/CENAMOS HOY?
-    </div>
-    <div id="cena-hoy-container">
+        
+        <div id="section-cena-hoy" style="margin-bottom: 30px; padding: 0 20px;">
+            <div class="m-section" style="display: flex; align-items: center; gap: 10px;">
+                <span style="background: var(--primary); color: black; padding: 2px 8px; border-radius: 4px; font-size: 12px;">EN PROMO</span>
+                ¿QUÉ ALMORZAMOS/CENAMOS HOY?
+            </div>
+            <div id="cena-hoy-container"></div>
         </div>
-</div>
+        
         <div id="menu-container"></div>
     </div>
 
@@ -322,70 +228,68 @@
             <p>Promociones exclusivas disponibles solo hoy.</p>
         </div>
         <div class="m-section">CATÁLOGO DE PROMOS</div>
-        <div id="promos-container" class="menu-grid">
+        <div id="promos-container" class="menu-grid"></div>
+    </div>
+
+    <div id="tab-perfil" class="tab-page hidden" style="padding: 20px;">
+        <div id="perfil-form" class="hidden">
+            <h2 style="font-weight: 800; margin-bottom: 10px;">MI PERFIL</h2>
+            <p style="color: var(--text-light); margin-bottom: 20px; font-size: 14px;">Ingresa tus datos para recibir beneficios exclusivos.</p>
+            
+            <div id="registro-paso-1">
+                <input type="text" id="reg-nom" class="ui-input" placeholder="Nombre completo">
+                <input type="email" id="reg-mail" class="ui-input" placeholder="tu@email.com">
+                <input type="number" id="reg-tel" class="ui-input" placeholder="WhatsApp">
+                <button class="btn-action" onclick="enviarCodigoVerificacion()">ENVIAR CÓDIGO AL MAIL</button>
             </div>
-    </div>
 
-<div id="tab-perfil" class="tab-page hidden" style="padding: 20px;">
-    <div id="perfil-form" class="hidden">
-        <h2 style="font-weight: 800; margin-bottom: 10px;">MI PERFIL</h2>
-        <p style="color: var(--text-light); margin-bottom: 20px; font-size: 14px;">Ingresa tus datos para recibir regalos exclusivos.</p>
-        
-        <div id="registro-paso-1">
-            <input type="text" id="reg-nom" class="ui-input" placeholder="Nombre completo">
-            <input type="email" id="reg-mail" class="ui-input" placeholder="tu@email.com">
-            <input type="number" id="reg-tel" class="ui-input" placeholder="WhatsApp">
-            <button class="btn-action" onclick="enviarCodigoVerificacion()">ENVIAR CÓDIGO AL MAIL</button>
-        </div>
-
-        <div id="registro-paso-2" class="hidden" style="margin-top: 20px; border-top: 1px dashed var(--border); padding-top: 20px;">
-            <p style="color: var(--primary); font-size: 13px; margin-bottom: 10px; font-weight: 700;">Te enviamos un código (simulado) al correo.</p>
-            <input type="number" id="reg-codigo" class="ui-input" placeholder="Ingresa el código de 4 dígitos">
-            <button class="btn-action" style="background: #10b981;" onclick="verificarCodigoYGuardar()">VERIFICAR Y ENTRAR</button>
-            <button onclick="document.getElementById('registro-paso-2').classList.add('hidden'); document.getElementById('registro-paso-1').classList.remove('hidden');" 
-                    style="background: transparent; color: var(--text-light); border: none; width: 100%; margin-top: 10px; font-size: 12px;">Volver a intentar</button>
-        </div>
-    </div>
-
-    <div id="perfil-info" class="hidden">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <div>
-                <h2 id="lbl-nombre" style="color: var(--primary); font-weight:800; margin:0;"></h2>
-                <p id="lbl-mail" style="font-size:12px; color:var(--text-light);"></p>
+            <div id="registro-paso-2" class="hidden" style="margin-top: 20px; border-top: 1px dashed var(--border); padding-top: 20px;">
+                <p style="color: var(--primary); font-size: 13px; margin-bottom: 10px; font-weight: 700;">Te enviamos un código (simulado) al correo.</p>
+                <input type="number" id="reg-codigo" class="ui-input" placeholder="Ingresa el código de 4 dígitos">
+                <button class="btn-action" style="background: #10b981;" onclick="verificarCodigoYGuardar()">VERIFICAR Y ENTRAR</button>
+                <button onclick="document.getElementById('registro-paso-2').classList.add('hidden'); document.getElementById('registro-paso-1').classList.remove('hidden');" 
+                        style="background: transparent; color: var(--text-light); border: none; width: 100%; margin-top: 10px; font-size: 12px;">Volver a intentar</button>
             </div>
-            <button onclick="cerrarSesion()" style="background:transparent; border:1px solid #333; color:#999; padding:5px 10px; border-radius:8px; font-size:10px;">SALIR</button>
         </div>
 
-        <div style="background:var(--surface); border-radius:16px; padding:20px; border:1px solid var(--border);">
-            <h3 style="font-weight:800; font-size:15px; margin-bottom:15px; display:flex; align-items:center; gap:8px;">
-                <span>🎁</span> MIS CUPONES Y REGALOS
-            </h3>
-            <div id="lista-cupones-p"></div>
+        <div id="perfil-info" class="hidden">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <div>
+                    <h2 id="lbl-nombre" style="color: var(--primary); font-weight:800; margin:0;"></h2>
+                    <p id="lbl-mail" style="font-size:12px; color:var(--text-light);"></p>
+                </div>
+                <button onclick="cerrarSesion()" style="background:transparent; border:1px solid #333; color:#999; padding:5px 10px; border-radius:8px; font-size:10px;">SALIR</button>
+            </div>
+
+            <div style="background:var(--surface); border-radius:16px; padding:20px; border:1px solid var(--border);">
+                <h3 style="font-weight:800; font-size:15px; margin-bottom:15px; display:flex; align-items:center; gap:8px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg> 
+                    BENEFICIOS EXCLUSIVOS
+                </h3>
+                <div id="lista-cupones-p"></div>
+            </div>
         </div>
     </div>
-</div>
-
-
 
     <div class="cart-float" onclick="toggleCart()">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
         <span id="cart-badge" class="badge-qty">0</span>
     </div>
 
-<nav class="bottom-nav">
-    <div class="nav-item active" onclick="switchTab('tab-inicio', this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
-        Inicio
-    </div>
-    <div class="nav-item" onclick="switchTab('tab-promos', this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="5" x2="5" y2="19"></line><circle cx="6.5" cy="6.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg>
-        Promos
-    </div>
-    <div class="nav-item" onclick="switchTab('tab-perfil', this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-        Perfil
-    </div>
-</nav>
+    <nav class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('tab-inicio', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+            Inicio
+        </div>
+        <div class="nav-item" onclick="switchTab('tab-promos', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="5" x2="5" y2="19"></line><circle cx="6.5" cy="6.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg>
+            Promos
+        </div>
+        <div class="nav-item" onclick="switchTab('tab-perfil', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            Perfil
+        </div>
+    </nav>
 
     <div class="modal" id="m-prod">
         <div class="modal-sheet">
@@ -474,7 +378,7 @@
                     </div>
                 </div>
                 
-                <button class="btn-action" onclick="procesarPedido()">ENVIAR PEDIDO POR WHATSAPP</button>
+                <button class="btn-action" onclick="procesarPedido()">ENVIAR PEDIDO</button>
             </div>
         </div>
     </div>
@@ -486,57 +390,54 @@
         const firebaseConfig = { apiKey: "AIzaSyAeRlE9S5pnEUuhxRXoOX6lMX4Ryky0uSI", authDomain: "marvel-food-fa570.firebaseapp.com", projectId: "marvel-food-fa570", storageBucket: "marvel-food-fa570.firebasestorage.app", messagingSenderId: "351263580699", appId: "1:351263580699:web:9ba99708a021e5eabecebe" };
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-let cuponAplicado = null; // Guardará el objeto del cupón { id, titulo, valor, tipo }
 
+        let cuponAplicado = null; 
 
+        window.aplicarCuponDesdeRegalos = (cuponId) => {
+            const cupon = currentUser.cupones.find(c => c.id === cuponId);
+            if (!cupon || cupon.usado) return;
 
+            cuponAplicado = cupon; 
+            alert(`¡Beneficio "${cupon.titulo}" aplicado! Verás el descuento en tu carrito.`);
+            
+            actualizarTotales(); 
+            switchTab('tab-inicio', document.querySelector('.nav-item'));
+        };
 
-// Función que se llama desde la pestaña de "Regalos"
-window.aplicarCuponDesdeRegalos = (cuponId) => {
-    const cupon = currentUser.cupones.find(c => c.id === cuponId);
-    if (!cupon || cupon.usado) return;
+        const CALENDARIO_MARVEL = {
+            0: { n: "DOMINGO CHISBURGER", img: "URL_IMAGEN" },
+            1: { n: "LUNES CAPITÁN AMÉRICA", img: "https://i.ibb.co/5hNX8tBj/Capitan-America.png" },
+            2: { n: "MARTES PETER PARKER", img: "URL_IMAGEN" },
+            3: { n: "MIÉRCOLES IRON MAN", img: "URL_IMAGEN" },
+            4: { n: "JUEVES STACKER", img: "URL_IMAGEN" },
+            5: { n: "VIERNES LOKI", img: "URL_IMAGEN" },
+            6: { n: "SÁBADO BLACK PANTHER", img: "URL_IMAGEN" }
+        };
 
-    cuponActivo = cupon; // Lo activamos globalmente
-    alert(`¡Cupón "${cupon.titulo}" aplicado! Verás el descuento en tu carrito.`);
-    
-    // Refrescar el carrito para que calcule el descuento
-    actualizarTotales(); 
-    // Volver al inicio
-    switchTab('tab-inicio', document.querySelector('.nav-item'));
-};
-
-
-const CALENDARIO_MARVEL = {
-    0: { n: "DOMINGO CHISBURGER", img: "URL_IMAGEN" },
-    1: { n: "LUNES CAPITÁN AMÉRICA", img: "https://i.ibb.co/5hNX8tBj/Capitan-America.png" },
-    2: { n: "MARTES PETER PARKER", img: "URL_IMAGEN" },
-    3: { n: "MIÉRCOLES IRON MAN", img: "URL_IMAGEN" },
-    4: { n: "JUEVES STACKER", img: "URL_IMAGEN" },
-    5: { n: "VIERNES LOKI", img: "URL_IMAGEN" },
-    6: { n: "SÁBADO BLACK PANTHER", img: "URL_IMAGEN" }
-};
-const PROMOS_DATA = [
-    {
-        id: 'promo-martes-marvel',
-        n: "MARTES MARVEL (2x1)",
-        d: "Solo por hoy: 2 Burger Iron Man + Papas. ¡No te lo pierdas!",
-        pOriginal: 18000,
-        p: 9000,
-        img: "https://images.unsplash.com/photo-1550547660-d9450f859349?w=500",
-        cat: "Promos",
-        diaVenta: 2 // 2 representa el Martes (0 es Domingo, 1 Lunes, etc.)
-    },
-    {
-        id: 'promo-siempre',
-        n: "COMBO FAMILIAR",
-        d: "4 Burgers + Gaseosa 1.5L",
-        pOriginal: 25000,
-        p: 21000,
-        img: "https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?w=500",
-        cat: "Promos",
-        diaVenta: null // Se muestra todos los días
-    }
-];
+        const PROMOS_DATA = [
+            {
+                id: 'promo-martes-marvel',
+                n: "MARTES MARVEL (2x1)",
+                d: "Solo por hoy: 2 Burger Iron Man + Papas. ¡No te lo pierdas!",
+                pOriginal: 18000,
+                p: 9000,
+                img: "https://images.unsplash.com/photo-1550547660-d9450f859349?w=500",
+                cat: "Promos",
+                diaVenta: 2,
+                ings: [] // CORRECCIÓN: Previene el error en openModal
+            },
+            {
+                id: 'promo-siempre',
+                n: "COMBO FAMILIAR",
+                d: "4 Burgers + Gaseosa 1.5L",
+                pOriginal: 25000,
+                p: 21000,
+                img: "https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?w=500",
+                cat: "Promos",
+                diaVenta: null,
+                ings: [] // CORRECCIÓN
+            }
+        ];
 
         const SUC_MAP = {
             Centro: { n: "Zona Centro", wsp: "3413315885", locs: { "Rosario": 2000 } },
@@ -549,7 +450,7 @@ const PROMOS_DATA = [
             { cat: "Hamburguesas", items: [
                 { id: 1, n: "Hulk Burger", p: 11800, d: "Doble carne, cheddar, cebolla caramelizada, panceta y BBQ.", img: "https://pency-images.nyc3.digitaloceanspaces.com/marvelfoodabasto/1760658566420.jpg", ings: ["Cebolla", "BBQ", "Cheddar", "Panceta"] }
             ]},
-                        { cat: "Hamburguesas smashed", items: [
+            { cat: "Hamburguesas smashed", items: [
                 { id: 10, n: "Perfekta Smash", p: 8900, d: "Doble smash, doble cheddar, lechuga y alioli.", img: "https://pency-images.nyc3.digitaloceanspaces.com/marvelfoodabasto/1760659273628.jpg", ings: ["Lechuga", "tomate","cheddar","salsa marvel"] }
             ]},
             { cat: "Acompañamientos", items: [
@@ -561,14 +462,12 @@ const PROMOS_DATA = [
 
         let carrito = [];
         let tProd = null;
-let cuponActivo = null; // Aquí se guarda el cupón cuando le das a "USAR"
-let codigoSimulado = null;
+        let codigoSimulado = null;
         let isDelivery = true;
         let coordenadasGPS = null;
 
-        window.onload = () => { renderMenu(); };
+        window.onload = () => { renderMenu(); renderCenaHoy(); };
 
-        // Efecto Header Scroll
         window.addEventListener('scroll', () => {
             const header = document.getElementById('header');
             if(window.scrollY > 50) header.classList.add('scrolled');
@@ -576,34 +475,25 @@ let codigoSimulado = null;
         });
 
         window.scrollToMenu = () => {
-            const menu = document.getElementById('main-menu');
+            const menu = document.getElementById('menu-container');
             const y = menu.getBoundingClientRect().top + window.scrollY - 60;
             window.scrollTo({top: y, behavior: 'smooth'});
         };
 
-//gguardado de datos usuario
-// Cargar usuario al iniciar la app
-let currentUser = JSON.parse(localStorage.getItem('marvel_user')) || { nombre: "", tel: "", cupones: [] };
+        let currentUser = JSON.parse(localStorage.getItem('marvel_user')) || { nombre: "", tel: "", cupones: [] };
 
-// Si ya tenemos el teléfono, la próxima vez que entre a la pestaña perfil, 
-// podemos intentar traer los cupones actualizados de Firebase por si le regalaste uno nuevo manualmente
-async function checkSincronizacionFirebase() {
-    if (currentUser.tel) {
-        const userRef = doc(db, "usuarios", currentUser.tel);
-        const snap = await getDoc(userRef);
-        if (snap.exists()) {
-            currentUser = snap.data();
-            localStorage.setItem('marvel_user', JSON.stringify(currentUser));
+        async function checkSincronizacionFirebase() {
+            if (currentUser.tel) {
+                const userRef = doc(db, "usuarios", currentUser.tel);
+                const snap = await getDoc(userRef);
+                if (snap.exists()) {
+                    currentUser = snap.data();
+                    localStorage.setItem('marvel_user', JSON.stringify(currentUser));
+                }
+            }
         }
-    }
-}
-// Llamar a la sincronización en segundo plano
-checkSincronizacionFirebase();
+        checkSincronizacionFirebase();
 
-//
-
-
-        // GPS Logic
         window.obtenerUbicacion = () => {
             const statusText = document.getElementById('loc-status');
             statusText.innerText = "Obteniendo ubicación...";
@@ -612,13 +502,13 @@ checkSincronizacionFirebase();
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         coordenadasGPS = `${position.coords.latitude},${position.coords.longitude}`;
-                        statusText.innerText = "📍 Ubicación guardada con éxito";
+                        statusText.innerText = "✓ Ubicación guardada con éxito";
                         statusText.parentElement.style.background = "rgba(16, 185, 129, 0.2)";
                         statusText.parentElement.style.border = "1px solid #10b981";
                         statusText.style.color = "#10b981";
                     },
                     (error) => {
-                        statusText.innerText = "❌ Permiso denegado o error GPS";
+                        statusText.innerText = "Error de permisos o GPS";
                         alert("No pudimos obtener tu ubicación. Por favor, asegúrate de tener el GPS encendido y darle permisos al navegador.");
                     },
                     { enableHighAccuracy: true }
@@ -628,7 +518,6 @@ checkSincronizacionFirebase();
             }
         };
 
-        // UI Logic
         window.setGeneralDelivery = (isDel) => {
             isDelivery = isDel;
             document.getElementById('btn-tipo-del').classList.toggle('active', isDelivery);
@@ -706,7 +595,9 @@ checkSincronizacionFirebase();
             if(p.ings && p.ings.length > 0) {
                 document.getElementById('m-sec-ings').classList.remove('hidden');
                 ingList.innerHTML = p.ings.map(i => `<label class="custom-check"><span>Sin ${i}</span><input type="checkbox" onchange="toggleSin('${i}')"><div class="check-box"></div></label>`).join('');
-            } else document.getElementById('m-sec-ings').classList.add('hidden');
+            } else {
+                document.getElementById('m-sec-ings').classList.add('hidden');
+            }
 
             const extList = document.getElementById('m-list-extras');
             extList.innerHTML = EXTRAS.map(e => `<label class="custom-check"><span>${e.n} (+$${e.p})</span><input type="checkbox" onchange="toggleExt('${e.id}')"><div class="check-box"></div></label>`).join('');
@@ -744,474 +635,400 @@ checkSincronizacionFirebase();
         function updateCartUI() { document.getElementById('cart-badge').innerText = carrito.reduce((s,i)=>s+i.cant,0); }
         window.toggleVuelto = () => document.getElementById('vuelto-box').style.display = (document.getElementById('p-metodo').value === 'Efectivo') ? 'block' : 'none';
 
-function renderCartItems() {
-    const list = document.getElementById('cart-items-list');
-    let subtotal = 0;
-    
-    if (carrito.length === 0) {
-        list.innerHTML = `<div style="text-align:center; color:var(--text-light); margin-top:40px;">Tu pedido está vacío 🍔</div>`;
-    } else {
-        list.innerHTML = carrito.map((i, idx) => {
-            subtotal += i.totalItem;
-            return `
-                <div style="background:var(--surface); border-radius:12px; padding:15px; margin-bottom:15px; border:1px solid var(--border);">
-                    <div style="display:flex; justify-content:space-between; font-weight:800; font-size:15px; color:var(--white);">
-                        <span>${i.cant}x ${i.n}</span><span>$${i.totalItem.toLocaleString()}</span>
-                    </div>
-                    <div style="text-align:right; margin-top:10px;">
-                        <span onclick="delItem(${idx})" style="color:#ef4444; font-size:12px; font-weight:800; cursor:pointer;">ELIMINAR</span>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
-
-    // Lógica de Envío
-    const sucId = document.getElementById('main-sucursal').value;
-    const locName = document.getElementById('c-loc') ? document.getElementById('c-loc').value : '';
-    let costoEnvio = (isDelivery && sucId && SUC_MAP[sucId] && locName && SUC_MAP[sucId].locs[locName]) ? SUC_MAP[sucId].locs[locName] : 0;
-
-    // Lógica de Descuento
-    let montoDescuento = 0;
-    let detalleDescuentoHtml = "";
-
-    if (cuponAplicado) {
-        if (cuponAplicado.tipo === "porcentaje") {
-            montoDescuento = subtotal * cuponAplicado.valor;
-            detalleDescuentoHtml = `
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #10b981; font-weight: 600;">
-                    <span>Cupón: ${cuponAplicado.titulo}</span> <span>-$${montoDescuento.toLocaleString()}</span>
-                </div>`;
-        } else if (cuponAplicado.tipo === "regalo") {
-            detalleDescuentoHtml = `
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #10b981; font-weight: 600;">
-                    <span>Regalo: ${cuponAplicado.titulo}</span> <span>¡GRATIS!</span>
-                </div>`;
+        function actualizarTotales() {
+            renderCartItems();
         }
-    }
 
-    let totalFinal = subtotal + costoEnvio - montoDescuento;
+        function renderCartItems() {
+            const list = document.getElementById('cart-items-list');
+            let subtotal = 0;
+            
+            if (carrito.length === 0) {
+                list.innerHTML = `<div style="text-align:center; color:var(--text-light); margin-top:40px;">Tu pedido está vacío.</div>`;
+            } else {
+                list.innerHTML = carrito.map((i, idx) => {
+                    subtotal += i.totalItem;
+                    return `
+                        <div style="background:var(--surface); border-radius:12px; padding:15px; margin-bottom:15px; border:1px solid var(--border);">
+                            <div style="display:flex; justify-content:space-between; font-weight:800; font-size:15px; color:var(--white);">
+                                <span>${i.cant}x ${i.n}</span><span>$${i.totalItem.toLocaleString()}</span>
+                            </div>
+                            <div style="text-align:right; margin-top:10px;">
+                                <span onclick="delItem(${idx})" style="color:#ef4444; font-size:12px; font-weight:800; cursor:pointer;">ELIMINAR</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
 
-    // Actualizar UI de totales
-    document.getElementById('res-sub').innerText = `$${subtotal.toLocaleString()}`;
-    document.getElementById('res-envio').innerText = isDelivery ? (costoEnvio > 0 ? `$${costoEnvio.toLocaleString()}` : 'A calcular') : `Gratis`;
-    
-    // Insertamos el detalle del descuento dinámicamente antes del total
-    const totalBox = document.getElementById('res-total').parentElement;
-    // Limpiamos descuentos previos si existen
-    const descuentoPrevio = document.getElementById('detalle-descuento-ui');
-    if (descuentoPrevio) descuentoPrevio.remove();
-    
-    if (detalleDescuentoHtml) {
-        const divDesc = document.createElement('div');
-        divDesc.id = "detalle-descuento-ui";
-        divDesc.innerHTML = detalleDescuentoHtml;
-        totalBox.parentNode.insertBefore(divDesc, totalBox);
-    }
+            const sucId = document.getElementById('main-sucursal').value;
+            const locName = document.getElementById('c-loc') ? document.getElementById('c-loc').value : '';
+            let costoEnvio = (isDelivery && sucId && SUC_MAP[sucId] && locName && SUC_MAP[sucId].locs[locName]) ? SUC_MAP[sucId].locs[locName] : 0;
 
-    document.getElementById('res-total').innerText = `$${totalFinal.toLocaleString()}`;
-}
+            let montoDescuento = 0;
+            let detalleDescuentoHtml = "";
 
+            if (cuponAplicado) {
+                if (cuponAplicado.tipo === "porcentaje") {
+                    montoDescuento = subtotal * cuponAplicado.valor;
+                    detalleDescuentoHtml = `
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #10b981; font-weight: 600;">
+                            <span>Beneficio: ${cuponAplicado.titulo}</span> <span>-$${montoDescuento.toLocaleString()}</span>
+                        </div>`;
+                } else if (cuponAplicado.tipo === "regalo") {
+                    detalleDescuentoHtml = `
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #10b981; font-weight: 600;">
+                            <span>Regalo: ${cuponAplicado.titulo}</span> <span>¡INCLUIDO!</span>
+                        </div>`;
+                }
+            }
+
+            let totalFinal = subtotal + costoEnvio - montoDescuento;
+
+            document.getElementById('res-sub').innerText = `$${subtotal.toLocaleString()}`;
+            document.getElementById('res-envio').innerText = isDelivery ? (costoEnvio > 0 ? `$${costoEnvio.toLocaleString()}` : 'A calcular') : `Gratis`;
+            
+            const totalBox = document.getElementById('res-total').parentElement;
+            const descuentoPrevio = document.getElementById('detalle-descuento-ui');
+            if (descuentoPrevio) descuentoPrevio.remove();
+            
+            if (detalleDescuentoHtml) {
+                const divDesc = document.createElement('div');
+                divDesc.id = "detalle-descuento-ui";
+                divDesc.innerHTML = detalleDescuentoHtml;
+                totalBox.parentNode.insertBefore(divDesc, totalBox);
+            }
+
+            document.getElementById('res-total').innerText = `$${Math.max(0, totalFinal).toLocaleString()}`;
+        }
 
         window.delItem = (i) => { carrito.splice(i,1); updateCartUI(); renderCartItems(); };
 
-window.procesarPedido = async () => {
-    if (carrito.length === 0) return alert("Agregá productos a tu pedido primero.");
-    
-    const sucId = document.getElementById('main-sucursal').value;
-    if(!sucId) return alert("Seleccioná tu sucursal en el menú principal.");
+        window.procesarPedido = async () => {
+            if (carrito.length === 0) return alert("Agregá productos a tu pedido primero.");
+            
+            const sucId = document.getElementById('main-sucursal').value;
+            if(!sucId) return alert("Seleccioná tu sucursal en el menú principal.");
 
-    const nombre = document.getElementById('c-nombre').value;
-    const tel = document.getElementById('c-tel').value;
-    if(!nombre || !tel) return alert("Completá tu nombre y WhatsApp.");
+            const nombre = document.getElementById('c-nombre').value;
+            const tel = document.getElementById('c-tel').value;
+            if(!nombre || !tel) return alert("Completá tu nombre y WhatsApp.");
 
-    const loc = document.getElementById('c-loc').value;
-    const dir = document.getElementById('c-dir').value;
-    if(isDelivery && (!loc || !dir)) return alert("Completá localidad y dirección para el envío.");
+            const loc = document.getElementById('c-loc').value;
+            const dir = document.getElementById('c-dir').value;
+            if(isDelivery && (!loc || !dir)) return alert("Completá localidad y dirección para el envío.");
 
-    const pago = document.getElementById('p-metodo').value;
-    const vuelto = parseFloat(document.getElementById('p-vuelto').value) || 0;
+            const pago = document.getElementById('p-metodo').value;
+            const vuelto = parseFloat(document.getElementById('p-vuelto').value) || 0;
 
-    // --- CÁLCULOS DE TOTALES ---
-    let sub = carrito.reduce((s, i) => s + i.totalItem, 0);
-    let envio = isDelivery ? (SUC_MAP[sucId].locs[loc] || 0) : 0;
-    
-    let montoDescuento = 0;
-    let detalleCupon = "Ninguno";
+            let sub = carrito.reduce((s, i) => s + i.totalItem, 0);
+            let envio = isDelivery ? (SUC_MAP[sucId].locs[loc] || 0) : 0;
+            
+            let montoDescuento = 0;
+            let detalleCupon = "Ninguno";
 
-    // Aplicar descuento si hay un cupón activo
-    if (cuponAplicado) {
-        detalleCupon = cuponAplicado.titulo;
-        if (cuponAplicado.tipo === "porcentaje") {
-            montoDescuento = Math.round(sub * cuponAplicado.valor);
-        }
-        // Si es tipo "regalo", el montoDescuento queda en 0 pero se informa en el detalle
-    }
+            if (cuponAplicado) {
+                detalleCupon = cuponAplicado.titulo;
+                if (cuponAplicado.tipo === "porcentaje") {
+                    montoDescuento = Math.round(sub * cuponAplicado.valor);
+                }
+            }
 
-    let total = sub + envio - montoDescuento;
+            let total = Math.max(0, sub + envio - montoDescuento);
 
-    if (pago === 'Efectivo' && vuelto > 0 && vuelto < total) {
-        return alert(`El monto a abonar debe ser mayor al total ($${total}).`);
-    }
+            if (pago === 'Efectivo' && vuelto > 0 && vuelto < total) {
+                return alert(`El monto a abonar debe ser mayor al total ($${total}).`);
+            }
 
-    // --- OBJETO PARA FIREBASE ---
-    const ordenDatos = {
-        cliente: nombre.toUpperCase(), 
-        tel, 
-        sucursal: SUC_MAP[sucId].n, 
-        tipo: isDelivery ? 'Delivery' : 'Retiro',
-        loc: isDelivery ? loc : 'N/A', 
-        dir: isDelivery ? dir : 'N/A', 
-        gps: coordenadasGPS || 'No provisto',
-        piso: isDelivery ? `${document.getElementById('c-piso').value} ${document.getElementById('c-depto').value}` : '',
-        items: carrito, 
-        subtotal: sub,
-        envio: envio,
-        descuento: montoDescuento,
-        cuponUsado: detalleCupon,
-        total: total, 
-        pago, 
-        estado: "Pendiente", 
-        fecha: serverTimestamp()
-    };
+            const ordenDatos = {
+                cliente: nombre.toUpperCase(), 
+                tel, 
+                sucursal: SUC_MAP[sucId].n, 
+                tipo: isDelivery ? 'Delivery' : 'Retiro',
+                loc: isDelivery ? loc : 'N/A', 
+                dir: isDelivery ? dir : 'N/A', 
+                gps: coordenadasGPS || 'No provisto',
+                piso: isDelivery ? `${document.getElementById('c-piso').value} ${document.getElementById('c-depto').value}` : '',
+                items: carrito, 
+                subtotal: sub,
+                envio: envio,
+                descuento: montoDescuento,
+                cuponUsado: detalleCupon,
+                total: total, 
+                pago, 
+                estado: "Pendiente", 
+                fecha: serverTimestamp()
+            };
 
-    try {
-        document.body.style.cursor = 'wait'; // Indicador de carga simple
+            try {
+                document.body.style.cursor = 'wait'; // Usamos el cursor nativo como indicador
 
-        // 1. Guardar el pedido en Firebase
-        await addDoc(collection(db, "pedidos_v2"), ordenDatos);
+                await addDoc(collection(db, "pedidos_v2"), ordenDatos);
 
-        // 2. Si se usó un cupón y el usuario está registrado, marcarlo como usado en Firebase
-        if (currentUser && cuponAplicado) {
-            const userRef = doc(db, "usuarios", currentUser.tel);
-            const userSnap = await getDoc(userRef);
-            if (userSnap.exists()) {
-                const userData = userSnap.data();
-                const nuevosCupones = userData.cupones.map(c => {
-                    if (c.id === cuponAplicado.id) return { ...c, usado: true };
-                    return c;
-                });
-                await setDoc(userRef, { cupones: nuevosCupones }, { merge: true });
+                if (currentUser && cuponAplicado) {
+                    const userRef = doc(db, "usuarios", currentUser.email || currentUser.tel);
+                    const userSnap = await getDoc(userRef);
+                    if (userSnap.exists()) {
+                        const userData = userSnap.data();
+                        const nuevosCupones = userData.cupones.map(c => {
+                            if (c.id === cuponAplicado.id) return { ...c, usado: true };
+                            return c;
+                        });
+                        await setDoc(userRef, { cupones: nuevosCupones }, { merge: true });
+                        
+                        currentUser.cupones = nuevosCupones;
+                        localStorage.setItem('marvel_user', JSON.stringify(currentUser));
+                    }
+                }
+
+                let t = `*NUEVO PEDIDO | MARVEL FOOD*%0A---------------------------%0A`;
+                t += `*Cliente:* ${ordenDatos.cliente}%0A*Sucursal:* ${ordenDatos.sucursal}%0A*Tipo:* ${ordenDatos.tipo}%0A`;
+                if (isDelivery) {
+                    t += `*Dirección:* ${dir} ${ordenDatos.piso}%0A*Localidad:* ${loc}%0A`;
+                    if (coordenadasGPS) t += `*Ubicación GPS:* https://www.google.com/maps?q=${coordenadasGPS}%0A`;
+                }
+                t += `---------------------------%0A`;
                 
-                // Actualizar datos locales para que desaparezca de la pestaña regalos
-                currentUser.cupones = nuevosCupones;
-                localStorage.setItem('marvel_user', JSON.stringify(currentUser));
+                carrito.forEach(i => {
+                    t += `*${i.cant}x ${i.n}* ($${i.totalItem})%0A`;
+                    if(i.sin.length) t += `   _Sin: ${i.sin.join(', ')}_%0A`;
+                    if(i.con.length) t += `   _Extras: ${i.con.map(x=>x.n).join(', ')}_%0A`;
+                    if(i.obs) t += `   _Nota: ${i.obs}_%0A`;
+                });
+
+                t += `---------------------------%0A`;
+                t += `*Subtotal:* $${sub}%0A`;
+                if(envio > 0) t += `*Envío:* $${envio}%0A`;
+                if(montoDescuento > 0) t += `*Descuento (${detalleCupon}):* -$${montoDescuento}%0A`;
+                if(cuponAplicado && cuponAplicado.tipo === "regalo") t += `*Regalo:* ${cuponAplicado.titulo}%0A`;
+                
+                t += `*TOTAL FINAL: $${total}*%0A`;
+                t += `---------------------------%0A`;
+                t += `*Pago:* ${pago}%0A`;
+                if (pago === 'Efectivo' && vuelto > 0) {
+                    t += `*Abona con:* $${vuelto} (Vuelto: $${vuelto - total})%0A`;
+                }
+
+                document.body.style.cursor = 'default';
+                window.location.href = `https://wa.me/${SUC_MAP[sucId].wsp}?text=${t}`;
+
+            } catch (e) {
+                document.body.style.cursor = 'default';
+                console.error(e);
+                alert("Error al procesar el pedido: " + e.message);
+            }
+        };
+
+        window.switchTab = (tabId, element) => {
+            document.querySelectorAll('.tab-page').forEach(page => page.classList.add('hidden'));
+            document.getElementById(tabId).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            element.classList.add('active');
+
+            if(tabId === 'tab-perfil') actualizarVistasPerfil();
+            if(tabId === 'tab-promos') renderPromosCatalog();
+
+            window.scrollTo(0,0);
+        };
+
+        function actualizarVistasPerfil() {
+            const infoBox = document.getElementById('perfil-info');
+            const formBox = document.getElementById('perfil-form');
+            const cupCont = document.getElementById('lista-cupones-p');
+
+            if (!currentUser || !currentUser.email) {
+                if(infoBox) infoBox.classList.add('hidden');
+                if(formBox) formBox.classList.remove('hidden');
+                return;
+            }
+
+            if(formBox) formBox.classList.add('hidden');
+            if(infoBox) infoBox.classList.remove('hidden');
+            
+            const lblNombre = document.getElementById('lbl-nombre');
+            if(lblNombre) lblNombre.innerText = `¡Hola, ${currentUser.nombre}!`;
+
+            if (currentUser.cupones && currentUser.cupones.length > 0) {
+                cupCont.innerHTML = currentUser.cupones.map(c => `
+                    <div style="background:var(--bg); border:1px solid ${c.usado ? '#333' : 'var(--primary)'}; padding:15px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; opacity: ${c.usado ? '0.6' : '1'}">
+                        <div style="flex: 1;">
+                            <h4 style="color:var(--white); font-weight:700; font-size:14px; margin-bottom:2px;">${c.titulo}</h4>
+                            <p style="color:var(--text-light); font-size:11px;">${c.desc}</p>
+                        </div>
+                        <button 
+                            onclick="window.aplicarCuponDesdeRegalos('${c.id}')" 
+                            style="
+                                background: ${c.usado ? 'transparent' : 'var(--primary)'}; 
+                                border: 1px solid ${c.usado ? 'var(--border)' : 'var(--primary)'}; 
+                                color: ${c.usado ? 'var(--text-light)' : 'black'}; 
+                                padding: 8px 15px; 
+                                border-radius: 8px; 
+                                font-weight: 800; 
+                                font-size: 11px; 
+                                cursor: pointer;
+                                min-width: 80px;
+                            " 
+                            ${c.usado ? 'disabled' : ''}>
+                            ${c.usado ? 'CANJEADO' : 'USAR'}
+                        </button>
+                    </div>
+                `).join('');
+            } else {
+                cupCont.innerHTML = `
+                    <div style="text-align:center; padding:20px; border:1px dashed var(--border); border-radius:12px;">
+                        <p style='color:var(--text-light); font-size:13px;'>No tienes beneficios disponibles aún.</p>
+                    </div>`;
             }
         }
 
-        // 3. Armar mensaje de WhatsApp
-        let t = `*NUEVO PEDIDO | MARVEL FOOD*%0A---------------------------%0A`;
-        t += `*Cliente:* ${ordenDatos.cliente}%0A*Sucursal:* ${ordenDatos.sucursal}%0A*Tipo:* ${ordenDatos.tipo}%0A`;
-        if (isDelivery) {
-            t += `*Dirección:* ${dir} ${ordenDatos.piso}%0A*Localidad:* ${loc}%0A`;
-            if (coordenadasGPS) t += `*Ubicación GPS:* https://www.google.com/maps?q=${coordenadasGPS}%0A`;
-        }
-        t += `---------------------------%0A`;
-        
-        carrito.forEach(i => {
-            t += `*${i.cant}x ${i.n}* ($${i.totalItem})%0A`;
-            if(i.sin.length) t += `   _Sin: ${i.sin.join(', ')}_%0A`;
-            if(i.con.length) t += `   _Extras: ${i.con.map(x=>x.n).join(', ')}_%0A`;
-            if(i.obs) t += `   _Nota: ${i.obs}_%0A`;
-        });
+        window.enviarCodigoVerificacion = () => {
+            const mail = document.getElementById('reg-mail').value.trim();
+            const nom = document.getElementById('reg-nom').value.trim();
+            if(!mail || !nom) return alert("Por favor completa nombre y email");
 
-        t += `---------------------------%0A`;
-        t += `*Subtotal:* $${sub}%0A`;
-        if(envio > 0) t += `*Envío:* $${envio}%0A`;
-        if(montoDescuento > 0) t += `*Descuento (${detalleCupon}):* -$${montoDescuento}%0A`;
-        if(cuponAplicado && cuponAplicado.tipo === "regalo") t += `*Regalo:* ${cuponAplicado.titulo}%0A`;
-        
-        t += `*TOTAL FINAL: $${total}*%0A`;
-        t += `---------------------------%0A`;
-        t += `*Pago:* ${pago}%0A`;
-        if (pago === 'Efectivo' && vuelto > 0) {
-            t += `*Abona con:* $${vuelto} (Vuelto: $${vuelto - total})%0A`;
-        }
+            codigoSimulado = Math.floor(1000 + Math.random() * 9000).toString();
+            alert(`[SIMULACIÓN MAIL] De: Marvel Food\nPara: ${mail}\nTu código de acceso es: ${codigoSimulado}`);
 
-        document.body.style.cursor = 'default';
-        window.location.href = `https://wa.me/${SUC_MAP[sucId].wsp}?text=${t}`;
+            document.getElementById('registro-paso-1').classList.add('hidden');
+            document.getElementById('registro-paso-2').classList.remove('hidden');
+        };
 
-    } catch (e) {
-        document.body.style.cursor = 'default';
-        console.error(e);
-        alert("Error al procesar el pedido: " + e.message);
-    }
-};
+        window.verificarCodigoYGuardar = async () => {
+            const inputCodigo = document.getElementById('reg-codigo').value.trim();
+            const nom = document.getElementById('reg-nom').value.trim();
+            const mail = document.getElementById('reg-mail').value.trim().toLowerCase();
+            const tel = document.getElementById('reg-tel').value.trim();
 
+            if(inputCodigo !== codigoSimulado) return alert("Código incorrecto. Revisa tu mail.");
 
-// Función para cambiar de pestaña
-window.switchTab = (tabId, element) => {
-    // Ocultar todas
-    document.querySelectorAll('.tab-page').forEach(page => page.classList.add('hidden'));
-    // Mostrar la elegida
-    document.getElementById(tabId).classList.remove('hidden');
-    
-    // Cambiar color del icono
-    document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-    element.classList.add('active');
+            try {
+                document.body.style.cursor = 'wait';
+                const userRef = doc(db, "usuarios", mail);
+                const userSnap = await getDoc(userRef);
 
-    // Si es perfil, refrescar cupones
-    if(tabId === 'tab-perfil') actualizarVistasPerfil();
-    // Si es promos, refrescar catálogo
-    if(tabId === 'tab-promos') renderPromosCatalog();
+                if (userSnap.exists()) {
+                    currentUser = userSnap.data();
+                } else {
+                    currentUser = {
+                        nombre: nom, email: mail, tel: tel,
+                        fechaRegistro: serverTimestamp(),
+                        cupones: [
+                            { id: 'CUPON-BIENVENIDA', titulo: "10% OFF", desc: "En tu primer pedido", valor: 0.10, tipo: "porcentaje", usado: false },
+                            { id: 'CUPON-PAPAS', titulo: "PAPAS GRATIS", desc: "Papas chicas de regalo", valor: 0, tipo: "regalo", usado: false }
+                        ]
+                    };
+                    await setDoc(userRef, currentUser);
+                }
 
-    window.scrollTo(0,0);
-};
+                localStorage.setItem('marvel_user', JSON.stringify(currentUser));
+                actualizarVistasPerfil();
+                alert("¡Verificación exitosa!");
+            } catch (e) {
+                alert("Error al conectar con la base de datos");
+                console.error(e);
+            } finally {
+                document.body.style.cursor = 'default';
+            }
+        };
 
-// LA FUNCIÓN QUE PREGUNTABAS
-function actualizarVistasPerfil() {
-    const infoBox = document.getElementById('perfil-info');
-    const formBox = document.getElementById('perfil-form');
-    const cupCont = document.getElementById('lista-cupones-p');
+        window.cerrarSesion = () => {
+            localStorage.removeItem('marvel_user');
+            currentUser = { nombre: "", tel: "", cupones: [] };
+            actualizarVistasPerfil();
+        };
 
-    // Si no hay teléfono, mostramos formulario
-    if (!currentUser || !currentUser.tel) {
-        if(infoBox) infoBox.classList.add('hidden');
-        if(formBox) formBox.classList.remove('hidden');
-        return;
-    }
+        function renderPromosCatalog() {
+            const container = document.getElementById('promos-container');
+            const bannerMartes = document.getElementById('martes-banner');
+            if (!container) return;
 
-    // Si hay usuario, mostramos info y cupones
-    if(formBox) formBox.classList.add('hidden');
-    if(infoBox) infoBox.classList.remove('hidden');
-    
-    const lblNombre = document.getElementById('lbl-nombre');
-    if(lblNombre) lblNombre.innerText = `¡Hola, ${currentUser.nombre}! 👋`;
+            const hoy = new Date().getDay(); 
 
-    // Renderizado de cupones
-    if (currentUser.cupones && currentUser.cupones.length > 0) {
-        cupCont.innerHTML = currentUser.cupones.map(c => `
-            <div style="background:var(--bg); border:1px solid ${c.usado ? '#333' : 'var(--primary)'}; padding:15px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; opacity: ${c.usado ? '0.6' : '1'}">
-                <div style="flex: 1;">
-                    <h4 style="color:var(--white); font-weight:700; font-size:14px; margin-bottom:2px;">${c.titulo}</h4>
-                    <p style="color:var(--text-light); font-size:11px;">${c.desc}</p>
-                </div>
-                <button 
-                    onclick="window.aplicarCuponDesdeRegalos('${c.id}')" 
-                    style="
-                        background: ${c.usado ? 'transparent' : 'var(--primary)'}; 
-                        border: 1px solid ${c.usado ? 'var(--border)' : 'var(--primary)'}; 
-                        color: ${c.usado ? 'var(--text-light)' : 'black'}; 
-                        padding: 8px 15px; 
-                        border-radius: 8px; 
-                        font-weight: 800; 
-                        font-size: 11px; 
-                        cursor: pointer;
-                        min-width: 80px;
-                    " 
-                    ${c.usado ? 'disabled' : ''}>
-                    ${c.usado ? 'CANJEADO' : 'USAR'}
-                </button>
-            </div>
-        `).join('');
-    } else {
-        cupCont.innerHTML = `
-            <div style="text-align:center; padding:20px; border:1px dashed var(--border); border-radius:12px;">
-                <p style='color:var(--text-light); font-size:13px;'>No tienes regalos disponibles aún.</p>
-            </div>`;
-    }
-}
+            if (hoy === 2) {
+                if (bannerMartes) bannerMartes.classList.remove('hidden');
+            } else {
+                if (bannerMartes) bannerMartes.classList.add('hidden');
+            }
 
+            const promosVisibles = PROMOS_DATA.filter(item => {
+                return item.diaVenta === null || item.diaVenta === hoy;
+            });
 
-window.guardarPerfil = async () => {
-    const nom = document.getElementById('reg-nom').value.trim();
-    const mail = document.getElementById('reg-mail').value.trim(); // Cambiado de tel a mail
-    const tel = document.getElementById('reg-tel').value.trim();
+            if (promosVisibles.length === 0) {
+                container.innerHTML = `<p style="color:var(--text-light); text-align:center; grid-column: 1/-1;">Hoy no hay promociones especiales activas.</p>`;
+                return;
+            }
 
-    // Validar Email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(mail)) return alert("Por favor, ingresa un email válido.");
-    if (!nom || !tel) return alert("Completa todos los campos");
-
-    try {
-        if(document.getElementById('global-loader')) document.getElementById('global-loader').style.display = 'flex';
-
-        // Usamos el mail como ID único en la base de datos
-        const userRef = doc(db, "usuarios", mail.toLowerCase());
-        const userSnap = await getDoc(userRef);
-
-        let datosFinales;
-
-        if (userSnap.exists()) {
-            datosFinales = { ...userSnap.data(), nombre: nom, tel: tel };
-            await setDoc(userRef, datosFinales, { merge: true });
-        } else {
-            datosFinales = {
-                nombre: nom, email: mail.toLowerCase(), tel: tel,
-                fechaRegistro: serverTimestamp(),
-                cupones: [
-                    { id: 'REGALO-1', titulo: "BIENVENIDA", desc: "10% OFF", valor: 0.10, tipo: "porcentaje", usado: false },
-                    { id: 'REGALO-PAPAS', titulo: "PAPAS GRATIS", desc: "Papas de regalo", valor: 0, tipo: "regalo", usado: false }
-                ]
-            };
-            await setDoc(userRef, datosFinales);
-        }
-
-        currentUser = datosFinales;
-        localStorage.setItem('marvel_user', JSON.stringify(currentUser));
-        actualizarVistasPerfil();
-        alert("¡Cuenta verificada y creada con éxito!");
-
-    } catch (e) {
-        console.error(e);
-        alert("Error: " + e.message);
-    } finally {
-        if(document.getElementById('global-loader')) document.getElementById('global-loader').style.display = 'none';
-    }
-};
-
-
-function renderPromosCatalog() {
-    const container = document.getElementById('promos-container');
-    const bannerMartes = document.getElementById('martes-banner'); // El banner que pusimos en el HTML
-    if (!container) return;
-
-    // Obtener el día actual (0-6)
-    const hoy = new Date().getDay(); 
-
-    // Mostrar/Ocultar el banner de "Martes de Promo"
-    if (hoy === 2) {
-        if (bannerMartes) bannerMartes.classList.remove('hidden');
-    } else {
-        if (bannerMartes) bannerMartes.classList.add('hidden');
-    }
-
-    // Filtrar las promos: que no tengan día restringido O que coincidan con hoy
-    const promosVisibles = PROMOS_DATA.filter(item => {
-        return item.diaVenta === null || item.diaVenta === hoy;
-    });
-
-    if (promosVisibles.length === 0) {
-        container.innerHTML = `<p style="color:var(--text-light); text-align:center; grid-column: 1/-1;">Hoy no hay promociones especiales activas.</p>`;
-        return;
-    }
-
-    container.innerHTML = promosVisibles.map(item => `
-        <div class="promo-card">
-            <div class="badge-promo">${item.diaVenta === 2 ? 'SOLO POR HOY' : 'PROMO'}</div>
-            <img src="${item.img}" style="width:100%; height:140px; object-fit:cover; border-radius:10px; margin-bottom:10px;">
-            <h3 style="font-size:16px; font-weight:800;">${item.n}</h3>
-            <p style="font-size:12px; color:var(--text-light); margin: 5px 0;">${item.d}</p>
-            
-            <div class="price-container">
-                <span class="old-price">$${item.pOriginal.toLocaleString()}</span>
-                <span class="new-price">$${item.p.toLocaleString()}</span>
-            </div>
-
-            <button class="btn-action" 
-                    onclick='openModal(${JSON.stringify(item)})' 
-                    style="margin-top:12px; padding:10px; font-size:13px;">
-                AGREGAR PROMO
-            </button>
-        </div>
-    `).join('');
-}
-
-function renderCenaHoy() {
-    const container = document.getElementById('cena-hoy-container');
-    const hoy = new Date().getDay(); // 0-6
-    const burgerDelDia = CALENDARIO_MARVEL[hoy];
-
-    // Definimos las dos versiones de la promo
-    const opciones = [
-        {
-            ...burgerDelDia,
-            id: `PROMO-DIA-NORMAL-${hoy}`,
-            n: `${burgerDelDia.n} (PROMO)`,
-            pOriginal: 15500,
-            p: 13000,
-            badge: "MARVEL DEL DÍA"
-        },
-        {
-            ...burgerDelDia,
-            id: `PROMO-DIA-VEGGIE-${hoy}`,
-            n: `${burgerDelDia.n} VEGGIE (PROMO)`,
-            pOriginal: 11900,
-            p: 10600,
-            badge: "VERSIÓN VEGGIE"
-        }
-    ];
-
-    container.innerHTML = `
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-            ${opciones.map(item => `
-                <div class="promo-card" style="padding: 10px;">
-                    <div class="badge-promo" style="font-size: 8px;">${item.badge}</div>
-                    <h3 style="font-size: 14px; margin-top: 25px; min-height: 40px;">${item.n}</h3>
+            container.innerHTML = promosVisibles.map(item => `
+                <div class="promo-card">
+                    <div class="badge-promo">${item.diaVenta === 2 ? 'SOLO POR HOY' : 'PROMO'}</div>
+                    <img src="${item.img}" style="width:100%; height:140px; object-fit:cover; border-radius:10px; margin-bottom:10px;">
+                    <h3 style="font-size:16px; font-weight:800;">${item.n}</h3>
+                    <p style="font-size:12px; color:var(--text-light); margin: 5px 0;">${item.d}</p>
                     
-                    <div class="price-container" style="flex-direction: column; align-items: flex-start; gap: 2px;">
-                        <span class="old-price" style="font-size: 12px;">$${item.pOriginal.toLocaleString()}</span>
-                        <span class="new-price" style="font-size: 16px;">$${item.p.toLocaleString()}</span>
+                    <div class="price-container">
+                        <span class="old-price">$${item.pOriginal.toLocaleString()}</span>
+                        <span class="new-price">$${item.p.toLocaleString()}</span>
                     </div>
 
                     <button class="btn-action" 
                             onclick='openModal(${JSON.stringify(item)})' 
-                            style="margin-top:10px; padding:8px; font-size:11px; width: 100%;">
-                        AGREGAR
+                            style="margin-top:12px; padding:10px; font-size:13px;">
+                        AGREGAR PROMO
                     </button>
                 </div>
-            `).join('')}
-        </div>
-    `;
-}
-
-// Llamar a la función al inicio
-renderCenaHoy();
-
-window.enviarCodigoVerificacion = () => {
-    const mail = document.getElementById('reg-mail').value.trim();
-    const nom = document.getElementById('reg-nom').value.trim();
-    if(!mail || !nom) return alert("Por favor completa nombre y email");
-
-    // Generamos un código de 4 dígitos
-    codigoSimulado = Math.floor(1000 + Math.random() * 9000).toString();
-    
-    // SIMULACIÓN: En un entorno real aquí usarías EmailJS o Firebase Auth.
-    alert(`[SIMULACIÓN MAIL] De: Marvel Food\nPara: ${mail}\nTu código de acceso es: ${codigoSimulado}`);
-
-    document.getElementById('registro-paso-1').classList.add('hidden');
-    document.getElementById('registro-paso-2').classList.remove('hidden');
-};
-
-window.verificarCodigoYGuardar = async () => {
-    const inputCodigo = document.getElementById('reg-codigo').value.trim();
-    const nom = document.getElementById('reg-nom').value.trim();
-    const mail = document.getElementById('reg-mail').value.trim().toLowerCase();
-    const tel = document.getElementById('reg-tel').value.trim();
-
-    if(inputCodigo !== codigoSimulado) return alert("Código incorrecto. Revisa tu mail.");
-
-    try {
-        const userRef = doc(db, "usuarios", mail);
-        const userSnap = await getDoc(userRef);
-
-        if (userSnap.exists()) {
-            currentUser = userSnap.data();
-        } else {
-            currentUser = {
-                nombre: nom, email: mail, tel: tel,
-                fechaRegistro: serverTimestamp(),
-                cupones: [
-                    { id: 'CUPON-BIENVENIDA', titulo: "10% OFF", desc: "En tu primer pedido", valor: 0.10, tipo: "porcentaje", usado: false },
-                    { id: 'CUPON-PAPAS', titulo: "PAPAS GRATIS", desc: "Papas chicas de regalo", valor: 0, tipo: "regalo", usado: false }
-                ]
-            };
-            await setDoc(userRef, currentUser);
+            `).join('');
         }
 
-        localStorage.setItem('marvel_user', JSON.stringify(currentUser));
-        actualizarVistasPerfil();
-        alert("¡Verificación exitosa!");
-    } catch (e) {
-        alert("Error al conectar con la base de datos");
-        console.error(e);
-    }
-};
+        function renderCenaHoy() {
+            const container = document.getElementById('cena-hoy-container');
+            const hoy = new Date().getDay();
+            const burgerDelDia = CALENDARIO_MARVEL[hoy];
 
+            const opciones = [
+                {
+                    ...burgerDelDia,
+                    id: `PROMO-DIA-NORMAL-${hoy}`,
+                    n: `${burgerDelDia.n} (PROMO)`,
+                    pOriginal: 15500,
+                    p: 13000,
+                    badge: "MARVEL DEL DÍA",
+                    ings: [] // CORRECCIÓN
+                },
+                {
+                    ...burgerDelDia,
+                    id: `PROMO-DIA-VEGGIE-${hoy}`,
+                    n: `${burgerDelDia.n} VEGGIE (PROMO)`,
+                    pOriginal: 11900,
+                    p: 10600,
+                    badge: "VERSIÓN VEGGIE",
+                    ings: [] // CORRECCIÓN
+                }
+            ];
 
+            container.innerHTML = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    ${opciones.map(item => `
+                        <div class="promo-card" style="padding: 10px;">
+                            <div class="badge-promo" style="font-size: 8px;">${item.badge}</div>
+                            <h3 style="font-size: 14px; margin-top: 25px; min-height: 40px;">${item.n}</h3>
+                            
+                            <div class="price-container" style="flex-direction: column; align-items: flex-start; gap: 2px;">
+                                <span class="old-price" style="font-size: 12px;">$${item.pOriginal.toLocaleString()}</span>
+                                <span class="new-price" style="font-size: 16px;">$${item.p.toLocaleString()}</span>
+                            </div>
 
-
-
-  </script>
+                            <button class="btn-action" 
+                                    onclick='openModal(${JSON.stringify(item)})' 
+                                    style="margin-top:10px; padding:8px; font-size:11px; width: 100%;">
+                                AGREGAR
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+    </script>
 </body>
 </html>

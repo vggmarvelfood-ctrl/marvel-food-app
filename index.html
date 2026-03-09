@@ -326,27 +326,47 @@
             </div>
     </div>
 
-    <div id="tab-perfil" class="tab-page hidden" style="padding: 20px;">
-        <div id="perfil-form">
-            <h2 style="font-weight: 800; margin-bottom: 10px;">MI PERFIL</h2>
-            <p style="color: var(--text-light); margin-bottom: 20px;">Registrate para recibir regalos y cupones.</p>
-            <input type="text" id="reg-nom" class="ui-input" placeholder="Nombre">
-            <input type="text" id="reg-ape" class="ui-input" placeholder="Apellido">
-            <input type="number" id="reg-tel" class="ui-input" placeholder="WhatsApp (Ej: 3416123456)">
-            <button class="btn-action" onclick="guardarPerfil()">GUARDAR DATOS</button>
+<div id="tab-perfil" class="tab-page hidden" style="padding: 20px;">
+    <div id="perfil-form" class="hidden">
+        <h2 style="font-weight: 800; margin-bottom: 10px;">MI PERFIL</h2>
+        <p style="color: var(--text-light); margin-bottom: 20px; font-size: 14px;">Ingresa tus datos para recibir regalos exclusivos.</p>
+        
+        <div id="registro-paso-1">
+            <input type="text" id="reg-nom" class="ui-input" placeholder="Nombre completo">
+            <input type="email" id="reg-mail" class="ui-input" placeholder="tu@email.com">
+            <input type="number" id="reg-tel" class="ui-input" placeholder="WhatsApp">
+            <button class="btn-action" onclick="enviarCodigoVerificacion()">ENVIAR CÓDIGO AL MAIL</button>
         </div>
 
-        <div id="perfil-info" class="hidden">
-            <h2 id="lbl-nombre" style="color: var(--primary);"></h2>
-            <div class="m-section">MIS REGALOS 🎁</div>
-            <div id="lista-cupones-p">
-                </div>
-            
-            <div class="m-section" style="margin-top:30px;">PEDIDOS ANTERIORES</div>
-            <div id="historial-pedidos" style="font-size: 13px; color: var(--text-light);">No hay pedidos recientes.</div>
+        <div id="registro-paso-2" class="hidden" style="margin-top: 20px; border-top: 1px dashed var(--border); padding-top: 20px;">
+            <p style="color: var(--primary); font-size: 13px; margin-bottom: 10px; font-weight: 700;">Te enviamos un código (simulado) al correo.</p>
+            <input type="number" id="reg-codigo" class="ui-input" placeholder="Ingresa el código de 4 dígitos">
+            <button class="btn-action" style="background: #10b981;" onclick="verificarCodigoYGuardar()">VERIFICAR Y ENTRAR</button>
+            <button onclick="document.getElementById('registro-paso-2').classList.add('hidden'); document.getElementById('registro-paso-1').classList.remove('hidden');" 
+                    style="background: transparent; color: var(--text-light); border: none; width: 100%; margin-top: 10px; font-size: 12px;">Volver a intentar</button>
+        </div>
+    </div>
+
+    <div id="perfil-info" class="hidden">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <div>
+                <h2 id="lbl-nombre" style="color: var(--primary); font-weight:800; margin:0;"></h2>
+                <p id="lbl-mail" style="font-size:12px; color:var(--text-light);"></p>
+            </div>
+            <button onclick="cerrarSesion()" style="background:transparent; border:1px solid #333; color:#999; padding:5px 10px; border-radius:8px; font-size:10px;">SALIR</button>
+        </div>
+
+        <div style="background:var(--surface); border-radius:16px; padding:20px; border:1px solid var(--border);">
+            <h3 style="font-weight:800; font-size:15px; margin-bottom:15px; display:flex; align-items:center; gap:8px;">
+                <span>🎁</span> MIS CUPONES Y REGALOS
+            </h3>
+            <div id="lista-cupones-p"></div>
         </div>
     </div>
 </div>
+
+
+
     <div class="cart-float" onclick="toggleCart()">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
         <span id="cart-badge" class="badge-qty">0</span>
@@ -461,7 +481,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
         
         const firebaseConfig = { apiKey: "AIzaSyAeRlE9S5pnEUuhxRXoOX6lMX4Ryky0uSI", authDomain: "marvel-food-fa570.firebaseapp.com", projectId: "marvel-food-fa570", storageBucket: "marvel-food-fa570.firebasestorage.app", messagingSenderId: "351263580699", appId: "1:351263580699:web:9ba99708a021e5eabecebe" };
         const app = initializeApp(firebaseConfig);
@@ -472,27 +492,19 @@ let cuponAplicado = null; // Guardará el objeto del cupón { id, titulo, valor,
 
 
 // Función que se llama desde la pestaña de "Regalos"
-window.aplicarCuponDesdeRegalos = (idCupon) => {
-    const cupon = currentUser.cupones.find(c => c.id === idCupon);
-    
-    if (!cupon || cupon.usado) {
-        alert("Este cupón no está disponible.");
-        return;
-    }
+window.aplicarCuponDesdeRegalos = (cuponId) => {
+    const cupon = currentUser.cupones.find(c => c.id === cuponId);
+    if (!cupon || cupon.usado) return;
 
-    // Definimos el valor del descuento según el ID
-    if (idCupon === 'CUPON-10') {
-        cuponAplicado = { id: idCupon, titulo: "10% OFF", valor: 0.10, tipo: "porcentaje" };
-    } else if (idCupon === 'CUPON-PAPAS') {
-        cuponAplicado = { id: idCupon, titulo: "Papas Chicas de Regalo", valor: 0, tipo: "regalo" };
-    }
-
-    alert(`¡Cupón "${cuponAplicado.titulo}" seleccionado! Se aplicará al finalizar tu pedido.`);
+    cuponActivo = cupon; // Lo activamos globalmente
+    alert(`¡Cupón "${cupon.titulo}" aplicado! Verás el descuento en tu carrito.`);
     
-    // Cambiamos a la pestaña de inicio para que el usuario siga comprando
-    switchTab('tab-inicio', document.querySelectorAll('.nav-item')[0]);
-    renderCartItems(); // Actualizamos el carrito si ya tenía cosas
+    // Refrescar el carrito para que calcule el descuento
+    actualizarTotales(); 
+    // Volver al inicio
+    switchTab('tab-inicio', document.querySelector('.nav-item'));
 };
+
 
 const CALENDARIO_MARVEL = {
     0: { n: "DOMINGO CHISBURGER", img: "URL_IMAGEN" },
@@ -549,6 +561,8 @@ const PROMOS_DATA = [
 
         let carrito = [];
         let tProd = null;
+let cuponActivo = null; // Aquí se guarda el cupón cuando le das a "USAR"
+let codigoSimulado = null;
         let isDelivery = true;
         let coordenadasGPS = null;
 
@@ -950,116 +964,102 @@ function actualizarVistasPerfil() {
     const formBox = document.getElementById('perfil-form');
     const cupCont = document.getElementById('lista-cupones-p');
 
-    if (!currentUser.tel) {
-        infoBox.classList.add('hidden');
-        formBox.classList.remove('hidden');
+    // Si no hay teléfono, mostramos formulario
+    if (!currentUser || !currentUser.tel) {
+        if(infoBox) infoBox.classList.add('hidden');
+        if(formBox) formBox.classList.remove('hidden');
         return;
     }
 
-    formBox.classList.add('hidden');
-    infoBox.classList.remove('hidden');
-    document.getElementById('lbl-nombre').innerText = `¡Hola, ${currentUser.nombre}! 👋`;
+    // Si hay usuario, mostramos info y cupones
+    if(formBox) formBox.classList.add('hidden');
+    if(infoBox) infoBox.classList.remove('hidden');
+    
+    const lblNombre = document.getElementById('lbl-nombre');
+    if(lblNombre) lblNombre.innerText = `¡Hola, ${currentUser.nombre}! 👋`;
 
-    // Renderizado de cupones dentro del contenedor
+    // Renderizado de cupones
     if (currentUser.cupones && currentUser.cupones.length > 0) {
         cupCont.innerHTML = currentUser.cupones.map(c => `
-            <div style="background:var(--surface); border:1px solid var(--border); padding:15px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <div>
-                    <h4 style="color:var(--white); font-weight:700;">${c.titulo}</h4>
-                    <p style="color:var(--text-light); font-size:12px;">${c.desc}</p>
+            <div style="background:var(--bg); border:1px solid ${c.usado ? '#333' : 'var(--primary)'}; padding:15px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; opacity: ${c.usado ? '0.6' : '1'}">
+                <div style="flex: 1;">
+                    <h4 style="color:var(--white); font-weight:700; font-size:14px; margin-bottom:2px;">${c.titulo}</h4>
+                    <p style="color:var(--text-light); font-size:11px;">${c.desc}</p>
                 </div>
                 <button 
                     onclick="window.aplicarCuponDesdeRegalos('${c.id}')" 
-                    style="background:transparent; border:1px solid var(--primary); color:var(--primary); padding:8px 12px; border-radius:8px; font-weight:bold; cursor:pointer;" 
+                    style="
+                        background: ${c.usado ? 'transparent' : 'var(--primary)'}; 
+                        border: 1px solid ${c.usado ? 'var(--border)' : 'var(--primary)'}; 
+                        color: ${c.usado ? 'var(--text-light)' : 'black'}; 
+                        padding: 8px 15px; 
+                        border-radius: 8px; 
+                        font-weight: 800; 
+                        font-size: 11px; 
+                        cursor: pointer;
+                        min-width: 80px;
+                    " 
                     ${c.usado ? 'disabled' : ''}>
-                    ${c.usado ? 'USADO' : 'USAR'}
+                    ${c.usado ? 'CANJEADO' : 'USAR'}
                 </button>
             </div>
         `).join('');
     } else {
-        cupCont.innerHTML = "<p style='color:var(--text-light);'>No tienes cupones disponibles.</p>";
+        cupCont.innerHTML = `
+            <div style="text-align:center; padding:20px; border:1px dashed var(--border); border-radius:12px;">
+                <p style='color:var(--text-light); font-size:13px;'>No tienes regalos disponibles aún.</p>
+            </div>`;
     }
 }
-  
+
+
 window.guardarPerfil = async () => {
-    const nombre = document.getElementById('reg-nom').value.trim();
-    const apellido = document.getElementById('reg-ape').value.trim();
+    const nom = document.getElementById('reg-nom').value.trim();
+    const mail = document.getElementById('reg-mail').value.trim(); // Cambiado de tel a mail
     const tel = document.getElementById('reg-tel').value.trim();
 
-    // Validaciones básicas
-    if (!nombre || !apellido || !tel) {
-        return alert("Por favor, completa todos los campos para registrarte.");
-    }
-
-    if (tel.length < 8) {
-        return alert("Por favor, ingresa un número de WhatsApp válido.");
-    }
-
-    const loader = document.getElementById('global-loader');
-    if(loader) loader.style.display = 'flex';
+    // Validar Email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(mail)) return alert("Por favor, ingresa un email válido.");
+    if (!nom || !tel) return alert("Completa todos los campos");
 
     try {
-        // Referencia al documento del usuario usando su teléfono como ID único
-        const userRef = doc(db, "usuarios", tel);
+        if(document.getElementById('global-loader')) document.getElementById('global-loader').style.display = 'flex';
+
+        // Usamos el mail como ID único en la base de datos
+        const userRef = doc(db, "usuarios", mail.toLowerCase());
         const userSnap = await getDoc(userRef);
 
-        let datosUsuario;
+        let datosFinales;
 
         if (userSnap.exists()) {
-            // Si el usuario ya existe, solo actualizamos nombre y apellido
-            datosUsuario = {
-                ...userSnap.data(),
-                nombre: nombre,
-                apellido: apellido,
-                ultimaActualizacion: serverTimestamp()
-            };
-            await setDoc(userRef, datosUsuario, { merge: true });
-            alert(`¡Hola de nuevo, ${nombre}! Datos actualizados.`);
+            datosFinales = { ...userSnap.data(), nombre: nom, tel: tel };
+            await setDoc(userRef, datosFinales, { merge: true });
         } else {
-            // Si es NUEVO, le regalamos sus primeros cupones
-            datosUsuario = {
-                nombre: nombre,
-                apellido: apellido,
-                tel: tel,
+            datosFinales = {
+                nombre: nom, email: mail.toLowerCase(), tel: tel,
                 fechaRegistro: serverTimestamp(),
-                puntos: 0,
                 cupones: [
-                    { 
-                        id: 'CUPON-BIENVENIDA', 
-                        titulo: "10% OFF BIENVENIDA", 
-                        desc: "Descuento en tu primera burger", 
-                        valor: 0.10, 
-                        tipo: "porcentaje", 
-                        usado: false 
-                    },
-                    { 
-                        id: 'CUPON-PAPAS', 
-                        titulo: "PAPAS DE REGALO", 
-                        desc: "Papas chicas gratis con tu pedido", 
-                        valor: 0, 
-                        tipo: "regalo", 
-                        usado: false 
-                    }
+                    { id: 'REGALO-1', titulo: "BIENVENIDA", desc: "10% OFF", valor: 0.10, tipo: "porcentaje", usado: false },
+                    { id: 'REGALO-PAPAS', titulo: "PAPAS GRATIS", desc: "Papas de regalo", valor: 0, tipo: "regalo", usado: false }
                 ]
             };
-            await setDoc(userRef, datosUsuario);
-            alert("¡Registro exitoso! Ya puedes usar tus cupones de regalo.");
+            await setDoc(userRef, datosFinales);
         }
 
-        // Guardar en memoria local y actualizar la interfaz
-        currentUser = datosUsuario;
+        currentUser = datosFinales;
         localStorage.setItem('marvel_user', JSON.stringify(currentUser));
-        
-        // Refrescar la vista de perfil
         actualizarVistasPerfil();
+        alert("¡Cuenta verificada y creada con éxito!");
 
     } catch (e) {
-        console.error("Error al guardar perfil:", e);
-        alert("Hubo un error al guardar tus datos. Intenta nuevamente.");
+        console.error(e);
+        alert("Error: " + e.message);
     } finally {
-        if(loader) loader.style.display = 'none';
+        if(document.getElementById('global-loader')) document.getElementById('global-loader').style.display = 'none';
     }
 };
+
 
 function renderPromosCatalog() {
     const container = document.getElementById('promos-container');
@@ -1157,6 +1157,60 @@ function renderCenaHoy() {
 
 // Llamar a la función al inicio
 renderCenaHoy();
+
+window.enviarCodigoVerificacion = () => {
+    const mail = document.getElementById('reg-mail').value.trim();
+    const nom = document.getElementById('reg-nom').value.trim();
+    if(!mail || !nom) return alert("Por favor completa nombre y email");
+
+    // Generamos un código de 4 dígitos
+    codigoSimulado = Math.floor(1000 + Math.random() * 9000).toString();
+    
+    // SIMULACIÓN: En un entorno real aquí usarías EmailJS o Firebase Auth.
+    alert(`[SIMULACIÓN MAIL] De: Marvel Food\nPara: ${mail}\nTu código de acceso es: ${codigoSimulado}`);
+
+    document.getElementById('registro-paso-1').classList.add('hidden');
+    document.getElementById('registro-paso-2').classList.remove('hidden');
+};
+
+window.verificarCodigoYGuardar = async () => {
+    const inputCodigo = document.getElementById('reg-codigo').value.trim();
+    const nom = document.getElementById('reg-nom').value.trim();
+    const mail = document.getElementById('reg-mail').value.trim().toLowerCase();
+    const tel = document.getElementById('reg-tel').value.trim();
+
+    if(inputCodigo !== codigoSimulado) return alert("Código incorrecto. Revisa tu mail.");
+
+    try {
+        const userRef = doc(db, "usuarios", mail);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+            currentUser = userSnap.data();
+        } else {
+            currentUser = {
+                nombre: nom, email: mail, tel: tel,
+                fechaRegistro: serverTimestamp(),
+                cupones: [
+                    { id: 'CUPON-BIENVENIDA', titulo: "10% OFF", desc: "En tu primer pedido", valor: 0.10, tipo: "porcentaje", usado: false },
+                    { id: 'CUPON-PAPAS', titulo: "PAPAS GRATIS", desc: "Papas chicas de regalo", valor: 0, tipo: "regalo", usado: false }
+                ]
+            };
+            await setDoc(userRef, currentUser);
+        }
+
+        localStorage.setItem('marvel_user', JSON.stringify(currentUser));
+        actualizarVistasPerfil();
+        alert("¡Verificación exitosa!");
+    } catch (e) {
+        alert("Error al conectar con la base de datos");
+        console.error(e);
+    }
+};
+
+
+
+
 
   </script>
 </body>

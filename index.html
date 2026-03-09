@@ -7,186 +7,245 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #e23636; /* Mantenemos el rojo Marvel para acentos */
-            --dark: #1a1a1a; /* Negro de la referencia */
-            --bg: #f9fafb;
+            /* Paleta Dark Premium basada en las referencias */
+            --primary: #f59e0b; /* Naranja/Amarillo vibrante */
+            --dark: #000000;
+            --bg: #121212;
+            --surface: #1e1e1e;
             --white: #ffffff;
-            --text: #111827;
-            --text-light: #6b7280;
-            --border: #e5e7eb;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-            --shadow-card: 0 2px 12px rgba(0,0,0,0.06);
+            --text: #f9fafb;
+            --text-light: #9ca3af;
+            --border: #333333;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+            --shadow-card: 0 8px 16px rgba(0,0,0,0.4);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background-color: var(--white); color: var(--text); overflow-x: hidden; padding-bottom: 80px; /* Espacio para el nav inferior */ }
+        body { background-color: var(--bg); color: var(--text); overflow-x: hidden; padding-bottom: 80px; }
 
         /* Utilidades y Animaciones */
         @keyframes slideUp { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
         @keyframes modalSlide { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
         .hidden { display: none !important; }
 
-        /* Header (Estilo Referencia) */
-        .top-header { display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; background: var(--white); position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--border); }
-        .brand-container { display: flex; align-items: center; gap: 12px; }
-        .brand-logo { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
-        .brand-name { font-weight: 800; font-size: 18px; color: var(--dark); }
-        .login-btn { display: flex; align-items: center; gap: 6px; background: none; border: none; font-weight: 600; font-size: 14px; color: var(--text); cursor: pointer; }
-        .login-btn svg { width: 20px; height: 20px; }
-
-        /* Selector Delivery/Retiro (Estilo Referencia) */
-        .type-toggle { display: flex; gap: 10px; padding: 15px 20px 5px; background: var(--white); }
-        .type-btn { flex: 1; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 14px; border: 1px solid var(--border); background: var(--white); color: var(--text); cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: 0.2s; }
-        .type-btn.active { background: var(--dark); color: var(--white); border-color: var(--dark); }
-
-        /* Selector de Sucursal y Dirección (Estilo Referencia) */
-        .address-bar { display: flex; align-items: center; margin: 10px 20px; border: 1px solid var(--border); border-radius: 8px; background: var(--white); overflow: hidden; }
-        .address-bar select { flex: 1; padding: 12px 15px; border: none; outline: none; font-weight: 500; font-size: 14px; color: var(--text); background: transparent; cursor: pointer; border-right: 1px solid var(--border); }
-        .address-bar button { padding: 0 15px; background: none; border: none; cursor: pointer; color: var(--text-light); }
-
-        /* Categorías Nav (Estilo Referencia) */
-        .nav-cats { display: flex; overflow-x: auto; padding: 15px 20px; gap: 10px; scrollbar-width: none; background: var(--white); }
-        .nav-cats::-webkit-scrollbar { display: none; }
-        .cat-tag { padding: 8px 16px; border-radius: 20px; background: var(--white); border: 1px solid var(--border); font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; cursor: pointer; transition: 0.2s; }
-        .cat-tag.active { border-color: var(--dark); box-shadow: 0 0 0 1px var(--dark); }
-
-        /* Tarjetas de Producto (Estilo Referencia Móvil) */
-        #menu-container { padding: 0 20px; background: var(--white); }
-        .cat-title { font-size: 20px; font-weight: 700; margin: 20px 0 15px; color: var(--dark); }
+        /* HERO SLIDER (Carrusel Pantalla Completa) */
+        .hero-slider {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scrollbar-width: none; /* Ocultar scrollbar Firefox */
+            position: relative;
+        }
+        .hero-slider::-webkit-scrollbar { display: none; }
+        .hero-slide {
+            flex: 0 0 100vw;
+            height: 100vh;
+            scroll-snap-align: start;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 40px 20px 100px 20px; /* Espacio inferior para el indicador */
+        }
+        .hero-slide::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.1) 100%);
+            z-index: 1;
+        }
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+        .hero-title { font-size: 42px; font-weight: 800; color: var(--white); line-height: 1.1; margin-bottom: 10px; text-transform: uppercase; }
+        .hero-title span { color: var(--primary); }
+        .hero-subtitle { font-size: 16px; color: #d1d5db; margin-bottom: 20px; max-width: 80%; }
         
-        .card-p { display: flex; gap: 15px; background: var(--white); border-radius: 12px; padding: 12px; margin-bottom: 15px; border: 1px solid var(--border); box-shadow: var(--shadow-card); cursor: pointer; transition: 0.2s; align-items: center; }
-        .card-p:active { transform: scale(0.98); }
-        .p-img { width: 90px; height: 90px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
-        .p-txt { flex: 1; display: flex; flex-direction: column; justify-content: center; }
-        .p-txt h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; color: var(--dark); }
-        .p-txt p { font-size: 13px; color: var(--text-light); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 8px; }
-        .p-action-row { display: flex; align-items: center; gap: 8px; }
-        .add-btn { width: 24px; height: 24px; border-radius: 50%; background: var(--dark); color: var(--white); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; border: none; }
-        .p-price { font-weight: 800; font-size: 16px; color: var(--dark); }
+        .scroll-indicator {
+            position: absolute;
+            bottom: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--white);
+            animation: bounce 2s infinite;
+            opacity: 0.8;
+        }
+        .scroll-indicator svg { width: 30px; height: 30px; }
+
+        /* Top Header sobre el Hero */
+        .top-header { position: fixed; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); z-index: 100; transition: background 0.3s; }
+        .top-header.scrolled { background: rgba(18, 18, 18, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
+        .brand-container { display: flex; align-items: center; gap: 12px; }
+        .brand-logo { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); }
+        .brand-name { font-weight: 800; font-size: 18px; color: var(--white); }
+
+        /* Contenedor Principal (Debajo del Hero) */
+        .main-content {
+            background: var(--bg);
+            position: relative;
+            z-index: 10;
+            padding-top: 20px;
+        }
+
+        /* Selector Delivery/Retiro */
+        .type-toggle { display: flex; gap: 10px; padding: 0 20px 15px; }
+        .type-btn { flex: 1; padding: 12px; border-radius: 12px; font-weight: 700; font-size: 14px; border: 2px solid var(--border); background: var(--surface); color: var(--text-light); cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: 0.3s; }
+        .type-btn.active { background: rgba(245, 158, 11, 0.1); color: var(--primary); border-color: var(--primary); }
+
+        /* Selector de Sucursal y Dirección */
+        .address-bar { display: flex; align-items: center; margin: 0 20px 20px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); overflow: hidden; }
+        .address-bar select { flex: 1; padding: 14px 15px; border: none; outline: none; font-weight: 600; font-size: 14px; color: var(--white); background: transparent; cursor: pointer; border-right: 1px solid var(--border); }
+        .address-bar select option { background: var(--surface); color: var(--white); }
+        .address-bar button { padding: 0 15px; background: transparent; border: none; cursor: pointer; color: var(--primary); }
+
+        /* Categorías Nav */
+        .nav-cats { display: flex; overflow-x: auto; padding: 0 20px 20px; gap: 12px; scrollbar-width: none; position: sticky; top: 70px; background: var(--bg); z-index: 90; }
+        .nav-cats::-webkit-scrollbar { display: none; }
+        .cat-tag { padding: 10px 20px; border-radius: 25px; background: var(--surface); border: 1px solid var(--border); font-size: 14px; font-weight: 700; color: var(--text-light); white-space: nowrap; cursor: pointer; transition: 0.3s; }
+        .cat-tag.active { background: var(--primary); color: var(--dark); border-color: var(--primary); }
+
+        /* Tarjetas de Producto (Grid Moderno) */
+        #menu-container { padding: 0 20px; }
+        .cat-title { font-size: 24px; font-weight: 800; margin: 10px 0 20px; color: var(--white); text-transform: uppercase; letter-spacing: 1px; }
+        
+        .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        
+        .card-p { background: var(--surface); border-radius: 16px; border: 1px solid var(--border); overflow: hidden; cursor: pointer; transition: 0.3s; display: flex; flex-direction: column; }
+        .card-p:active { transform: scale(0.96); }
+        .p-img-wrapper { position: relative; padding-top: 100%; /* Aspect ratio 1:1 */ }
+        .p-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        .p-txt { padding: 15px; display: flex; flex-direction: column; flex: 1; justify-content: space-between; }
+        .p-txt h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; color: var(--white); line-height: 1.2; }
+        .p-txt p { font-size: 12px; color: var(--text-light); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 12px; }
+        .p-action-row { display: flex; align-items: center; justify-content: space-between; margin-top: auto; }
+        .p-price { font-weight: 800; font-size: 16px; color: var(--primary); }
+        .add-btn { width: 32px; height: 32px; border-radius: 10px; background: var(--primary); color: var(--dark); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; border: none; }
 
         /* Bottom Navigation */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--white); border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; z-index: 500; overflow-x: auto; scrollbar-width: none; }
-        .bottom-nav::-webkit-scrollbar { display: none; }
-        .nav-item { flex: 1; min-width: 70px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: var(--text-light); text-decoration: none; cursor: pointer; font-size: 10px; font-weight: 600; text-align: center; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(30, 30, 30, 0.95); backdrop-filter: blur(10px); border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; z-index: 500; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: var(--text-light); text-decoration: none; cursor: pointer; font-size: 10px; font-weight: 600; }
         .nav-item svg { width: 22px; height: 22px; }
-        .nav-item.active { color: var(--dark); }
+        .nav-item.active { color: var(--primary); }
 
         /* Botón de Carrito Flotante */
-        .cart-float { position: fixed; bottom: 85px; right: 20px; background: var(--primary); color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(226, 54, 54, 0.4); z-index: 400; cursor: pointer; transition: 0.3s; }
+        .cart-float { position: fixed; bottom: 85px; right: 20px; background: var(--primary); color: var(--dark); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(245, 158, 11, 0.4); z-index: 400; cursor: pointer; transition: 0.3s; }
         .cart-float:active { transform: scale(0.9); }
-        .badge-qty { position: absolute; top: 0; right: 0; background: var(--dark); color: white; border-radius: 50%; width: 22px; height: 22px; font-size: 12px; font-weight: bold; display: flex; align-items: center; justify-content: center; border: 2px solid white; }
+        .badge-qty { position: absolute; top: -2px; right: -2px; background: var(--white); color: var(--dark); border-radius: 50%; width: 24px; height: 24px; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; border: 2px solid var(--primary); }
 
-        /* Modal y UI (Adaptado) */
-        .ui-label { font-size: 12px; font-weight: 700; color: var(--text-light); text-transform: uppercase; margin-bottom: 8px; display: block; }
-        .ui-input { width: 100%; padding: 14px; border-radius: 8px; border: 1px solid var(--border); font-size: 14px; outline: none; background: var(--white); margin-bottom: 15px; font-weight: 500; }
-        .ui-input:focus { border-color: var(--dark); box-shadow: 0 0 0 2px rgba(26, 26, 26, 0.1); }
-        .btn-action { background: var(--dark); color: var(--white); border: none; padding: 16px; border-radius: 8px; font-weight: 700; cursor: pointer; width: 100%; font-size: 16px; transition: 0.2s; }
+        /* UI Elements Globales */
+        .ui-input { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid var(--border); font-size: 14px; outline: none; background: var(--bg); color: var(--white); margin-bottom: 15px; font-weight: 500; transition: 0.2s; }
+        .ui-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2); }
+        .btn-action { background: var(--primary); color: var(--dark); border: none; padding: 16px; border-radius: 12px; font-weight: 800; cursor: pointer; width: 100%; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; }
+        .btn-action:active { transform: scale(0.98); }
+        .m-section { font-size: 13px; font-weight: 800; color: var(--text-light); margin: 25px 0 10px; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* GPS Button */
+        .btn-gps { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px dashed #10b981; padding: 12px; border-radius: 10px; width: 100%; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px; cursor: pointer; }
         
-        /* Modal de Producto */
-        .modal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(2px); z-index: 2000; display: none; justify-content: center; align-items: flex-end; }
-        .modal-sheet { background: var(--white); width: 100%; max-width: 500px; height: 90vh; border-radius: 24px 24px 0 0; overflow-y: auto; display: flex; flex-direction: column; animation: modalSlide 0.3s ease-out; position: relative; }
-        .m-close { position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.9); width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; z-index: 10; box-shadow: var(--shadow); border: 1px solid var(--border); }
-        .m-hero { height: 250px; background-size: cover; background-position: center; }
+        /* Modal General */
+        .modal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px); z-index: 2000; display: none; justify-content: center; align-items: flex-end; }
+        .modal-sheet { background: var(--surface); width: 100%; max-width: 500px; height: 90vh; border-radius: 24px 24px 0 0; overflow-y: auto; display: flex; flex-direction: column; animation: modalSlide 0.3s ease-out; position: relative; }
+        .m-close { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.5); color: white; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; z-index: 10; backdrop-filter: blur(4px); }
+        
+        /* Contenido Modal Producto */
+        .m-hero { height: 280px; background-size: cover; background-position: center; position: relative; }
+        .m-hero::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 50px; background: linear-gradient(to top, var(--surface), transparent); }
         .m-content { padding: 20px; flex: 1; }
-        .m-section { font-size: 14px; font-weight: 700; color: var(--dark); margin: 20px 0 10px; }
-        .custom-check { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 14px; font-weight: 500; }
+        .custom-check { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 15px; font-weight: 500; }
         .custom-check input { display: none; }
-        .check-box { width: 20px; height: 20px; border: 2px solid var(--text-light); border-radius: 4px; display: flex; align-items: center; justify-content: center; }
-        .custom-check input:checked + .check-box { background: var(--dark); border-color: var(--dark); }
-        .custom-check input:checked + .check-box::after { content: '✓'; color: white; font-size: 12px; }
+        .check-box { width: 22px; height: 22px; border: 2px solid var(--text-light); border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .custom-check input:checked + .check-box { background: var(--primary); border-color: var(--primary); }
+        .custom-check input:checked + .check-box::after { content: '✓'; color: var(--dark); font-size: 14px; font-weight: bold; }
 
-        /* Carrito Vista Lateral */
-        #cart-view { position: fixed; top: 0; right: 0; width: 100%; max-width: 450px; height: 100dvh; background: var(--bg); z-index: 3000; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s ease-out; box-shadow: -5px 0 25px rgba(0,0,0,0.1); }
+        /* Carrito Lateral */
+        #cart-view { position: fixed; top: 0; right: 0; width: 100%; max-width: 450px; height: 100dvh; background: var(--bg); z-index: 3000; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s ease-out; box-shadow: -10px 0 30px rgba(0,0,0,0.5); }
         #cart-view.open { transform: translateX(0); }
-
-        /* Modal Genérico de Información (Rangos, Medios de pago, etc) */
-        #info-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 4000; display: none; align-items: center; justify-content: center; padding: 20px; }
-        .info-card { background: white; width: 100%; max-width: 400px; border-radius: 16px; padding: 25px; position: relative; max-height: 80vh; overflow-y: auto; }
-
-        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 12px 24px; border-radius: 50px; font-weight: 600; font-size: 14px; z-index: 5000; opacity: 0; transition: 0.3s; pointer-events: none; }
+        
+        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 12px 24px; border-radius: 50px; font-weight: 700; font-size: 14px; z-index: 5000; opacity: 0; transition: 0.3s; pointer-events: none; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
         #toast.show { opacity: 1; transform: translateX(-50%) translateY(10px); }
-        #global-loader { position: fixed; inset: 0; background: var(--white); z-index: 10000; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-        .spinner { width: 40px; height: 40px; border: 3px solid #e5e7eb; border-top: 3px solid var(--dark); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
     <div id="toast">¡Agregado al pedido!</div>
 
-    <div id="global-loader" style="display:none;">
-        <div class="spinner"></div>
-        <div style="margin-top: 15px; font-weight: 600;">Cargando...</div>
-    </div>
-
-    <header class="top-header">
+    <header class="top-header" id="header">
         <div class="brand-container">
             <img src="https://pency-images.nyc3.digitaloceanspaces.com/marvelfoodabasto/1760661165087.jpg" alt="Logo" class="brand-logo">
-            <span class="brand-name">Marvel Food</span>
+            <span class="brand-name">MARVEL FOOD</span>
         </div>
-        <button class="login-btn" onclick="mostrarInfo('Ingreso', 'Próximamente podrás crear tu cuenta para guardar tus direcciones.')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-            Acceder
-        </button>
     </header>
 
-    <div class="type-toggle">
-        <button id="btn-tipo-del" class="type-btn active" onclick="setGeneralDelivery(true)">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h2a2 2 0 0 1 2 2l2.6 3.6a2 2 0 0 1 .4 1.2V16a2 2 0 0 1-2 2h-2M15 18H9M19 22a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM7 22a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/></svg>
-            Reparto
-        </button>
-        <button id="btn-tipo-ret" class="type-btn" onclick="setGeneralDelivery(false)">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l8-4 8 4v14M9 21v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4"/></svg>
-            Recogida
-        </button>
+    <div class="hero-slider">
+        <div class="hero-slide" style="background-image: url('https://pency-images.nyc3.digitaloceanspaces.com/marvelfoodabasto/1760658566420.jpg');">
+            <div class="hero-content">
+                <h1 class="hero-title">LA MEJOR DE LA CARTA<br><span>Nuestra Hulk</span></h1>
+                <p class="hero-subtitle">Doble carne, cheddar, panceta, cebolla caramelizada, bbq.</p>
+                <button class="btn-action" style="width: auto; padding: 12px 24px;" onclick="scrollToMenu()">Pedir Ahora</button>
+            </div>
+        </div>
+        <div class="hero-slide" style="background-image: url('https://pency-images.nyc3.digitaloceanspaces.com/marvelfoodabasto/1760659273628.jpg');">
+            <div class="hero-content">
+                <h1 class="hero-title">ESPECIAL<br><span>FIN DE SEMANA</span></h1>
+                <p class="hero-subtitle">Con la compra de 2 combos, llevate unas papas cheddar de regalo.</p>
+                <button class="btn-action" style="width: auto; padding: 12px 24px;" onclick="scrollToMenu()">Aprovechar</button>
+            </div>
+        </div>
+        
+        <div class="scroll-indicator" onclick="scrollToMenu()">
+            <span style="font-size: 12px; font-weight: 700; letter-spacing: 2px; margin-bottom: 5px;">MENÚ</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
     </div>
 
-    <div class="address-bar">
-        <select id="main-sucursal" onchange="cambiarSucursalPrincipal()">
-            <option value="" disabled selected>Seleccioná tu sucursal...</option>
-            <option value="Centro">Rosario Centro (Pellegrini)</option>
-            <option value="Norte">Zona Norte (Alberdi)</option>
-            <option value="Sur">Zona Sur / VGG</option>
-            <option value="Funes">Funes (Ruta 9)</option>
-        </select>
-        <button onclick="verMapaRangos()" title="Ver Rangos de Envío">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-        </button>
-    </div>
+    <div class="main-content" id="main-menu">
+        <div class="type-toggle">
+            <button id="btn-tipo-del" class="type-btn active" onclick="setGeneralDelivery(true)">Delivery</button>
+            <button id="btn-tipo-ret" class="type-btn" onclick="setGeneralDelivery(false)">TakeAway</button>
+        </div>
 
-    <div class="nav-cats" id="cat-list"></div>
-    
-    <div id="menu-container"></div>
+        <div class="address-bar">
+            <select id="main-sucursal" onchange="cambiarSucursalPrincipal()">
+                <option value="" disabled selected>Seleccioná tu sucursal...</option>
+                <option value="Centro">Rosario Centro (Pellegrini)</option>
+                <option value="Norte">Zona Norte (Alberdi)</option>
+                <option value="Sur">Zona Sur / VGG</option>
+                <option value="Funes">Funes (Ruta 9)</option>
+            </select>
+        </div>
+
+        <div class="nav-cats" id="cat-list"></div>
+        
+        <div id="menu-container"></div>
+    </div>
 
     <div class="cart-float" onclick="toggleCart()">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
         <span id="cart-badge" class="badge-qty">0</span>
     </div>
 
     <nav class="bottom-nav">
         <div class="nav-item active" onclick="window.scrollTo(0,0)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
             Inicio
         </div>
-        <div class="nav-item" onclick="mostrarInfo('Descuentos', '¡Los jueves tenemos 15% OFF en Smash Burgers pagando en efectivo!')">
+        <div class="nav-item">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="5" x2="5" y2="19"></line><circle cx="6.5" cy="6.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg>
-            Descuentos
+            Promos
         </div>
-        <div class="nav-item" onclick="mostrarInfo('Promociones', 'Comprando 2 Combos Hulk, te llevás unas papas Cheddar de regalo.')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-            Promociones
-        </div>
-        <div class="nav-item" onclick="mostrarInfo('Regalos', 'Acumulá puntos con tu número de teléfono y canjealos por productos gratis.')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg>
-            Regalos
-        </div>
-        <div class="nav-item" onclick="verMapaRangos()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path></svg>
-            Sucursales
-        </div>
-        <div class="nav-item" onclick="mostrarInfo('Medios de Pago', 'Aceptamos Efectivo, Transferencia Bancaria y Mercado Pago (Link de Pago).')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
-            Pagos
+        <div class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            Perfil
         </div>
     </nav>
 
@@ -195,7 +254,7 @@
             <div class="m-close" onclick="closeModal()">✕</div>
             <div class="m-hero" id="m-img"></div>
             <div class="m-content">
-                <h2 id="m-title" style="font-weight: 800; font-size: 22px; color: var(--dark);"></h2>
+                <h2 id="m-title" style="font-weight: 800; font-size: 24px; color: var(--white);"></h2>
                 <p id="m-desc" style="color: var(--text-light); margin-top: 8px; font-size: 14px; line-height: 1.5;"></p>
 
                 <div id="m-sec-ings">
@@ -204,7 +263,7 @@
                 </div>
 
                 <div id="m-sec-extras">
-                    <div class="m-section">EXTRAS</div>
+                    <div class="m-section">AGREGAR EXTRAS</div>
                     <div id="m-list-extras"></div>
                 </div>
 
@@ -212,34 +271,26 @@
                 <textarea id="m-obs" class="ui-input" style="height: 80px; resize: none;" placeholder="Ej: Sin sal en las papas..."></textarea>
             </div>
             
-            <div style="padding: 15px 20px; border-top: 1px solid var(--border); background: var(--white); position: sticky; bottom: 0; z-index: 10; display: flex; gap: 15px; align-items: center;">
-                <div style="display: flex; align-items: center; border: 1px solid var(--border); border-radius: 8px; height: 50px;">
-                    <button onclick="updateMQty(-1)" style="width: 40px; height: 100%; border: none; background: transparent; font-size: 20px; cursor: pointer;">-</button>
-                    <span id="m-qty" style="width: 30px; text-align: center; font-weight: 700;">1</span>
-                    <button onclick="updateMQty(1)" style="width: 40px; height: 100%; border: none; background: transparent; font-size: 20px; cursor: pointer;">+</button>
+            <div style="padding: 15px 20px; border-top: 1px solid var(--border); background: var(--surface); position: sticky; bottom: 0; z-index: 10; display: flex; gap: 15px; align-items: center;">
+                <div style="display: flex; align-items: center; border: 1px solid var(--border); border-radius: 12px; height: 50px; background: var(--bg);">
+                    <button onclick="updateMQty(-1)" style="width: 40px; height: 100%; border: none; background: transparent; font-size: 20px; color: var(--white); cursor: pointer;">-</button>
+                    <span id="m-qty" style="width: 30px; text-align: center; font-weight: 800; color: var(--white);">1</span>
+                    <button onclick="updateMQty(1)" style="width: 40px; height: 100%; border: none; background: transparent; font-size: 20px; color: var(--white); cursor: pointer;">+</button>
                 </div>
                 <button class="btn-action" id="m-btn-add" onclick="confirmAdd()">Agregar</button>
             </div>
         </div>
     </div>
 
-    <div class="modal" id="info-modal">
-        <div class="info-card">
-            <div class="m-close" onclick="document.getElementById('info-modal').style.display='none'" style="top: 10px; right: 10px; width: 30px; height: 30px;">✕</div>
-            <h3 id="info-title" style="margin-bottom: 15px; font-weight: 800; color: var(--dark);"></h3>
-            <div id="info-body" style="font-size: 14px; color: var(--text-light); line-height: 1.6;"></div>
-        </div>
-    </div>
-
     <div id="cart-view">
-        <div style="padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--white);">
-            <h2 style="font-weight: 800; font-size: 20px;">Tu Pedido</h2>
-            <button onclick="toggleCart()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text);">✕</button>
+        <div style="padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--surface);">
+            <h2 style="font-weight: 800; font-size: 20px; color: var(--white);">TU ORDEN</h2>
+            <button onclick="toggleCart()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--white);">✕</button>
         </div>
         
         <div id="cart-items-list" style="flex: 1; overflow-y: auto; padding: 20px; background: var(--bg);"></div>
         
-        <div style="padding: 20px; background: var(--white); box-shadow: 0 -4px 10px rgba(0,0,0,0.05); overflow-y:auto;">
+        <div style="padding: 20px; background: var(--surface); border-top: 1px solid var(--border); overflow-y:auto; max-height: 50vh;">
             <div id="checkout-form">
                 <div class="m-section" style="margin-top: 0;">DATOS DEL CLIENTE</div>
                 <input type="text" id="c-nombre" class="ui-input" placeholder="Nombre completo">
@@ -247,10 +298,16 @@
 
                 <div id="box-envio-checkout">
                     <div class="m-section">DATOS DE ENVÍO</div>
+                    
+                    <button type="button" class="btn-gps" onclick="obtenerUbicacion()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                        <span id="loc-status">Enviar mi ubicación exacta</span>
+                    </button>
+
                     <select id="c-loc" class="ui-input" style="margin-bottom: 10px;">
                         <option value="" disabled selected>Seleccioná localidad</option>
                     </select>
-                    <input type="text" id="c-dir" class="ui-input" placeholder="Dirección (Calle y Altura)">
+                    <input type="text" id="c-dir" class="ui-input" placeholder="Calle y Altura (Obligatorio)">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                         <input type="text" id="c-piso" class="ui-input" placeholder="Piso (Opc.)">
                         <input type="text" id="c-depto" class="ui-input" placeholder="Depto (Opc.)">
@@ -261,82 +318,104 @@
                 <select id="p-metodo" class="ui-input" onchange="toggleVuelto()">
                     <option value="Efectivo">Efectivo</option>
                     <option value="Transferencia">Transferencia bancaria</option>
-                    <option value="Link de Pago">Mercado Pago</option>
+                    <option value="Mercado Pago">Mercado Pago</option>
                 </select>
                 <div id="vuelto-box">
-                    <input type="number" id="p-vuelto" class="ui-input" placeholder="¿Con cuánto abonás en efectivo?">
+                    <input type="number" id="p-vuelto" class="ui-input" placeholder="¿Con cuánto abonás? (Ej: 20000)">
                 </div>
 
-                <div style="border-top: 1px dashed var(--border); margin: 15px 0; padding-top: 15px;">
+                <div style="border-top: 1px dashed var(--border); margin: 20px 0; padding-top: 15px;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: var(--text-light);">
                         <span>Subtotal</span> <span id="res-sub">$ 0</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; margin-bottom: 15px; color: var(--text-light);">
                         <span id="txt-envio-tipo">Envío</span> <span id="res-envio">$ 0</span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; font-size: 20px; font-weight: 800; color: var(--dark);">
+                    <div style="display: flex; justify-content: space-between; font-size: 22px; font-weight: 800; color: var(--primary);">
                         <span>Total</span> <span id="res-total">$ 0</span>
                     </div>
                 </div>
                 
-                <button class="btn-action" onclick="procesarPedido()">CONFIRMAR PEDIDO</button>
+                <button class="btn-action" onclick="procesarPedido()">ENVIAR PEDIDO POR WHATSAPP</button>
             </div>
         </div>
     </div>
 
     <script type="module">
-        // Firebase Setup (Se mantiene igual)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
         
-        const firebaseConfig = {
-            apiKey: "AIzaSyAeRlE9S5pnEUuhxRXoOX6lMX4Ryky0uSI",
-            authDomain: "marvel-food-fa570.firebaseapp.com",
-            projectId: "marvel-food-fa570",
-            storageBucket: "marvel-food-fa570.firebasestorage.app",
-            messagingSenderId: "351263580699",
-            appId: "1:351263580699:web:9ba99708a021e5eabecebe"
-        };
+        const firebaseConfig = { apiKey: "AIzaSyAeRlE9S5pnEUuhxRXoOX6lMX4Ryky0uSI", authDomain: "marvel-food-fa570.firebaseapp.com", projectId: "marvel-food-fa570", storageBucket: "marvel-food-fa570.firebasestorage.app", messagingSenderId: "351263580699", appId: "1:351263580699:web:9ba99708a021e5eabecebe" };
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Datos del Sistema
         const SUC_MAP = {
-            Centro: { n: "Zona Centro", wsp: "3413315885", mapImg: "https://i.ibb.co/231rcdfJ/CENTRO.png", locs: { "Rosario": 2000 } },
-            Norte: { n: "Zona Norte", wsp: "3413315885", mapImg: "https://i.ibb.co/tM1NSHTv/NORTE.png", locs: { "Rosario Norte": 2200, "Gdor. Baigorria": 3500 } },
-            Sur: { n: "Zona Sur", wsp: "3413315885", mapImg: "https://i.ibb.co/1BNnzX5/VGG.png", locs: { "Villa Gdor. Gálvez": 3000, "Rosario Sur": 2500 } },
-            Funes: { n: "Funes", wsp: "3413315885", mapImg: "https://i.ibb.co/84MNBwGC/mapas-2026-5-Funes.png", locs: { "Funes": 1800, "Fisherton": 2500 } }
+            Centro: { n: "Zona Centro", wsp: "3413315885", locs: { "Rosario": 2000 } },
+            Norte: { n: "Zona Norte", wsp: "3413315885", locs: { "Rosario Norte": 2200, "Gdor. Baigorria": 3500 } },
+            Sur: { n: "Zona Sur", wsp: "3413315885", locs: { "Villa Gdor. Gálvez": 3000, "Rosario Sur": 2500 } },
+            Funes: { n: "Funes", wsp: "3413315885", locs: { "Funes": 1800, "Fisherton": 2500 } }
         };
 
         const MENU = [
             { cat: "Hamburguesas", items: [
-                { id: 1, n: "Hulk Burger", p: 11800, d: "Doble carne, cheddar, cebolla caramelizada, panceta y BBQ.", img: "https://pency-images.nyc3.digitaloceanspaces.com/marvelfoodabasto/1760658566420.jpg", ings: ["Cebolla", "BBQ", "Cheddar", "Panceta"] },
+                { id: 1, n: "Hulk Burger", p: 11800, d: "Doble carne, cheddar, cebolla caramelizada, panceta y BBQ.", img: "https://pency-images.nyc3.digitaloceanspaces.com/marvelfoodabasto/1760658566420.jpg", ings: ["Cebolla", "BBQ", "Cheddar", "Panceta"] }
+            ]},
+                        { cat: "Hamburguesas smashed", items: [
                 { id: 10, n: "Perfekta Smash", p: 8900, d: "Doble smash, doble cheddar, lechuga y alioli.", img: "https://pency-images.nyc3.digitaloceanspaces.com/marvelfoodabasto/1760659273628.jpg", ings: ["Lechuga", "tomate","cheddar","salsa marvel"] }
             ]},
             { cat: "Acompañamientos", items: [
-                { id: 20, n: "Papas Cheddar", p: 7800, d: "Bañadas en nuestra salsa de queso cheddar y verdeo.", img: "https://i.ibb.co/3mSTjbmW/Papas-cheddar.png" }
+                { id: 20, n: "Papas Cheddar grandes", p: 7800, d: "Bañadas en salsa de queso cheddar y panceta crocante.", img: "https://i.ibb.co/3mSTjbmW/Papas-cheddar.png", ings: [] }
             ]}
         ];
 
-        const EXTRAS = [{ id: "e1", n: "Extra Queso", p: 1500 }, { id: "e2", n: "Extra Carne", p: 3500 }, { id: "e3", n: "Extra Bacon", p: 2000 }];
+        const EXTRAS = [{ id: "e1", n: "Extra Cheddar", p: 1500 }, { id: "e2", n: "Medallón Extra", p: 3500 }, { id: "e3", n: "Extra Bacon", p: 2000 }];
 
-        // Variables Globales
         let carrito = [];
         let tProd = null;
         let isDelivery = true;
+        let coordenadasGPS = null;
 
-        // Inicialización Directa
-        window.onload = () => {
-            renderMenu();
-            // Preseleccionar sucursal si hay una en localStorage (Opcional para mejorar UX)
-            const savedSuc = localStorage.getItem('marvel_sucursal');
-            if(savedSuc && SUC_MAP[savedSuc]) {
-                document.getElementById('main-sucursal').value = savedSuc;
-                actualizarLocalidadesCheckout();
+        window.onload = () => { renderMenu(); };
+
+        // Efecto Header Scroll
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('header');
+            if(window.scrollY > 50) header.classList.add('scrolled');
+            else header.classList.remove('scrolled');
+        });
+
+        window.scrollToMenu = () => {
+            const menu = document.getElementById('main-menu');
+            const y = menu.getBoundingClientRect().top + window.scrollY - 60;
+            window.scrollTo({top: y, behavior: 'smooth'});
+        };
+
+        // GPS Logic
+        window.obtenerUbicacion = () => {
+            const statusText = document.getElementById('loc-status');
+            statusText.innerText = "Obteniendo ubicación...";
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        coordenadasGPS = `${position.coords.latitude},${position.coords.longitude}`;
+                        statusText.innerText = "📍 Ubicación guardada con éxito";
+                        statusText.parentElement.style.background = "rgba(16, 185, 129, 0.2)";
+                        statusText.parentElement.style.border = "1px solid #10b981";
+                        statusText.style.color = "#10b981";
+                    },
+                    (error) => {
+                        statusText.innerText = "❌ Permiso denegado o error GPS";
+                        alert("No pudimos obtener tu ubicación. Por favor, asegúrate de tener el GPS encendido y darle permisos al navegador.");
+                    },
+                    { enableHighAccuracy: true }
+                );
+            } else {
+                alert("Tu navegador no soporta geolocalización.");
             }
         };
 
-        // Lógica de UI Principal
+        // UI Logic
         window.setGeneralDelivery = (isDel) => {
             isDelivery = isDel;
             document.getElementById('btn-tipo-del').classList.toggle('active', isDelivery);
@@ -347,51 +426,21 @@
 
         window.cambiarSucursalPrincipal = () => {
             const suc = document.getElementById('main-sucursal').value;
-            localStorage.setItem('marvel_sucursal', suc);
-            actualizarLocalidadesCheckout();
-            renderCartItems(); // Recalcular costos
-        };
-
-        function actualizarLocalidadesCheckout() {
-            const sucId = document.getElementById('main-sucursal').value;
             const locSelect = document.getElementById('c-loc');
             locSelect.innerHTML = `<option value="" disabled selected>Seleccioná localidad</option>`;
-            
-            if(sucId && SUC_MAP[sucId]) {
-                const locs = SUC_MAP[sucId].locs;
-                for(let l in locs) {
-                    locSelect.innerHTML += `<option value="${l}">${l} ($${locs[l]})</option>`;
-                }
+            if(suc && SUC_MAP[suc]) {
+                const locs = SUC_MAP[suc].locs;
+                for(let l in locs) { locSelect.innerHTML += `<option value="${l}">${l} (+$${locs[l]})</option>`; }
             }
-        }
-
-        window.verMapaRangos = () => {
-            const sucId = document.getElementById('main-sucursal').value;
-            if(!sucId) return mostrarInfo('Atención', 'Primero seleccioná una sucursal en la barra superior para ver sus zonas de entrega.');
-            
-            const data = SUC_MAP[sucId];
-            let html = `<div style="margin-bottom:15px;">`;
-            for(let l in data.locs) { html += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; border-bottom:1px solid #eee; padding-bottom:5px;"><span>${l}</span> <b>$${data.locs[l]}</b></div>`; }
-            html += `</div>`;
-            if(data.mapImg) html += `<img src="${data.mapImg}" style="width:100%; border-radius:12px; border:1px solid #eee;">`;
-            
-            mostrarInfo(`Cobertura ${data.n}`, html);
+            renderCartItems();
         };
 
-        window.mostrarInfo = (titulo, contenido) => {
-            document.getElementById('info-title').innerText = titulo;
-            document.getElementById('info-body').innerHTML = contenido;
-            document.getElementById('info-modal').style.display = 'flex';
-        };
-
-        // Renderizado de Menú Estilo "Yellow Burgerine"
         function renderMenu() {
             const cats = document.getElementById('cat-list');
             const menu = document.getElementById('menu-container');
             cats.innerHTML = ""; menu.innerHTML = "";
 
             MENU.forEach((c, idx) => {
-                // Pill de Categoría
                 const btn = document.createElement('button');
                 btn.className = `cat-tag ${idx===0?'active':''}`;
                 btn.innerText = c.cat;
@@ -404,31 +453,34 @@
                 };
                 cats.appendChild(btn);
 
-                // Sección del Menú
                 const sec = document.createElement('div');
                 sec.id = `sec-${idx}`;
                 sec.innerHTML = `<h3 class="cat-title">${c.cat}</h3>`;
                 
+                let gridHtml = `<div class="menu-grid">`;
                 c.items.forEach(p => {
-                    sec.innerHTML += `
+                    gridHtml += `
                         <div class="card-p" onclick='openModal(${JSON.stringify(p)})'>
-                            <img class="p-img" src="${p.img}" alt="${p.n}">
+                            <div class="p-img-wrapper"><img class="p-img" src="${p.img}" alt="${p.n}"></div>
                             <div class="p-txt">
-                                <h3>${p.n}</h3>
-                                <p>${p.d}</p>
+                                <div>
+                                    <h3>${p.n}</h3>
+                                    <p>${p.d}</p>
+                                </div>
                                 <div class="p-action-row">
+                                    <span class="p-price">$${p.p.toLocaleString()}</span> 
                                     <button class="add-btn">+</button>
-                                    <span class="p-price">${p.p.toLocaleString()} $</span> 
-                                    </div>
+                                </div>
                             </div>
                         </div>
                     `;
                 });
+                gridHtml += `</div>`;
+                sec.innerHTML += gridHtml;
                 menu.appendChild(sec);
             });
         }
 
-        // Lógica de Modal de Producto
         window.openModal = (p) => {
             tProd = { ...p, cant: 1, sin: [], con: [], obs: "" };
             document.getElementById('m-title').innerText = p.n;
@@ -438,18 +490,13 @@
             document.getElementById('m-obs').value = "";
 
             const ingList = document.getElementById('m-list-ings');
-            if(p.ings.length > 0) {
+            if(p.ings && p.ings.length > 0) {
                 document.getElementById('m-sec-ings').classList.remove('hidden');
-                ingList.innerHTML = p.ings.map(i => `
-                    <label class="custom-check"><span>Sin ${i}</span><input type="checkbox" onchange="toggleSin('${i}')"><div class="check-box"></div></label>
-                `).join('');
+                ingList.innerHTML = p.ings.map(i => `<label class="custom-check"><span>Sin ${i}</span><input type="checkbox" onchange="toggleSin('${i}')"><div class="check-box"></div></label>`).join('');
             } else document.getElementById('m-sec-ings').classList.add('hidden');
 
             const extList = document.getElementById('m-list-extras');
-            document.getElementById('m-sec-extras').classList.remove('hidden');
-            extList.innerHTML = EXTRAS.map(e => `
-                <label class="custom-check"><span>${e.n} (+$${e.p})</span><input type="checkbox" onchange="toggleExt('${e.id}')"><div class="check-box"></div></label>
-            `).join('');
+            extList.innerHTML = EXTRAS.map(e => `<label class="custom-check"><span>${e.n} (+$${e.p})</span><input type="checkbox" onchange="toggleExt('${e.id}')"><div class="check-box"></div></label>`).join('');
 
             updateModalBtn();
             document.getElementById('m-prod').style.display = 'flex';
@@ -466,7 +513,7 @@
         window.updateMQty = (v) => { tProd.cant = Math.max(1, tProd.cant + v); document.getElementById('m-qty').innerText = tProd.cant; updateModalBtn(); };
         function updateModalBtn() {
             let u = tProd.p; tProd.con.forEach(e => u += e.p);
-            document.getElementById('m-btn-add').innerText = `Agregar • $ ${(u * tProd.cant).toLocaleString()}`;
+            document.getElementById('m-btn-add').innerText = `Agregar • $${(u * tProd.cant).toLocaleString()}`;
         }
 
         window.closeModal = () => document.getElementById('m-prod').style.display = 'none';
@@ -475,42 +522,33 @@
             tProd.obs = document.getElementById('m-obs').value;
             let u = tProd.p; tProd.con.forEach(e => u += e.p);
             carrito.push({ ...tProd, totalItem: u * tProd.cant });
-            updateCartUI();
-            closeModal();
+            updateCartUI(); renderCartItems(); closeModal();
             const t = document.getElementById('toast');
-            t.classList.add('show');
-            setTimeout(() => { t.classList.remove('show'); }, 2000);
+            t.classList.add('show'); setTimeout(() => { t.classList.remove('show'); }, 2000);
         };
 
-        // Lógica del Carrito
-        window.toggleCart = () => { 
-            document.getElementById('cart-view').classList.toggle('open'); 
-            renderCartItems(); 
-        };
-        
+        window.toggleCart = () => { document.getElementById('cart-view').classList.toggle('open'); };
         function updateCartUI() { document.getElementById('cart-badge').innerText = carrito.reduce((s,i)=>s+i.cant,0); }
         window.toggleVuelto = () => document.getElementById('vuelto-box').style.display = (document.getElementById('p-metodo').value === 'Efectivo') ? 'block' : 'none';
 
         function renderCartItems() {
             const list = document.getElementById('cart-items-list');
             let sub = 0;
-            if(carrito.length === 0) {
-                list.innerHTML = `<div style="text-align:center; color:var(--text-light); margin-top:40px;">Tu pedido está vacío 🍔</div>`;
-            } else {
+            if(carrito.length === 0) list.innerHTML = `<div style="text-align:center; color:var(--text-light); margin-top:40px;">Tu pedido está vacío 🍔</div>`;
+            else {
                 list.innerHTML = carrito.map((i, idx) => {
                     sub += i.totalItem;
                     return `
-                        <div style="background:var(--white); border-radius:12px; padding:15px; margin-bottom:15px; border:1px solid var(--border);">
-                            <div style="display:flex; justify-content:space-between; font-weight:700; font-size:15px;">
-                                <span>${i.cant}x ${i.n}</span>
-                                <span>$${i.totalItem.toLocaleString()}</span>
+                        <div style="background:var(--surface); border-radius:12px; padding:15px; margin-bottom:15px; border:1px solid var(--border);">
+                            <div style="display:flex; justify-content:space-between; font-weight:800; font-size:15px; color:var(--white);">
+                                <span>${i.cant}x ${i.n}</span><span>$${i.totalItem.toLocaleString()}</span>
                             </div>
-                            <div style="font-size:13px; color:var(--text-light); margin-top:6px;">
-                                ${i.sin.length ? 'Sin: '+i.sin.join(', ')+'<br>' : ''} 
-                                ${i.con.length ? 'Extras: '+i.con.map(x=>x.n).join(', ')+'<br>' : ''}
+                            <div style="font-size:12px; color:var(--text-light); margin-top:6px;">
+                                ${i.sin.length ? '<span style="color:#ef4444;">Sin:</span> '+i.sin.join(', ')+'<br>' : ''} 
+                                ${i.con.length ? '<span style="color:var(--primary);">Extras:</span> '+i.con.map(x=>x.n).join(', ')+'<br>' : ''}
                             </div>
-                            <div style="text-align:right; margin-top:8px;">
-                                <span onclick="delItem(${idx})" style="color:var(--primary); font-size:12px; font-weight:700; cursor:pointer;">ELIMINAR</span>
+                            <div style="text-align:right; margin-top:10px;">
+                                <span onclick="delItem(${idx})" style="color:#ef4444; font-size:12px; font-weight:800; cursor:pointer;">ELIMINAR</span>
                             </div>
                         </div>
                     `;
@@ -519,84 +557,70 @@
 
             const sucId = document.getElementById('main-sucursal').value;
             const locName = document.getElementById('c-loc') ? document.getElementById('c-loc').value : '';
-            
-            let costoEnvio = 0;
-            if (isDelivery && sucId && SUC_MAP[sucId] && locName && SUC_MAP[sucId].locs[locName]) {
-                costoEnvio = SUC_MAP[sucId].locs[locName];
-            }
+            let costoEnvio = (isDelivery && sucId && SUC_MAP[sucId] && locName && SUC_MAP[sucId].locs[locName]) ? SUC_MAP[sucId].locs[locName] : 0;
 
-            document.getElementById('txt-envio-tipo').innerText = isDelivery ? `Envío a domicilio` : `Recogida en local`;
-            document.getElementById('res-envio').innerText = isDelivery ? (costoEnvio > 0 ? `$ ${costoEnvio.toLocaleString()}` : 'A calcular') : `Gratis`;
-            document.getElementById('res-sub').innerText = `$ ${sub.toLocaleString()}`;
-            document.getElementById('res-total').innerText = `$ ${(sub + costoEnvio).toLocaleString()}`;
-            
-            // Re-vincular evento onChange a localidad para actualizar costos en vivo
+            document.getElementById('txt-envio-tipo').innerText = isDelivery ? `Envío` : `Retiro en local`;
+            document.getElementById('res-envio').innerText = isDelivery ? (costoEnvio > 0 ? `$${costoEnvio.toLocaleString()}` : 'A calcular') : `Gratis`;
+            document.getElementById('res-sub').innerText = `$${sub.toLocaleString()}`;
+            document.getElementById('res-total').innerText = `$${(sub + costoEnvio).toLocaleString()}`;
             document.getElementById('c-loc').addEventListener('change', renderCartItems);
         }
 
         window.delItem = (i) => { carrito.splice(i,1); updateCartUI(); renderCartItems(); };
 
-        // Procesar Pedido (Firebase + WhatsApp)
         window.procesarPedido = async () => {
             if (carrito.length === 0) return alert("Agregá productos a tu pedido primero.");
-            
             const sucId = document.getElementById('main-sucursal').value;
-            if(!sucId) return alert("Por favor, seleccioná la sucursal arriba antes de pedir.");
+            if(!sucId) return alert("Seleccioná tu sucursal en el menú principal.");
 
             const nombre = document.getElementById('c-nombre').value;
             const tel = document.getElementById('c-tel').value;
-            if(!nombre || !tel) return alert("Completá tu nombre y teléfono.");
+            if(!nombre || !tel) return alert("Completá tu nombre y WhatsApp.");
 
             const loc = document.getElementById('c-loc').value;
             const dir = document.getElementById('c-dir').value;
             if(isDelivery && (!loc || !dir)) return alert("Completá localidad y dirección para el envío.");
 
             const pago = document.getElementById('p-metodo').value;
-            const vueltoRaw = document.getElementById('p-vuelto').value;
-            const vuelto = parseFloat(vueltoRaw) || 0;
+            const vuelto = parseFloat(document.getElementById('p-vuelto').value) || 0;
 
             let sub = carrito.reduce((s, i) => s + i.totalItem, 0);
             let envio = isDelivery ? SUC_MAP[sucId].locs[loc] : 0;
             let total = sub + envio;
 
-            if (pago === 'Efectivo' && vuelto < total) return alert(`El monto a abonar debe ser mayor o igual al total ($${total}).`);
-
-            document.getElementById('global-loader').style.display = 'flex';
+            if (pago === 'Efectivo' && vuelto > 0 && vuelto < total) return alert(`El monto a abonar debe ser mayor al total ($${total}).`);
 
             const ordenDatos = {
-                cliente: nombre.toUpperCase(),
-                telefono: tel,
-                sucursal: SUC_MAP[sucId].n,
-                tipo: isDelivery ? 'Delivery' : 'Retiro por local',
-                localidad: isDelivery ? loc : 'N/A',
-                direccion: isDelivery ? dir : 'Retiro en sucursal',
-                pisoDepto: isDelivery ? `${document.getElementById('c-piso').value} ${document.getElementById('c-depto').value}`.trim() : '',
-                items: carrito.map(i => ({ n: i.n, cant: i.cant, totalItem: i.totalItem, sin: i.sin, con: i.con.map(e => e.n), obs: i.obs })),
-                subtotal: sub, envio: envio, total: total, metodoPago: pago, abonaCon: pago === 'Efectivo' ? vuelto : 0,
-                estado: "Pendiente", fechaCreacion: serverTimestamp()
+                cliente: nombre.toUpperCase(), tel, sucursal: SUC_MAP[sucId].n, tipo: isDelivery ? 'Delivery' : 'Retiro',
+                loc: isDelivery ? loc : 'N/A', dir: isDelivery ? dir : 'N/A', gps: coordenadasGPS || 'No provisto',
+                piso: isDelivery ? `${document.getElementById('c-piso').value} ${document.getElementById('c-depto').value}` : '',
+                items: carrito, total, pago, estado: "Pendiente", fecha: serverTimestamp()
             };
 
             try {
-                await addDoc(collection(db, "pedidos"), ordenDatos);
+                // Guardar en Firebase
+                await addDoc(collection(db, "pedidos_v2"), ordenDatos);
 
-                let t = `*NUEVO PEDIDO | MARVEL FOOD*%0A---------------------------------%0A`;
-                t += `*Cliente:* ${ordenDatos.cliente}%0A*Tel:* ${tel}%0A*Sucursal:* ${ordenDatos.sucursal}%0A*Tipo:* ${ordenDatos.tipo}%0A`;
-                if (isDelivery) t += `*Dirección:* ${dir} ${ordenDatos.pisoDepto}%0A*Localidad:* ${loc}%0A`;
-                t += `---------------------------------%0A`;
+                // Armar msj WhatsApp
+                let t = `🍔 *NUEVO PEDIDO | MARVEL FOOD*%0A---------------------------%0A`;
+                t += `*Cliente:* ${ordenDatos.cliente}%0A*Sucursal:* ${ordenDatos.sucursal}%0A*Tipo:* ${ordenDatos.tipo}%0A`;
+                if (isDelivery) {
+                    t += `*Dirección:* ${dir} ${ordenDatos.piso}%0A*Localidad:* ${loc}%0A`;
+                    if (coordenadasGPS) t += `📍 *Ubicación GPS:* https://maps.google.com/?q=${coordenadasGPS}%0A`;
+                }
+                t += `---------------------------%0A`;
                 carrito.forEach(i => {
                     t += `*${i.cant}x ${i.n}* ($${i.totalItem})%0A`;
-                    if(i.sin.length) t += `_Sin: ${i.sin.join(', ')}_%0A`;
-                    if(i.con.length) t += `_Extras: ${i.con.map(x=>x.n).join(', ')}_%0A`;
-                    if(i.obs) t += `_Nota: ${i.obs}_%0A`;
+                    if(i.sin.length) t += `   _Sin: ${i.sin.join(', ')}_%0A`;
+                    if(i.con.length) t += `   _Extras: ${i.con.map(x=>x.n).join(', ')}_%0A`;
+                    if(i.obs) t += `   _Nota: ${i.obs}_%0A`;
                 });
-                t += `---------------------------------%0A*TOTAL:* $${total}%0A*Pago:* ${pago}%0A`;
-                if (pago === 'Efectivo') t += `*Abona con:* $${vuelto}%0A`;
+                t += `---------------------------%0A*TOTAL: $${total}*%0A*Pago:* ${pago}%0A`;
+                if (pago === 'Efectivo' && vuelto > 0) t += `*Abona con:* $${vuelto} (Vuelto: $${vuelto - total})%0A`;
 
-                document.getElementById('global-loader').style.display = 'none';
                 window.location.href = `https://wa.me/${SUC_MAP[sucId].wsp}?text=${t}`;
-            } catch (error) {
-                document.getElementById('global-loader').style.display = 'none';
-                alert("Error: " + error.message);
+            } catch (e) {
+                alert("Error al procesar: " + e.message);
             }
         };
     </script>

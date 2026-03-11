@@ -1131,26 +1131,26 @@ window.verificarCodigoYGuardar = async () => {
 
     try {
         document.body.style.cursor = 'wait';
-        // Usamos la constante 'db' que definiste arriba
         const userRef = db.collection("usuarios").doc(mail);
         const userSnap = await userRef.get();
 
-        if (userSnap.exists()) {
+        // CORRECCIÓN AQUÍ: Quitamos los () de exists
+        if (userSnap.exists) { 
             const dataServidor = userSnap.data();
             
-            // Verificamos el código (el de Firebase o el de la memoria local)
+            // Verificamos el código
             if (inputCodigo !== dataServidor.codigoTemporal && inputCodigo !== codigoSimulado) {
                 document.body.style.cursor = 'default';
                 return alert("Código incorrecto. Revisá tu mail.");
             }
 
-            // LOGIN: Cargamos los datos y nos aseguramos de que existan los cupones
+            // LOGIN: Cargamos los datos
             currentUser = {
                 ...dataServidor,
-                cupones: dataServidor.cupones || [] // Si no tiene cupones, le ponemos una lista vacía para que no explote
+                cupones: dataServidor.cupones || []
             };
             
-            // Limpiamos el código usado en la base de datos
+            // Limpiamos el código usado
             await userRef.update({ 
                 codigoTemporal: firebase.firestore.FieldValue.delete() 
             });
@@ -1181,12 +1181,12 @@ window.verificarCodigoYGuardar = async () => {
 
     } catch (e) {
         console.error("Error detallado:", e);
-        // Ahora la alerta te dirá el error REAL si vuelve a fallar
-        alert("Error Firestore: " + e.message);
+        alert("Error de Sistema: " + e.message);
     } finally {
         document.body.style.cursor = 'default';
     }
 };
+
 
 window.cerrarSesion = () => {
     if(confirm("¿Estás seguro que quieres cerrar sesión?")) {

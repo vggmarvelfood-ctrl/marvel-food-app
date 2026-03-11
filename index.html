@@ -180,7 +180,7 @@
         <div class="hero-slide" style="background-image: url('https://i.ibb.co/gbVs3Lw1/Peter-Pepsi.png');">
             <div class="hero-content">
                 <h1 class="hero-title">Arma tu combo<br><span>Corta la semana</span></h1>
-                <p class="hero-subtitle">Arma tu combo preferido y sumale una bebida.</p>
+                <p class="hero-subtitle">sumale una bebida a tu combo Preferido.</p>
                 <button class="btn-action" style="width: auto; padding: 12px 24px;" onclick="scrollToMenu()">Aprovechar</button>
             </div>
         </div>
@@ -188,9 +188,18 @@
             <div class="hero-content">
                 <h1 class="hero-title">PROMOS<br><span>PARA VOS</span></h1>
                 <p class="hero-subtitle">Aprovecha las mejores promos del momento y disfruta de marvel!.</p>
-                <button class="btn-action" style="width: auto; padding: 12px 24px;" onclick="scrollToMenu()">Aprovechar</button>
+                <button class="btn-action" style="width: auto; padding: 12px 24px;" onclick="scrollToMenu()">Conocer mas</button>
             </div>
         </div>
+
+        <div class="hero-slide" style="background-image: url('https://i.ibb.co/hRgTKHLs/DSC-4850.jpg');">
+            <div class="hero-content">
+                <h1 class="hero-title">CALIDAD ASEGURADA<br><span>MARVEL FOOD</span></h1>
+                <p class="hero-subtitle">Somos mas que una burger!</p>
+                <button class="btn-action" style="width: auto; padding: 12px 24px;" onclick="scrollToMenu()">Menu</button>
+            </div>
+        </div>
+
 
         <div class="scroll-indicator" onclick="scrollToMenu()">
             <span style="font-size: 12px; font-weight: 700; letter-spacing: 2px; margin-bottom: 5px;">MENÚ</span>
@@ -313,7 +322,7 @@
         </div>
         <div class="nav-item" onclick="switchTab('tab-zonas', this)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-            Zonas
+            Locales
         </div>
         <div class="nav-item" onclick="switchTab('tab-perfil', this)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
@@ -482,10 +491,10 @@
         ];
 
 const SUC_MAP = {
-            Centro: { n: "Rosario, Zona Centro - Sur", mapImg: "https://i.ibb.co/231rcdfJ/CENTRO.png", locs: { "Rosario": 2000 } },
-            Norte: { n: "Rosario, Zona Norte-Baigorria", mapImg: "https://i.ibb.co/tM1NSHTv/NORTE.png", locs: { "Rosario Norte": 2200, "Granadero. Baigorria": 3500 } },
-            Sur: { n: "Rosario, Zona Sur-VGG", mapImg: "https://i.ibb.co/1BNnzX5/VGG.png", locs: { "Villa Gdor. Gálvez": 3000, "Rosario Sur": 2500 } },
-            Funes: { n: "Funes - Fisherton", mapImg: "https://i.ibb.co/84MNBwGC/mapas-2026-5-Funes.png", locs: { "Funes": 1800, "Fisherton": 2500, "Variante costo barrios privados Funes-Fisherton": 0 } }
+            Centro: { n: "Rosario, Zona Centro - Sur", wsp: "5493413315885", mapImg: "https://i.ibb.co/231rcdfJ/CENTRO.png", locs: { "Rosario": 2000 } },
+            Norte: { n: "Rosario, Zona Norte-Baigorria", wsp: "5493413315885", mapImg: "https://i.ibb.co/tM1NSHTv/NORTE.png", locs: { "Rosario Norte": 2200, "Granadero. Baigorria": 3500 } },
+            Sur: { n: "Rosario, Zona Sur-VGG", wsp: "5493413315885", mapImg: "https://i.ibb.co/1BNnzX5/VGG.png", locs: { "Villa Gdor. Gálvez": 3000, "Rosario Sur": 2500 } },
+            Funes: { n: "Funes - Fisherton", wsp: "5493413315885", mapImg: "https://i.ibb.co/84MNBwGC/mapas-2026-5-Funes.png", locs: { "Funes": 1800, "Fisherton": 2500, "Variante costo barrios privados Funes-Fisherton": 0 } }
         };
 
         const MENU = [

@@ -530,9 +530,14 @@
                     <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: var(--text-light);">
                         <span>Subtotal</span> <span id="res-sub">$ 0</span>
                     </div>
+                    
                     <div style="display: flex; justify-content: space-between; margin-bottom: 15px; color: var(--text-light);">
                         <span id="txt-envio-tipo">Envío</span> <span id="res-envio">$ 0</span>
                     </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+    <span>Horario estimado:</span>
+    <strong id="res-horario" style="color: var(--primary);">--:--</strong>
+</div>
                     <div style="display: flex; justify-content: space-between; font-size: 22px; font-weight: 800; color: var(--primary);">
                         <span>Total</span> <span id="res-total">$ 0</span>
                     </div>
@@ -1109,68 +1114,121 @@ function actualizarTotales() {
     }
 }
 
-        function renderCartItems() {
-            const list = document.getElementById('cart-items-list');
-            let subtotal = 0;
-            
-            if (carrito.length === 0) {
-                list.innerHTML = `<div style="text-align:center; color:var(--text-light); margin-top:40px;">Tu pedido está vacío.</div>`;
-            } else {
-                list.innerHTML = carrito.map((i, idx) => {
-                    subtotal += i.totalItem;
-                    return `
-                        <div style="background:var(--surface); border-radius:12px; padding:15px; margin-bottom:15px; border:1px solid var(--border);">
-                            <div style="display:flex; justify-content:space-between; font-weight:800; font-size:15px; color:var(--white);">
-                                <span>${i.cant}x ${i.n}</span><span>$${i.totalItem.toLocaleString()}</span>
-                            </div>
-                            <div style="text-align:right; margin-top:10px;">
-                                <span onclick="delItem(${idx})" style="color:#ef4444; font-size:12px; font-weight:800; cursor:pointer;">ELIMINAR</span>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            }
+function obtenerHorarioEstimado(esEnvio) {
+    const ahora = new Date();
+    const hActual = ahora.getHours();
+    const mActual = ahora.getMinutes();
+    const totalMinutosActual = hActual * 60 + mActual;
 
-            const sucId = document.getElementById('main-sucursal').value;
-            const locName = document.getElementById('c-loc') ? document.getElementById('c-loc').value : '';
-            let costoEnvio = (isDelivery && sucId && SUC_MAP[sucId] && locName && SUC_MAP[sucId].locs[locName]) ? SUC_MAP[sucId].locs[locName] : 0;
+    if (!esEnvio) {
+        // Lógica para Retiro: 15 a 30 minutos desde ahora
+        const minRetiro = new Date(ahora.getTime() + 15 * 60000);
+        const maxRetiro = new Date(ahora.getTime() + 30 * 60000);
+        const f = (d) => `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`;
+        return `${f(minRetiro)} a ${f(maxRetiro)} hs`;
+    }
 
-            let montoDescuento = 0;
-            let detalleDescuentoHtml = "";
+    // Rangos de Envío definidos
+    const rangos = [
+        { s: "12:00", e: "12:45" },
+        { s: "13:30", e: "14:15" },
+        { s: "14:15", e: "15:00" },
+        { s: "15:45", e: "16:30" },
+        { s: "20:15", e: "21:00" },
+        { s: "21:00", e: "21:45" },
+        { s: "21:45", e: "22:30" },
+        { s: "22:30", e: "23:15" },
+        { s: "23:15", e: "00:00" }
+    ];
 
-            if (cuponAplicado) {
-                if (cuponAplicado.tipo === "porcentaje") {
-                    montoDescuento = subtotal * cuponAplicado.valor;
-                    detalleDescuentoHtml = `
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #10b981; font-weight: 600;">
-                            <span>Beneficio: ${cuponAplicado.titulo}</span> <span>-$${montoDescuento.toLocaleString()}</span>
-                        </div>`;
-                } else if (cuponAplicado.tipo === "regalo") {
-                    detalleDescuentoHtml = `
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #10b981; font-weight: 600;">
-                            <span>Regalo: ${cuponAplicado.titulo}</span> <span>¡INCLUIDO!</span>
-                        </div>`;
-                }
-            }
+    const margenGracia = 10; // 10 minutos para "vencer" el rango actual
 
-            let totalFinal = subtotal + costoEnvio - montoDescuento;
+    for (let i = 0; i < rangos.length; i++) {
+        const [h, m] = rangos[i].s.split(':').map(Number);
+        let totalMinutosRango = h * 60 + m;
+        
+        // Manejo especial si el rango es medianoche
+        if (h === 0 && m === 0) totalMinutosRango = 24 * 60;
 
-            document.getElementById('res-sub').innerText = `$${subtotal.toLocaleString()}`;
-            document.getElementById('res-envio').innerText = isDelivery ? (costoEnvio > 0 ? `$${costoEnvio.toLocaleString()}` : 'A calcular') : `Gratis`;
-            
-            const totalBox = document.getElementById('res-total').parentElement;
-            const descuentoPrevio = document.getElementById('detalle-descuento-ui');
-            if (descuentoPrevio) descuentoPrevio.remove();
-            
-            if (detalleDescuentoHtml) {
-                const divDesc = document.createElement('div');
-                divDesc.id = "detalle-descuento-ui";
-                divDesc.innerHTML = detalleDescuentoHtml;
-                totalBox.parentNode.insertBefore(divDesc, totalBox);
-            }
-
-            document.getElementById('res-total').innerText = `$${Math.max(0, totalFinal).toLocaleString()}`;
+        // Si la hora actual es menor al inicio del rango + el margen de gracia, asignamos este
+        if (totalMinutosActual <= (totalMinutosRango + margenGracia)) {
+            return `${rangos[i].s} a ${rangos[i].e} hs`;
         }
+    }
+
+    return "Próximo turno disponible";
+}
+
+function renderCartItems() {
+    const list = document.getElementById('cart-items-list');
+    let subtotal = 0;
+    
+    if (carrito.length === 0) {
+        list.innerHTML = `<div style="text-align:center; color:var(--text-light); margin-top:40px;">Tu pedido está vacío.</div>`;
+    } else {
+        list.innerHTML = carrito.map((i, idx) => {
+            subtotal += i.totalItem;
+            return `
+                <div style="background:var(--surface); border-radius:12px; padding:15px; margin-bottom:15px; border:1px solid var(--border);">
+                    <div style="display:flex; justify-content:space-between; font-weight:800; font-size:15px; color:var(--white);">
+                        <span>${i.cant}x ${i.n}</span><span>$${i.totalItem.toLocaleString()}</span>
+                    </div>
+                    <div style="text-align:right; margin-top:10px;">
+                        <span onclick="delItem(${idx})" style="color:#ef4444; font-size:12px; font-weight:800; cursor:pointer;">ELIMINAR</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    const sucId = document.getElementById('main-sucursal').value;
+    const locName = document.getElementById('c-loc') ? document.getElementById('c-loc').value : '';
+    let costoEnvio = (isDelivery && sucId && SUC_MAP[sucId] && locName && SUC_MAP[sucId].locs[locName]) ? SUC_MAP[sucId].locs[locName] : 0;
+
+    // --- NUEVA SECCIÓN DE HORARIO ESTIMADO ---
+    const horarioTexto = obtenerHorarioEstimado(isDelivery);
+    const resHorario = document.getElementById('res-horario');
+    if (resHorario) {
+        resHorario.innerText = horarioTexto;
+    }
+    // -----------------------------------------
+
+    let montoDescuento = 0;
+    let detalleDescuentoHtml = "";
+
+    if (cuponAplicado) {
+        if (cuponAplicado.tipo === "porcentaje") {
+            montoDescuento = subtotal * cuponAplicado.valor;
+            detalleDescuentoHtml = `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #10b981; font-weight: 600;">
+                    <span>Beneficio: ${cuponAplicado.titulo}</span> <span>-$${montoDescuento.toLocaleString()}</span>
+                </div>`;
+        } else if (cuponAplicado.tipo === "regalo") {
+            detalleDescuentoHtml = `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #10b981; font-weight: 600;">
+                    <span>Regalo: ${cuponAplicado.titulo}</span> <span>¡INCLUIDO!</span>
+                </div>`;
+        }
+    }
+
+    let totalFinal = subtotal + costoEnvio - montoDescuento;
+
+    document.getElementById('res-sub').innerText = `$${subtotal.toLocaleString()}`;
+    document.getElementById('res-envio').innerText = isDelivery ? (costoEnvio > 0 ? `$${costoEnvio.toLocaleString()}` : 'A calcular') : `Gratis`;
+    
+    const totalBox = document.getElementById('res-total').parentElement;
+    const descuentoPrevio = document.getElementById('detalle-descuento-ui');
+    if (descuentoPrevio) descuentoPrevio.remove();
+    
+    if (detalleDescuentoHtml) {
+        const divDesc = document.createElement('div');
+        divDesc.id = "detalle-descuento-ui";
+        divDesc.innerHTML = detalleDescuentoHtml;
+        totalBox.parentNode.insertBefore(divDesc, totalBox);
+    }
+
+    document.getElementById('res-total').innerText = `$${Math.max(0, totalFinal).toLocaleString()}`;
+}
 
         window.delItem = (i) => { carrito.splice(i,1); updateCartUI(); renderCartItems(); };
 
@@ -1190,6 +1248,9 @@ window.procesarPedido = async () => {
 
     const pago = document.getElementById('p-metodo').value;
     const vuelto = parseFloat(document.getElementById('p-vuelto').value) || 0;
+
+    // --- NUEVO: Obtener el horario estimado antes de armar la orden ---
+    const horarioEstimadoFinal = obtenerHorarioEstimado(isDelivery);
 
     // Calcular Subtotal correctamente
     let sub = carrito.reduce((s, i) => s + i.totalItem, 0);
@@ -1216,6 +1277,7 @@ window.procesarPedido = async () => {
         tel, 
         sucursal: SUC_MAP[sucId].n, 
         tipo: isDelivery ? 'Delivery' : 'Retiro',
+        horarioEstimado: horarioEstimadoFinal, // <-- Guardado en Firebase
         loc: isDelivery ? loc : 'N/A', 
         dir: isDelivery ? dir : 'N/A', 
         gps: (typeof coordenadasGPS !== 'undefined' && coordenadasGPS) || 'No provisto',
@@ -1228,18 +1290,15 @@ window.procesarPedido = async () => {
         total: total, 
         pago, 
         estado: "Pendiente", 
-        // Corregido: sintaxis compat para timestamp
         fecha: firebase.firestore.FieldValue.serverTimestamp()
     };
 
     try {
         document.body.style.cursor = 'wait'; 
 
-        // Corregido: sintaxis db.collection().add()
         await db.collection("pedidos_v2").add(ordenDatos);
 
         if (currentUser && cuponAplicado) {
-            // Corregido: sintaxis db.collection().doc()
             const userRef = db.collection("usuarios").doc(currentUser.email || currentUser.tel);
             const userSnap = await userRef.get();
             
@@ -1250,7 +1309,6 @@ window.procesarPedido = async () => {
                     return c;
                 });
                 
-                // Corregido: sintaxis .set con merge
                 await userRef.set({ cupones: nuevosCupones }, { merge: true });
                 
                 currentUser.cupones = nuevosCupones;
@@ -1261,9 +1319,13 @@ window.procesarPedido = async () => {
         // --- Generar Mensaje de WhatsApp ---
         let t = `*NUEVO PEDIDO | MARVEL FOOD*%0A---------------------------%0A`;
         t += `*Cliente:* ${ordenDatos.cliente}%0A*Sucursal:* ${ordenDatos.sucursal}%0A*Tipo:* ${ordenDatos.tipo}%0A`;
+        
+        // Agregar el horario en el mensaje de WhatsApp
+        t += `*Horario Est.:* ${horarioEstimadoFinal}%0A`; 
+        
         if (isDelivery) {
             t += `*Dirección:* ${dir} ${ordenDatos.piso}%0A*Localidad:* ${loc}%0A`;
-            if (ordenDatos.gps !== 'No provisto') t += `*Ubicación GPS:* https://www.google.com/maps?q=${ordenDatos.gps}%0A`;
+            if (ordenDatos.gps !== 'No provisto') t += `*Ubicación GPS:* http://maps.google.com/maps?q=${ordenDatos.gps}%0A`;
         }
         t += `---------------------------%0A`;
         
@@ -1295,7 +1357,6 @@ window.procesarPedido = async () => {
         alert("Error al guardar el pedido: " + e.message);
     }
 };
-
 
         window.switchTab = (tabId, element) => {
             document.querySelectorAll('.tab-page').forEach(page => page.classList.add('hidden'));
@@ -1688,7 +1749,47 @@ window.cerrarSesion = () => {
             container.innerHTML = html;
         }
 
+// Configuración de rangos de envío (Formato 24hs)
+const RANGOS_ENVIO = [
+    { start: "12:00", end: "12:45" },
+    { start: "13:30", end: "14:15" },
+    { start: "14:15", end: "15:00" },
+    { start: "15:45", line: "16:30" },
+    { start: "20:15", end: "21:00" },
+    { start: "21:00", end: "21:45" },
+    { start: "21:45", end: "22:30" },
+    { start: "22:30", end: "23:15" },
+    { start: "23:15", end: "00:00" }
+];
 
+window.obtenerHorarioEstimado = (esDelivery) => {
+    const ahora = new Date();
+    const ahoraMinutos = ahora.getHours() * 60 + ahora.getMinutes();
+
+    if (!esDelivery) {
+        // Lógica para Retiro (15 a 30 min)
+        const minTime = new Date(ahora.getTime() + 15 * 60000);
+        const maxTime = new Date(ahora.getTime() + 30 * 60000);
+        const format = (d) => d.getHours() + ":" + d.getMinutes().toString().padStart(2, '0');
+        return `${format(minTime)} a ${format(maxTime)} hs`;
+    }
+
+    // Lógica para Envío por rangos
+    const margenGracia = 10; // 10 minutos de tolerancia antes de saltar al siguiente
+
+    for (const rango of RANGOS_ENVIO) {
+        const [hStart, mStart] = rango.start.split(':').map(Number);
+        // Si el rango es 00:00, lo tratamos como 24:00 para la comparación
+        const startTotalMinutos = (hStart === 0 ? 24 : hStart) * 60 + mStart;
+
+        // Si la hora actual es menor al inicio del rango + 10 min de gracia, asignamos este
+        if (ahoraMinutos <= (startTotalMinutos + margenGracia)) {
+            return `${rango.start} a ${rango.end} hs`;
+        }
+    }
+
+    return "Próximo turno disponible";
+};
 
     </script>
 </body>

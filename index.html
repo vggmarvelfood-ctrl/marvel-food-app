@@ -1074,43 +1074,47 @@ function obtenerCuponDelDia() {
 // Variable global para el código
 
 window.enviarCodigoVerificacion = async () => {
+    // 1. Captura de datos con IDs correctos según tu HTML
     const mailInput = document.getElementById('reg-mail').value.trim().toLowerCase();
     const nomInput = document.getElementById('reg-nom').value.trim();
     const telInput = document.getElementById('reg-tel').value.trim();
     const btn = document.querySelector('#registro-paso-1 .btn-action');
 
-    if(!mailInput || !nomInput || !telInput) return alert("Por favor completa todos los campos.");
+    if(!mailInput || !nomInput || !telInput) return alert("Por favor completa todos los campos (Nombre, Email y WhatsApp)");
 
+    // Bloqueo visual del botón para evitar múltiples clics
     btn.disabled = true;
-    btn.innerText = "PROCESANDO...";
+    btn.innerText = "VERIFICANDO...";
     document.body.style.cursor = 'wait';
 
     try {
         const usuariosRef = firebase.firestore().collection("usuarios");
         
-        // 1. Buscamos por teléfono para ver si ya tiene cuenta
+        // 2. Buscamos por teléfono en la base de datos
+        // Importante: Si esto falla, revisa que tengas habilitado Firestore en tu consola Firebase
         const queryTel = await usuariosRef.where("tel", "==", telInput).get();
         
         let mailFinal = mailInput;
         let nombreFinal = nomInput;
 
-        // Si el teléfono ya existe, recuperamos el mail real de la base de datos
+        // Si el teléfono ya existe, recuperamos los datos originales
         if (!queryTel.empty) {
             const docExistente = queryTel.docs[0];
-            mailFinal = docExistente.id; // El ID es el mail
-            nombreFinal = docExistente.data().nombre;
+            mailFinal = docExistente.id; 
+            nombreFinal = docExistente.data().nombre || nomInput;
             
-            // Actualizamos los campos visualmente para que el usuario sepa que lo reconocimos
+            // Auto-completamos para que el usuario sepa que detectamos su cuenta
             document.getElementById('reg-mail').value = mailFinal;
             document.getElementById('reg-nom').value = nombreFinal;
             
-            console.log("Usuario existente: " + mailFinal);
+            console.log("Usuario reconocido:", mailFinal);
         }
 
-        // 2. Generamos el nuevo código
+        // 3. Generamos el código de 4 dígitos
         codigoSimulado = Math.floor(1000 + Math.random() * 9000).toString();
 
-        // 3. GUARDAR EN FIREBASE (Usamos {merge: true} para no borrar sus cupones viejos)
+        // 4. GUARDADO EN FIREBASE
+        // Usamos merge: true para no borrar sus cupones o historial si ya existía
         await usuariosRef.doc(mailFinal).set({
             codigoTemporal: codigoSimulado,
             nombre: nombreFinal,
@@ -1118,7 +1122,8 @@ window.enviarCodigoVerificacion = async () => {
             ultimaConexion: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
 
-        // 4. ENVIAR MAIL (Solo después de haber guardado en la base de datos)
+        // 5. ENVÍO POR EMAILJS
+        // REVISA: El ID del servicio debe ser el que aparece en tu panel de EmailJS
         const templateParams = {
             nombre: nombreFinal,
             email_cliente: mailFinal, 
@@ -1127,24 +1132,32 @@ window.enviarCodigoVerificacion = async () => {
 
         await emailjs.send('service_2y6217j', 'template_1qepw99', templateParams);
         
-        // 5. CAMBIO DE PANTALLA
+        // 6. ÉXITO: CAMBIO DE PANTALLA
         document.getElementById('registro-paso-1').classList.add('hidden');
         document.getElementById('registro-paso-2').classList.remove('hidden');
         
         if (!queryTel.empty) {
-            alert("¡Bienvenido de nuevo! Revisa tu mail registrado: " + mailFinal);
+            alert("¡Hola de nuevo! Enviamos el código a tu mail registrado: " + mailFinal);
+        } else {
+            alert("Código enviado con éxito.");
         }
 
     } catch (error) {
-        console.error("Error en el proceso:", error);
-        alert("Hubo un problema al conectar con el servidor. Revisa tu conexión a internet.");
+        // Mostramos el error real en la consola para diagnóstico
+        console.error("Error detallado:", error);
+        
+        // Si el error es de Firebase por permisos:
+        if (error.code === 'permission-denied') {
+            alert("Error: No tienes permisos para escribir en la base de datos. Revisa las Reglas en Firebase.");
+        } else {
+            alert("Error al conectar: " + (error.message || "Revisa tu conexión"));
+        }
     } finally {
         btn.disabled = false;
         btn.innerText = "ENVIAR CÓDIGO AL MAIL";
         document.body.style.cursor = 'default';
     }
 };
-
 
 
 window.verificarCodigoYGuardar = async () => {

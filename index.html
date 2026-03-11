@@ -182,28 +182,28 @@
 
       
     <div class="hero-slider">
-        <div class="hero-slide" style="background-image: url('https://pency-images.nyc3.digitaloceanspaces.com/marvelfoodabasto/1760658566420.jpg');">
+        <div class="hero-slide" style="background-image: url('https://i.ibb.co/CsY32Zpc/Hulk-6.jpg');">
             <div class="hero-content">
                 <h1 class="hero-title">LA MEJOR DE LA CARTA<br><span>Nuestra Hulk</span></h1>
                 <p class="hero-subtitle">Doble carne, cheddar, panceta, cebolla caramelizada, bbq.</p>
                 <button class="btn-action" style="width: auto; padding: 12px 24px;" onclick="scrollToMenu()">Pedir Ahora</button>
             </div>
         </div>
-        <div class="hero-slide" style="background-image: url('https://i.ibb.co/ZzmPkFFY/Hulk-x2-papas.png');">
+        <div class="hero-slide" style="background-image: url('https://i.ibb.co/sp9f92tD/DSC04607.jpg');">
             <div class="hero-content">
                 <h1 class="hero-title">ESPECIAL<br><span>COMPARTIR UNA MARVEL</span></h1>
-                <p class="hero-subtitle">Te armamos tu combo preferido para que lo acompañes con alguien mas!.</p>
+                <p class="hero-subtitle">No hay 1 sin 2 para que lo acompañes con alguien mas!.</p>
                 <button class="btn-action" style="width: auto; padding: 12px 24px;" onclick="scrollToMenu()">Aprovechar</button>
             </div>
         </div>
-        <div class="hero-slide" style="background-image: url('https://i.ibb.co/gbVs3Lw1/Peter-Pepsi.png');">
+        <div class="hero-slide" style="background-image: url('https://i.ibb.co/gLZH7hJW/DSC04609.jpg');">
             <div class="hero-content">
                 <h1 class="hero-title">Arma tu combo<br><span>Corta la semana</span></h1>
-                <p class="hero-subtitle">sumale una bebida a tu combo Preferido.</p>
+                <p class="hero-subtitle">¿Papas, Nuggets o Aros de cebolla? Tu combo perfecto asegurado.</p>
                 <button class="btn-action" style="width: auto; padding: 12px 24px;" onclick="scrollToMenu()">Aprovechar</button>
             </div>
         </div>
-        <div class="hero-slide" style="background-image: url('https://i.ibb.co/gLS3147F/Thanos.png');">
+        <div class="hero-slide" style="background-image: url('https://i.ibb.co/wNQdcXh6/Dr-Strange-8.jpg');">
             <div class="hero-content">
                 <h1 class="hero-title">PROMOS<br><span>PARA VOS</span></h1>
                 <p class="hero-subtitle">Aprovecha las mejores promos del momento y disfruta de marvel!.</p>
@@ -573,7 +573,66 @@ const SUC_MAP = {
         let isDelivery = true;
         let coordenadasGPS = null;
 
-        window.onload = () => { renderMenu(); renderCenaHoy(); renderZonas(); };
+
+
+// 1. DEFINICIÓN DE LA FUNCIÓN DEL SLIDER
+function inicializarHeroSlider() {
+    const heroSlider = document.querySelector('.hero-slider');
+    if (!heroSlider) return;
+
+    let autoSlideInterval;
+
+    const startAutoSlide = () => {
+        clearInterval(autoSlideInterval);
+        autoSlideInterval = setInterval(() => {
+            const slideWidth = heroSlider.clientWidth;
+            const maxScroll = heroSlider.scrollWidth - slideWidth;
+            
+            // Si llegamos al final, vuelve al inicio, si no, avanza
+            if (heroSlider.scrollLeft >= maxScroll - 10) {
+                heroSlider.scrollTo({ left: 0, behavior: 'smooth' });
+            } else {
+                heroSlider.scrollBy({ left: slideWidth, behavior: 'smooth' });
+            }
+        }, 4000);
+    };
+
+    startAutoSlide();
+
+    // Pausa al tocar para que el usuario pueda hacer click en "Pedir Ahora" sin que se mueva
+    heroSlider.addEventListener('touchstart', () => clearInterval(autoSlideInterval), { passive: true });
+    heroSlider.addEventListener('touchend', () => setTimeout(startAutoSlide, 2000), { passive: true });
+}
+
+// 2. BLOQUE DE INICIO ÚNICO (SOLUCIÓN AL BLOQUEO DE BOTONES)
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("Marvel Food cargado correctamente.");
+
+    // A. Cargar Usuario
+    const savedUser = localStorage.getItem('marvel_user');
+    if (savedUser) {
+        try {
+            currentUser = JSON.parse(savedUser);
+            if (typeof actualizarVistasPerfil === 'function') actualizarVistasPerfil();
+        } catch (e) { console.error("Error user local:", e); }
+    }
+
+    // B. Iniciar Slider
+    inicializarHeroSlider();
+
+    // C. Renderizar Menú y Datos (Solo una vez)
+    if (typeof renderMenu === 'function') renderMenu();
+    if (typeof renderCenaHoy === 'function') renderCenaHoy();
+    if (typeof renderZonas === 'function') renderZonas();
+
+    // D. Sincronizar Firebase (Compat Mode)
+    if (typeof checkSincronizacionFirebase === 'function') {
+        checkSincronizacionFirebase();
+    }
+});
+
+// ---------------------------------------
+
 
         window.addEventListener('scroll', () => {
             const header = document.getElementById('header');
@@ -589,17 +648,18 @@ const SUC_MAP = {
 
         let currentUser = JSON.parse(localStorage.getItem('marvel_user')) || { nombre: "", tel: "", cupones: [] };
 
-        async function checkSincronizacionFirebase() {
-            if (currentUser.tel) {
-                const userRef = doc(db, "usuarios", currentUser.tel);
-                const snap = await getDoc(userRef);
-                if (snap.exists()) {
-                    currentUser = snap.data();
-                    localStorage.setItem('marvel_user', JSON.stringify(currentUser));
-                }
-            }
+async function checkSincronizacionFirebase() {
+    if (currentUser.tel) {
+        // Corrección: Sintaxis Compat de Firebase
+        const userRef = db.collection("usuarios").doc(currentUser.tel);
+        const snap = await userRef.get();
+        if (snap.exists) { // En v8 "exists" no lleva paréntesis
+            currentUser = snap.data();
+            localStorage.setItem('marvel_user', JSON.stringify(currentUser));
         }
-        checkSincronizacionFirebase();
+    }
+}
+checkSincronizacionFirebase();
 
         window.obtenerUbicacion = () => {
             const statusText = document.getElementById('loc-status');
@@ -744,8 +804,7 @@ const SUC_MAP = {
 
 function actualizarTotales() {
     // 1. Calcular Subtotal (Suma de productos en el carrito)
-    let subtotal = cart.reduce((acc, item) => acc + (item.p * item.q), 0);
-    
+ let subtotal = carrito.reduce((acc, item) => acc + item.totalItem, 0);
     // 2. Obtener Costo de Envío (según sucursal y localidad seleccionada)
     // Asumimos que guardas la localidad en una variable global o la sacas del DOM
     const selectLoc = document.getElementById('select-localidad');
@@ -869,120 +928,128 @@ function actualizarTotales() {
 
         window.delItem = (i) => { carrito.splice(i,1); updateCartUI(); renderCartItems(); };
 
-        window.procesarPedido = async () => {
-            if (carrito.length === 0) return alert("Agregá productos a tu pedido primero.");
+window.procesarPedido = async () => {
+    if (carrito.length === 0) return alert("Agregá productos a tu pedido primero.");
+    
+    const sucId = document.getElementById('main-sucursal').value;
+    if(!sucId) return alert("Seleccioná tu sucursal en el menú principal.");
+
+    const nombre = document.getElementById('c-nombre').value;
+    const tel = document.getElementById('c-tel').value;
+    if(!nombre || !tel) return alert("Completá tu nombre y WhatsApp.");
+
+    const loc = document.getElementById('c-loc').value;
+    const dir = document.getElementById('c-dir').value;
+    if(isDelivery && (!loc || !dir)) return alert("Completá localidad y dirección para el envío.");
+
+    const pago = document.getElementById('p-metodo').value;
+    const vuelto = parseFloat(document.getElementById('p-vuelto').value) || 0;
+
+    // Calcular Subtotal correctamente
+    let sub = carrito.reduce((s, i) => s + i.totalItem, 0);
+    let envio = isDelivery ? (SUC_MAP[sucId].locs[loc] || 0) : 0;
+    
+    let montoDescuento = 0;
+    let detalleCupon = "Ninguno";
+
+    if (cuponAplicado) {
+        detalleCupon = cuponAplicado.titulo;
+        if (cuponAplicado.tipo === "porcentaje") {
+            montoDescuento = Math.round(sub * cuponAplicado.valor);
+        }
+    }
+
+    let total = Math.max(0, sub + envio - montoDescuento);
+
+    if (pago === 'Efectivo' && vuelto > 0 && vuelto < total) {
+        return alert(`El monto a abonar debe ser mayor al total ($${total}).`);
+    }
+
+    const ordenDatos = {
+        cliente: nombre.toUpperCase(), 
+        tel, 
+        sucursal: SUC_MAP[sucId].n, 
+        tipo: isDelivery ? 'Delivery' : 'Retiro',
+        loc: isDelivery ? loc : 'N/A', 
+        dir: isDelivery ? dir : 'N/A', 
+        gps: (typeof coordenadasGPS !== 'undefined' && coordenadasGPS) || 'No provisto',
+        piso: isDelivery ? `${document.getElementById('c-piso').value} ${document.getElementById('c-depto').value}` : '',
+        items: carrito, 
+        subtotal: sub,
+        envio: envio,
+        descuento: montoDescuento,
+        cuponUsado: detalleCupon,
+        total: total, 
+        pago, 
+        estado: "Pendiente", 
+        // Corregido: sintaxis compat para timestamp
+        fecha: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    try {
+        document.body.style.cursor = 'wait'; 
+
+        // Corregido: sintaxis db.collection().add()
+        await db.collection("pedidos_v2").add(ordenDatos);
+
+        if (currentUser && cuponAplicado) {
+            // Corregido: sintaxis db.collection().doc()
+            const userRef = db.collection("usuarios").doc(currentUser.email || currentUser.tel);
+            const userSnap = await userRef.get();
             
-            const sucId = document.getElementById('main-sucursal').value;
-            if(!sucId) return alert("Seleccioná tu sucursal en el menú principal.");
-
-            const nombre = document.getElementById('c-nombre').value;
-            const tel = document.getElementById('c-tel').value;
-            if(!nombre || !tel) return alert("Completá tu nombre y WhatsApp.");
-
-            const loc = document.getElementById('c-loc').value;
-            const dir = document.getElementById('c-dir').value;
-            if(isDelivery && (!loc || !dir)) return alert("Completá localidad y dirección para el envío.");
-
-            const pago = document.getElementById('p-metodo').value;
-            const vuelto = parseFloat(document.getElementById('p-vuelto').value) || 0;
-
-            let sub = carrito.reduce((s, i) => s + i.totalItem, 0);
-            let envio = isDelivery ? (SUC_MAP[sucId].locs[loc] || 0) : 0;
-            
-            let montoDescuento = 0;
-            let detalleCupon = "Ninguno";
-
-            if (cuponAplicado) {
-                detalleCupon = cuponAplicado.titulo;
-                if (cuponAplicado.tipo === "porcentaje") {
-                    montoDescuento = Math.round(sub * cuponAplicado.valor);
-                }
-            }
-
-            let total = Math.max(0, sub + envio - montoDescuento);
-
-            if (pago === 'Efectivo' && vuelto > 0 && vuelto < total) {
-                return alert(`El monto a abonar debe ser mayor al total ($${total}).`);
-            }
-
-            const ordenDatos = {
-                cliente: nombre.toUpperCase(), 
-                tel, 
-                sucursal: SUC_MAP[sucId].n, 
-                tipo: isDelivery ? 'Delivery' : 'Retiro',
-                loc: isDelivery ? loc : 'N/A', 
-                dir: isDelivery ? dir : 'N/A', 
-                gps: coordenadasGPS || 'No provisto',
-                piso: isDelivery ? `${document.getElementById('c-piso').value} ${document.getElementById('c-depto').value}` : '',
-                items: carrito, 
-                subtotal: sub,
-                envio: envio,
-                descuento: montoDescuento,
-                cuponUsado: detalleCupon,
-                total: total, 
-                pago, 
-                estado: "Pendiente", 
-                fecha: serverTimestamp()
-            };
-
-            try {
-                document.body.style.cursor = 'wait'; // Usamos el cursor nativo como indicador
-
-                await addDoc(collection(db, "pedidos_v2"), ordenDatos);
-
-                if (currentUser && cuponAplicado) {
-                    const userRef = doc(db, "usuarios", currentUser.email || currentUser.tel);
-                    const userSnap = await getDoc(userRef);
-                    if (userSnap.exists()) {
-                        const userData = userSnap.data();
-                        const nuevosCupones = userData.cupones.map(c => {
-                            if (c.id === cuponAplicado.id) return { ...c, usado: true };
-                            return c;
-                        });
-                        await setDoc(userRef, { cupones: nuevosCupones }, { merge: true });
-                        
-                        currentUser.cupones = nuevosCupones;
-                        localStorage.setItem('marvel_user', JSON.stringify(currentUser));
-                    }
-                }
-
-                let t = `*NUEVO PEDIDO | MARVEL FOOD*%0A---------------------------%0A`;
-                t += `*Cliente:* ${ordenDatos.cliente}%0A*Sucursal:* ${ordenDatos.sucursal}%0A*Tipo:* ${ordenDatos.tipo}%0A`;
-                if (isDelivery) {
-                    t += `*Dirección:* ${dir} ${ordenDatos.piso}%0A*Localidad:* ${loc}%0A`;
-                    if (coordenadasGPS) t += `*Ubicación GPS:* https://www.google.com/maps?q=${coordenadasGPS}%0A`;
-                }
-                t += `---------------------------%0A`;
-                
-                carrito.forEach(i => {
-                    t += `*${i.cant}x ${i.n}* ($${i.totalItem})%0A`;
-                    if(i.sin.length) t += `   _Sin: ${i.sin.join(', ')}_%0A`;
-                    if(i.con.length) t += `   _Extras: ${i.con.map(x=>x.n).join(', ')}_%0A`;
-                    if(i.obs) t += `   _Nota: ${i.obs}_%0A`;
+            if (userSnap.exists) {
+                const userData = userSnap.data();
+                const nuevosCupones = userData.cupones.map(c => {
+                    if (c.id === cuponAplicado.id) return { ...c, usado: true };
+                    return c;
                 });
-
-                t += `---------------------------%0A`;
-                t += `*Subtotal:* $${sub}%0A`;
-                if(envio > 0) t += `*Envío:* $${envio}%0A`;
-                if(montoDescuento > 0) t += `*Descuento (${detalleCupon}):* -$${montoDescuento}%0A`;
-                if(cuponAplicado && cuponAplicado.tipo === "regalo") t += `*Regalo:* ${cuponAplicado.titulo}%0A`;
                 
-                t += `*TOTAL FINAL: $${total}*%0A`;
-                t += `---------------------------%0A`;
-                t += `*Pago:* ${pago}%0A`;
-                if (pago === 'Efectivo' && vuelto > 0) {
-                    t += `*Abona con:* $${vuelto} (Vuelto: $${vuelto - total})%0A`;
-                }
-
-                document.body.style.cursor = 'default';
-                window.location.href = `https://wa.me/${SUC_MAP[sucId].wsp}?text=${t}`;
-
-            } catch (e) {
-                document.body.style.cursor = 'default';
-                console.error(e);
-                alert("Error al procesar el pedido: " + e.message);
+                // Corregido: sintaxis .set con merge
+                await userRef.set({ cupones: nuevosCupones }, { merge: true });
+                
+                currentUser.cupones = nuevosCupones;
+                localStorage.setItem('marvel_user', JSON.stringify(currentUser));
             }
-        };
+        }
+
+        // --- Generar Mensaje de WhatsApp ---
+        let t = `*NUEVO PEDIDO | MARVEL FOOD*%0A---------------------------%0A`;
+        t += `*Cliente:* ${ordenDatos.cliente}%0A*Sucursal:* ${ordenDatos.sucursal}%0A*Tipo:* ${ordenDatos.tipo}%0A`;
+        if (isDelivery) {
+            t += `*Dirección:* ${dir} ${ordenDatos.piso}%0A*Localidad:* ${loc}%0A`;
+            if (ordenDatos.gps !== 'No provisto') t += `*Ubicación GPS:* https://www.google.com/maps?q=${ordenDatos.gps}%0A`;
+        }
+        t += `---------------------------%0A`;
+        
+        carrito.forEach(i => {
+            t += `*${i.cant}x ${i.n}* ($${i.totalItem})%0A`;
+            if(i.sin && i.sin.length) t += `   _Sin: ${i.sin.join(', ')}_%0A`;
+            if(i.con && i.con.length) t += `   _Extras: ${i.con.map(x=>x.n).join(', ')}_%0A`;
+            if(i.obs) t += `   _Nota: ${i.obs}_%0A`;
+        });
+
+        t += `---------------------------%0A`;
+        t += `*Subtotal:* $${sub}%0A`;
+        if(envio > 0) t += `*Envío:* $${envio}%0A`;
+        if(montoDescuento > 0) t += `*Descuento (${detalleCupon}):* -$${montoDescuento}%0A`;
+        
+        t += `*TOTAL FINAL: $${total}*%0A`;
+        t += `---------------------------%0A`;
+        t += `*Pago:* ${pago}%0A`;
+        if (pago === 'Efectivo' && vuelto > 0) {
+            t += `*Abona con:* $${vuelto} (Vuelto: $${vuelto - total})%0A`;
+        }
+
+        document.body.style.cursor = 'default';
+        window.location.href = `https://wa.me/${SUC_MAP[sucId].wsp}?text=${t}`;
+
+    } catch (e) {
+        document.body.style.cursor = 'default';
+        console.error("Error en Firebase:", e);
+        alert("Error al guardar el pedido: " + e.message);
+    }
+};
+
 
         window.switchTab = (tabId, element) => {
             document.querySelectorAll('.tab-page').forEach(page => page.classList.add('hidden'));
@@ -1210,13 +1277,7 @@ window.cerrarSesion = () => {
 };
 
 // Al cargar la página, verificamos si ya había una sesión
-window.addEventListener('DOMContentLoaded', () => {
-    const savedUser = localStorage.getItem('marvel_user');
-    if (savedUser) {
-        currentUser = JSON.parse(savedUser);
-        actualizarVistasPerfil();
-    }
-});
+
 
         function renderPromosCatalog() {
             const container = document.getElementById('promos-container');

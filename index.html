@@ -986,7 +986,7 @@ function actualizarTotales() {
             window.scrollTo(0,0);
         };
 
- function actualizarVistasPerfil() {
+function actualizarVistasPerfil() {
     const infoBox = document.getElementById('perfil-info');
     const formBox = document.getElementById('perfil-form');
     const cupCont = document.getElementById('lista-cupones-p');
@@ -1003,52 +1003,36 @@ function actualizarTotales() {
     const lblNombre = document.getElementById('lbl-nombre');
     if(lblNombre) lblNombre.innerText = `¡Hola, ${currentUser.nombre}!`;
 
-    // --- LÓGICA DE CUPONES DINÁMICOS (Marketing Automatizado) ---
+    // Protegemos la lista de cupones con un fallback vacío []
     let cuponesAMostrar = [...(currentUser.cupones || [])];
     
-    // Verificamos si hay un regalo especial según el día y hora
-    const cuponEspecial = obtenerCuponDelDia(); 
+    const cuponEspecial = (typeof obtenerCuponDelDia === 'function') ? obtenerCuponDelDia() : null; 
     if (cuponEspecial) {
-        // Lo agregamos al principio de la lista para que sea lo primero que vea
         cuponesAMostrar.unshift({
             id: cuponEspecial.code,
             titulo: cuponEspecial.titulo,
             desc: cuponEspecial.desc,
             usado: false,
-            especial: true // Marca para estilo diferente
+            especial: true 
         });
     }
 
     if (cuponesAMostrar.length > 0) {
-        cupCont.innerHTML = cuponesAMostrar.map(c => {
-            const esEspecial = c.especial;
-            return `
-                <div style="background:var(--surface); border:1px solid ${c.usado ? '#333' : (esEspecial ? 'var(--primary)' : 'var(--border)')}; padding:15px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; opacity: ${c.usado ? '0.6' : '1'}; position: relative; overflow: hidden;">
-                    ${esEspecial ? '<div style="position:absolute; top:0; left:0; background:var(--primary); color:black; font-size:8px; font-weight:800; padding:2px 8px; border-radius:0 0 8px 0;">¡SÓLO POR HOY!</div>' : ''}
-                    <div style="flex: 1; ${esEspecial ? 'margin-top:5px;' : ''}">
-                        <h4 style="color:var(--white); font-weight:700; font-size:14px; margin-bottom:2px;">${c.titulo}</h4>
-                        <p style="color:var(--text-light); font-size:11px;">${c.desc}</p>
-                    </div>
-                    <button 
-                        onclick="window.aplicarCuponDesdeRegalos('${c.id}')" 
-                        style="
-                            background: ${c.usado ? 'transparent' : 'var(--primary)'}; 
-                            border: 1px solid ${c.usado ? 'var(--border)' : 'var(--primary)'}; 
-                            color: ${c.usado ? 'var(--text-light)' : 'black'}; 
-                            padding: 8px 15px; 
-                            border-radius: 8px; 
-                            font-weight: 800; 
-                            font-size: 11px; 
-                            cursor: pointer;
-                            transition: 0.3s;
-                            min-width: 80px;
-                        " 
-                        ${c.usado ? 'disabled' : ''}>
-                        ${c.usado ? 'CANJEADO' : 'USAR'}
-                    </button>
+        cupCont.innerHTML = cuponesAMostrar.map(c => `
+            <div style="background:var(--surface); border:1px solid ${c.usado ? '#333' : (c.especial ? 'var(--primary)' : 'var(--border)')}; padding:15px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; opacity: ${c.usado ? '0.6' : '1'}; position: relative; overflow: hidden;">
+                ${c.especial ? '<div style="position:absolute; top:0; left:0; background:var(--primary); color:black; font-size:8px; font-weight:800; padding:2px 8px; border-radius:0 0 8px 0;">¡SÓLO POR HOY!</div>' : ''}
+                <div style="flex: 1; ${c.especial ? 'margin-top:5px;' : ''}">
+                    <h4 style="color:var(--white); font-weight:700; font-size:14px; margin-bottom:2px;">${c.titulo}</h4>
+                    <p style="color:var(--text-light); font-size:11px;">${c.desc}</p>
                 </div>
-            `;
-        }).join('');
+                <button 
+                    onclick="window.aplicarCuponDesdeRegalos('${c.id}')" 
+                    style="background: ${c.usado ? 'transparent' : 'var(--primary)'}; border: 1px solid ${c.usado ? 'var(--border)' : 'var(--primary)'}; color: ${c.usado ? 'var(--text-light)' : 'black'}; padding: 8px 15px; border-radius: 8px; font-weight: 800; font-size: 11px; cursor: pointer; min-width: 80px;" 
+                    ${c.usado ? 'disabled' : ''}>
+                    ${c.usado ? 'CANJEADO' : 'USAR'}
+                </button>
+            </div>
+        `).join('');
     } else {
         cupCont.innerHTML = `
             <div style="text-align:center; padding:20px; border:1px dashed var(--border); border-radius:12px;">
@@ -1056,7 +1040,6 @@ function actualizarTotales() {
             </div>`;
     }
 }
-
 // Función auxiliar para determinar el regalo del día
 function obtenerCuponDelDia() {
     const ahora = new Date();
@@ -1148,68 +1131,62 @@ window.verificarCodigoYGuardar = async () => {
 
     try {
         document.body.style.cursor = 'wait';
-        const userRef = firebase.firestore().collection("usuarios").doc(mail);
+        // Usamos la constante 'db' que definiste arriba
+        const userRef = db.collection("usuarios").doc(mail);
         const userSnap = await userRef.get();
 
         if (userSnap.exists()) {
             const dataServidor = userSnap.data();
             
-            // VALIDACIÓN: Verificamos el código guardado en Firebase (el códigoTemporal)
-            // Si por alguna razón la variable local codigoSimulado falla, el servidor manda.
+            // Verificamos el código (el de Firebase o el de la memoria local)
             if (inputCodigo !== dataServidor.codigoTemporal && inputCodigo !== codigoSimulado) {
                 document.body.style.cursor = 'default';
-                return alert("Código incorrecto. Revisa tu mail.");
+                return alert("Código incorrecto. Revisá tu mail.");
             }
 
-            // LOGIN: Usuario ya existe
-            currentUser = dataServidor;
-            console.log("Sesión iniciada: Usuario existente.");
+            // LOGIN: Cargamos los datos y nos aseguramos de que existan los cupones
+            currentUser = {
+                ...dataServidor,
+                cupones: dataServidor.cupones || [] // Si no tiene cupones, le ponemos una lista vacía para que no explote
+            };
             
-            // Limpiamos el código temporal para que no pueda usarse dos veces
-            await userRef.update({ codigoTemporal: firebase.firestore.FieldValue.delete() });
+            // Limpiamos el código usado en la base de datos
+            await userRef.update({ 
+                codigoTemporal: firebase.firestore.FieldValue.delete() 
+            });
 
         } else {
-            // REGISTRO: Solo si el código coincide con el generado en la sesión actual
+            // REGISTRO: Solo si el código coincide con el generado ahora
             if (inputCodigo !== codigoSimulado) {
                 document.body.style.cursor = 'default';
                 return alert("Código incorrecto.");
             }
 
-            // Creamos el perfil nuevo
             currentUser = {
                 nombre: nom,
                 email: mail,
                 tel: tel,
-                fechaRegistro: firebase.firestore.FieldValue.serverTimestamp(),
+                fechaRegistro: new Date().toISOString(),
                 cupones: [
                     { id: 'CUPON-BIENVENIDA', titulo: "10% OFF", desc: "En tu primer pedido", valor: 0.10, tipo: "porcentaje", usado: false },
                     { id: 'CUPON-PAPAS', titulo: "PAPAS GRATIS", desc: "Papas chicas de regalo", valor: 0, tipo: "regalo", usado: false }
                 ]
             };
             await userRef.set(currentUser);
-            console.log("Perfil creado: Usuario nuevo.");
         }
 
-        // Guardar en LocalStorage para persistencia
         localStorage.setItem('marvel_user', JSON.stringify(currentUser));
-        
-        // Actualizar la interfaz
         actualizarVistasPerfil(); 
-        
-        // Cerrar el flujo de registro si tienes un modal o pasos
         alert("¡Verificación exitosa! Bienvenido " + currentUser.nombre);
 
-        // Opcional: Si el perfil está en un modal, podrías cerrarlo aquí
-        // document.getElementById('modal-registro').style.display = 'none';
-
     } catch (e) {
-        console.error("Error Firestore:", e);
-        alert("Error al conectar con la base de datos");
+        console.error("Error detallado:", e);
+        // Ahora la alerta te dirá el error REAL si vuelve a fallar
+        alert("Error Firestore: " + e.message);
     } finally {
         document.body.style.cursor = 'default';
     }
 };
-
 
 window.cerrarSesion = () => {
     if(confirm("¿Estás seguro que quieres cerrar sesión?")) {

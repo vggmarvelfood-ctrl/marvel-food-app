@@ -169,7 +169,20 @@
         .price-container { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; margin-top: 10px; }
         .old-price { color: var(--text-light); text-decoration: line-through; font-size: 12px; opacity: 0.7; }
         .new-price { color: #10b981; font-weight: 800; font-size: 20px; }
-    </style>
+   
+   .bottom-nav {
+    display: flex;
+    justify-content: space-around; /* Cambiar a space-around para distribuir mejor */
+    padding: 10px 5px; /* Reducir un poco el padding lateral */
+}
+
+.nav-item {
+    font-size: 10px; /* Reducir un poco el tamaño de letra si es necesario */
+    flex: 1; /* Que todos ocupen el mismo ancho */
+}
+   
+   
+   </style>
 
 
 </head>
@@ -228,21 +241,24 @@
 
 <div class="main-content">
     <div id="tab-inicio" class="tab-page">
+        
+        <div id="store-status-banner"></div>
+
         <div class="type-toggle">
             <button id="btn-tipo-del" class="type-btn active" onclick="setGeneralDelivery(true)">Delivery</button>
             <button id="btn-tipo-ret" class="type-btn" onclick="setGeneralDelivery(false)">TakeAway</button>
         </div>
 
-<div class="address-bar">
-            <select id="main-sucursal" onchange="cambiarSucursalPrincipal()">
-                <option value="" disabled selected>Seleccioná tu sucursal mas cercana para continuar...</option>
-                <option value="Centro">(Pellegrini 1149) Rosario, Centro - Sur </option>
-                <option value="Norte">(Rondeau 2430) Rosario, Zona Norte - Grandero Baigorria </option>
-                <option value="Sur">(San martin 1808) Rosario, Zona Sur / VGG</option>
-                <option value="Funes">(RN9 972) Funes - Fisherton</option>
-            </select>
 
-        </div>
+<div class="address-bar">
+    <select id="main-sucursal" onchange="cambiarSucursalPrincipal()">
+        <option value="" disabled selected>Seleccioná tu sucursal mas cercana para continuar...</option>
+        <option value="Centro">(Pellegrini 1149) Rosario, Centro - Sur </option>
+        <option value="Norte">(Rondeau 2430) Rosario, Zona Norte - Grandero Baigorria </option>
+        <option value="Sur">(San martin 1808) Rosario, Zona Sur / VGG</option>
+        <option value="Funes">(RN9 972) Funes - Fisherton</option>
+    </select>
+</div>
 
         <div class="nav-cats" id="cat-list"></div>
         
@@ -325,29 +341,90 @@
         </div>
     </div>
 
+<div id="tab-ayuda" class="tab-page hidden" style="padding: 20px;">
+    <h2 style="color: var(--primary); font-weight: 800; margin-bottom: 20px; text-transform: uppercase; font-size: 20px;">¿Cómo realizar tu pedido?</h2>
+    
+    <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px;">
+        <div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);">
+            <strong style="display: block; color: var(--white); margin-bottom: 5px;">1. Seleccioná tu Sucursal</strong>
+            <p style="color: var(--text-light); font-size: 14px; margin: 0;">Elegí la sucursal más cercana para ver el menú y rango de envío correcto.</p>
+        </div>
+
+        <div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);">
+            <strong style="display: block; color: var(--white); margin-bottom: 5px;">2. Consultá el Rango de Envío</strong>
+            <p style="color: var(--text-light); font-size: 14px; margin: 0;">En la pestaña <strong>"Locales"</strong> podés ver los mapas de cobertura y costos.</p>
+        </div>
+
+        <div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);">
+            <strong style="display: block; color: var(--white); margin-bottom: 5px;">3. Armá tu Carrito</strong>
+            <p style="color: var(--text-light); font-size: 14px; margin: 0;">Agregá tus productos y revisá todo en el botón flotante del carrito.</p>
+        </div>
+    </div>
+
+    <h3 style="color: var(--white); font-size: 16px; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">Medios de Pago</h3>
+    
+    <div style="background: var(--surface); border-radius: 16px; overflow: hidden; border: 1px solid var(--border);">
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
+            <thead style="background: var(--primary);">
+                <tr>
+                    <th style="padding: 10px; color: black;">Método</th>
+                    <th style="padding: 10px; color: black;">Sucursal</th>
+                    <th style="padding: 10px; color: black;">Envío</th>
+                </tr>
+            </thead>
+            <tbody style="color: var(--text-light);">
+                <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 10px; color: var(--white);">Efectivo</td>
+                    <td style="padding: 10px;">✅</td>
+                    <td style="padding: 10px;">✅</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 10px; color: var(--white);">Débito/Crédito</td>
+                    <td style="padding: 10px;">✅</td>
+                    <td style="padding: 10px;">❌</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 10px; color: var(--white);">QR Mercado Pago</td>
+                    <td style="padding: 10px;">✅</td>
+                    <td style="padding: 10px;">❌</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; color: var(--white);">Link MP</td>
+                    <td style="padding: 10px;">❌</td>
+                    <td style="padding: 10px;">✅</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
     <div class="cart-float" onclick="toggleCart()">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
         <span id="cart-badge" class="badge-qty">0</span>
     </div>
 
 <nav class="bottom-nav">
-        <div class="nav-item active" onclick="switchTab('tab-inicio', this)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
-            Inicio
-        </div>
-        <div class="nav-item" onclick="switchTab('tab-promos', this)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="5" x2="5" y2="19"></line><circle cx="6.5" cy="6.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg>
-            Promos
-        </div>
-        <div class="nav-item" onclick="switchTab('tab-zonas', this)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-            Locales
-        </div>
-        <div class="nav-item" onclick="switchTab('tab-perfil', this)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-            Perfil
-        </div>
-    </nav>
+    <div class="nav-item active" onclick="switchTab('tab-inicio', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+        Inicio
+    </div>
+    <div class="nav-item" onclick="switchTab('tab-promos', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="5" x2="5" y2="19"></line><circle cx="6.5" cy="6.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg>
+        Promos
+    </div>
+    <div class="nav-item" onclick="switchTab('tab-zonas', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+        Locales
+    </div>
+    <div class="nav-item" onclick="switchTab('tab-ayuda', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        Ayuda
+    </div>
+    <div class="nav-item" onclick="switchTab('tab-perfil', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        Perfil
+    </div>
+</nav>
 
     <div class="modal" id="m-prod">
         <div class="modal-sheet">
@@ -573,7 +650,69 @@ const SUC_MAP = {
         let isDelivery = true;
         let coordenadasGPS = null;
 
+// NUEVO: Horarios por sucursal mapeados con los IDs (Centro = Pellegrini)
+const HORARIOS_SUCURSALES = {
+    Centro: { m_start: "11:30", m_end: "16:00", n_start: "19:00", n_end: "23:30" },
+    Norte: { m_start: "11:30", m_end: "16:00", n_start: "19:00", n_end: "23:30" },
+    Sur: { m_start: "11:30", m_end: "15:00", n_start: "19:00", n_end: "23:00" },
+    Funes: { m_start: "11:30", m_end: "16:00", n_start: "19:00", n_end: "23:00" }
+};
 
+// NUEVO: Función para evaluar la hora real y renderizar el cartel
+window.actualizarEstadoLocal = () => {
+    const sucId = document.getElementById('main-sucursal').value;
+    const banner = document.getElementById('store-status-banner');
+    
+    if (!banner) return;
+    
+    // Si todavía no eligió sucursal, le mostramos un mensaje sutil
+    if (!sucId) {
+        banner.innerHTML = `<div style="text-align:center; color: var(--text-light); font-size: 13px; margin: 0 20px 15px;">Seleccioná una sucursal abajo para ver los horarios de atención.</div>`;
+        return;
+    }
+
+    const h = HORARIOS_SUCURSALES[sucId];
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    
+    // Función rápida para convertir "HH:MM" a minutos para comparar fácil
+    const parseTime = (t) => {
+        const parts = t.split(':');
+        return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+    };
+
+    const m_start = parseTime(h.m_start);
+    const m_end = parseTime(h.m_end);
+    const n_start = parseTime(h.n_start);
+    const n_end = parseTime(h.n_end);
+
+    // Verificamos si los minutos actuales entran en el turno mediodía o noche
+    const isOpen = (currentMinutes >= m_start && currentMinutes <= m_end) || 
+                   (currentMinutes >= n_start && currentMinutes <= n_end);
+
+    // Imprimimos el cartel según el estado
+    if (isOpen) {
+        banner.innerHTML = `
+            <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; border-radius: 12px; padding: 12px; margin: 0 20px 15px; text-align: center;">
+                <span style="color: #10b981; font-weight: 800; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    <span style="display:inline-block; width:10px; height:10px; background:#10b981; border-radius:50%; box-shadow: 0 0 8px #10b981;"></span> ABIERTO AHORA
+                </span>
+                <div style="color: var(--text-light); font-size: 12px; margin-top: 6px;">
+                    Horarios: ${h.m_start} a ${h.m_end} hs / ${h.n_start} a ${h.n_end} hs
+                </div>
+            </div>`;
+    } else {
+        banner.innerHTML = `
+            <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; border-radius: 12px; padding: 12px; margin: 0 20px 15px; text-align: center;">
+                <span style="color: #ef4444; font-weight: 800; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    <span style="display:inline-block; width:10px; height:10px; background:#ef4444; border-radius:50%;"></span> CERRADO
+                </span>
+                <div style="color: var(--text-light); font-size: 12px; margin-top: 6px;">
+                    Horarios: ${h.m_start} a ${h.m_end} hs / ${h.n_start} a ${h.n_end} hs
+                </div>
+            </div>`;
+    }
+};
 
 // 1. DEFINICIÓN DE LA FUNCIÓN DEL SLIDER
 function inicializarHeroSlider() {
@@ -629,6 +768,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof checkSincronizacionFirebase === 'function') {
         checkSincronizacionFirebase();
     }
+    actualizarEstadoLocal();
+    setInterval(actualizarEstadoLocal, 3000);
 });
 
 // ---------------------------------------
@@ -693,16 +834,19 @@ checkSincronizacionFirebase();
             renderCartItems();
         };
 
-        window.cambiarSucursalPrincipal = () => {
-            const suc = document.getElementById('main-sucursal').value;
-            const locSelect = document.getElementById('c-loc');
-            locSelect.innerHTML = `<option value="" disabled selected>Seleccioná localidad</option>`;
-            if(suc && SUC_MAP[suc]) {
-                const locs = SUC_MAP[suc].locs;
-                for(let l in locs) { locSelect.innerHTML += `<option value="${l}">${l} (+$${locs[l]})</option>`; }
-            }
-            renderCartItems();
-        };
+window.cambiarSucursalPrincipal = () => {
+    const suc = document.getElementById('main-sucursal').value;
+    const locSelect = document.getElementById('c-loc');
+    locSelect.innerHTML = `<option value="" disabled selected>Seleccioná localidad</option>`;
+    if(suc && SUC_MAP[suc]) {
+        const locs = SUC_MAP[suc].locs;
+        for(let l in locs) { locSelect.innerHTML += `<option value="${l}">${l} (+$${locs[l]})</option>`; }
+    }
+    renderCartItems();
+    
+    // NUEVO: Recalcular estado abierto/cerrado al cambiar de sucursal
+    actualizarEstadoLocal(); 
+};
 
         function renderMenu() {
             const cats = document.getElementById('cat-list');

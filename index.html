@@ -1074,84 +1074,62 @@ function obtenerCuponDelDia() {
 // Variable global para el código
 
 window.enviarCodigoVerificacion = async () => {
-    // 1. Captura de datos con IDs correctos según tu HTML
     const mailInput = document.getElementById('reg-mail').value.trim().toLowerCase();
     const nomInput = document.getElementById('reg-nom').value.trim();
     const telInput = document.getElementById('reg-tel').value.trim();
     const btn = document.querySelector('#registro-paso-1 .btn-action');
 
-    if(!mailInput || !nomInput || !telInput) return alert("Por favor completa todos los campos (Nombre, Email y WhatsApp)");
+    if(!mailInput || !nomInput || !telInput) return alert("Completá todos los campos.");
 
-    // Bloqueo visual del botón para evitar múltiples clics
     btn.disabled = true;
-    btn.innerText = "VERIFICANDO...";
+    btn.innerText = "CONECTANDO...";
     document.body.style.cursor = 'wait';
 
     try {
-        const usuariosRef = firebase.firestore().collection("usuarios");
+        // Referencia a la colección de usuarios
+        const usuariosRef = db.collection("usuarios");
         
-        // 2. Buscamos por teléfono en la base de datos
-        // Importante: Si esto falla, revisa que tengas habilitado Firestore en tu consola Firebase
-        const queryTel = await usuariosRef.where("tel", "==", telInput).get();
+        // BUSQUEDA POR TELÉFONO
+        const querySnapshot = await usuariosRef.where("tel", "==", telInput).get();
         
         let mailFinal = mailInput;
         let nombreFinal = nomInput;
 
-        // Si el teléfono ya existe, recuperamos los datos originales
-        if (!queryTel.empty) {
-            const docExistente = queryTel.docs[0];
+        if (!querySnapshot.empty) {
+            const docExistente = querySnapshot.docs[0];
             mailFinal = docExistente.id; 
             nombreFinal = docExistente.data().nombre || nomInput;
             
-            // Auto-completamos para que el usuario sepa que detectamos su cuenta
             document.getElementById('reg-mail').value = mailFinal;
             document.getElementById('reg-nom').value = nombreFinal;
-            
-            console.log("Usuario reconocido:", mailFinal);
+            alert("Cuenta encontrada. Enviando código a: " + mailFinal);
         }
 
-        // 3. Generamos el código de 4 dígitos
         codigoSimulado = Math.floor(1000 + Math.random() * 9000).toString();
 
-        // 4. GUARDADO EN FIREBASE
-        // Usamos merge: true para no borrar sus cupones o historial si ya existía
-        await usuariosRef.doc(mailFinal).set({
+        // GUARDAR EN FIRESTORE
+        // Usamos db.collection().doc().set() que es el estándar de la v10 compat
+        await db.collection("usuarios").doc(mailFinal).set({
             codigoTemporal: codigoSimulado,
             nombre: nombreFinal,
             tel: telInput,
-            ultimaConexion: firebase.firestore.FieldValue.serverTimestamp()
+            fechaActividad: new Date().toISOString()
         }, { merge: true });
 
-        // 5. ENVÍO POR EMAILJS
-        // REVISA: El ID del servicio debe ser el que aparece en tu panel de EmailJS
-        const templateParams = {
+        // ENVIAR EMAILJS
+        await emailjs.send('service_2y6217j', 'template_1qepw99', {
             nombre: nombreFinal,
             email_cliente: mailFinal, 
             codigo: codigoSimulado
-        };
-
-        await emailjs.send('service_2y6217j', 'template_1qepw99', templateParams);
+        });
         
-        // 6. ÉXITO: CAMBIO DE PANTALLA
         document.getElementById('registro-paso-1').classList.add('hidden');
         document.getElementById('registro-paso-2').classList.remove('hidden');
-        
-        if (!queryTel.empty) {
-            alert("¡Hola de nuevo! Enviamos el código a tu mail registrado: " + mailFinal);
-        } else {
-            alert("Código enviado con éxito.");
-        }
 
     } catch (error) {
-        // Mostramos el error real en la consola para diagnóstico
         console.error("Error detallado:", error);
-        
-        // Si el error es de Firebase por permisos:
-        if (error.code === 'permission-denied') {
-            alert("Error: No tienes permisos para escribir en la base de datos. Revisa las Reglas en Firebase.");
-        } else {
-            alert("Error al conectar: " + (error.message || "Revisa tu conexión"));
-        }
+        // Esto te dirá exactamente si es un error de Firebase, de Red o de Permisos
+        alert("Error de Sistema: " + (error.message || "No se pudo conectar con la base de datos"));
     } finally {
         btn.disabled = false;
         btn.innerText = "ENVIAR CÓDIGO AL MAIL";

@@ -287,9 +287,9 @@
         <p style="color: var(--text-light); font-size: 13px; margin-bottom: 20px;">Seleccioná una sucursal para ver el mapa y costos:</p>
         
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 25px;">
-            <button class="type-btn" onclick="verZona('Centro', this)">Centro</button>
-            <button class="type-btn" onclick="verZona('Norte', this)">Norte</button>
-            <button class="type-btn" onclick="verZona('Sur', this)">Sur / VGG</button>
+            <button class="type-btn" onclick="verZona('Centro', this)">Rosario, Zona Centro</button>
+            <button class="type-btn" onclick="verZona('Norte', this)">Rosario, Zona Norte</button>
+            <button class="type-btn" onclick="verZona('Sur', this)">Rosario, Zona Sur / VGG</button>
             <button class="type-btn" onclick="verZona('Funes', this)">Funes</button>
         </div>
 
@@ -359,6 +359,17 @@
             <strong style="display: block; color: var(--white); margin-bottom: 5px;">3. Armá tu Carrito</strong>
             <p style="color: var(--text-light); font-size: 14px; margin: 0;">Agregá tus productos y revisá todo en el botón flotante del carrito.</p>
         </div>
+        <div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);">
+            <strong style="display: block; color: var(--white); margin-bottom: 5px;">4. Envia tu pedido</strong>
+            <p style="color: var(--text-light); font-size: 14px; margin: 0;">Envia tu pedido y recibiras un mensaje de confirmación una vez enviado con los datos y horarios.</p>
+        </div>
+
+        <div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);">
+                  <strong style="display: block; color: var(--white); margin-bottom: 5px;">Nuestras sucursales en las cuales podes venir a comer y disfrutar de los espacios al publico</strong>
+            <p style="color: var(--text-light); font-size: 14px; margin: 0;">Sucursales de Rosario (Pellegrini 1149) y Funes (RN9 972).</p> 
+        </div>
+
+
     </div>
 
     <h3 style="color: var(--white); font-size: 16px; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">Medios de Pago</h3>
@@ -578,13 +589,13 @@ window.aplicarCuponDesdeRegalos = (cuponId) => {
 };
 
         const CALENDARIO_MARVEL = {
-            0: { n: "DOMINGO CHISBURGER", img: "URL_IMAGEN" },
+            0: { n: "DOMINGO CHISBURGER", img: "https://i.ibb.co/MkC0Czcj/Cheese-1.jpg" },
             1: { n: "LUNES CAPITÁN AMÉRICA", img: "https://i.ibb.co/5hNX8tBj/Capitan-America.png" },
-            2: { n: "MARTES PETER PARKER", img: "URL_IMAGEN" },
-            3: { n: "MIÉRCOLES IRON MAN", img: "URL_IMAGEN" },
-            4: { n: "JUEVES STACKER", img: "URL_IMAGEN" },
-            5: { n: "VIERNES LOKI", img: "URL_IMAGEN" },
-            6: { n: "SÁBADO BLACK PANTHER", img: "URL_IMAGEN" }
+            2: { n: "MARTES PETER PARKER", img: "https://i.ibb.co/hJ8F2Cz7/Peter-3.jpg" },
+            3: { n: "MIÉRCOLES IRON MAN", img: "https://i.ibb.co/9kR57Dqt/Ironman-9.jpg" },
+            4: { n: "JUEVES STACKER", img: "https://i.ibb.co/gLyNRYd1/Stacker-2.jpg" },
+            5: { n: "VIERNES LOKI", img: "https://i.ibb.co/N2XJ7FKz/Loki-7.jpg" },
+            6: { n: "SÁBADO BLACK PANTHER", img: "https://i.ibb.co/LzzZcJDR/Black-Phanter-1.jpg" }
         };
 
  const PROMOS_DATA = [
@@ -657,10 +668,10 @@ window.aplicarCuponDesdeRegalos = (cuponId) => {
 ];
 
 const SUC_MAP = {
-            Centro: { n: "Rosario, Zona Centro - Sur", wsp: "5493413315885", mapImg: "https://i.ibb.co/231rcdfJ/CENTRO.png", locs: { "Rosario": 2000 } },
-            Norte: { n: "Rosario, Zona Norte-Baigorria", wsp: "5493413315885", mapImg: "https://i.ibb.co/tM1NSHTv/NORTE.png", locs: { "Rosario Norte": 2200, "Granadero. Baigorria": 3500 } },
-            Sur: { n: "Rosario, Zona Sur-VGG", wsp: "5493413315885", mapImg: "https://i.ibb.co/1BNnzX5/VGG.png", locs: { "Villa Gdor. Gálvez": 3000, "Rosario Sur": 2500 } },
-            Funes: { n: "Funes - Fisherton", wsp: "5493413315885", mapImg: "https://i.ibb.co/84MNBwGC/mapas-2026-5-Funes.png", locs: { "Funes": 1800, "Fisherton": 2500, "Variante costo barrios privados Funes-Fisherton": 0 } }
+            Centro: { n: "NUESTRO RANGO DE ENVIOS Y COSTOS", wsp: "5493413315885", mapImg: "https://i.ibb.co/231rcdfJ/CENTRO.png", locs: { "Rosario": 2000 } },
+            Norte: { n: "NUESTRO RANGO DE ENVIOS Y COSTOS", wsp: "5493413315885", mapImg: "https://i.ibb.co/tM1NSHTv/NORTE.png", locs: { "Rosario Norte": 2200, "Granadero. Baigorria": 3500 } },
+            Sur: { n: "NUESTRO RANGO DE ENVIOS Y COSTOS", wsp: "5493413315885", mapImg: "https://i.ibb.co/1BNnzX5/VGG.png", locs: { "Villa Gdor. Gálvez": 3000, "Rosario Sur": 2500 } },
+            Funes: { n: "NUESTRO RANGO DE ENVIOS Y COSTOS", wsp: "5493413315885", mapImg: "https://i.ibb.co/84MNBwGC/mapas-2026-5-Funes.png", locs: { "Funes": 1800, "Fisherton": 2500, "Variante costo barrios privados Funes-Fisherton": 0 } }
         };
 
 const MENU = [

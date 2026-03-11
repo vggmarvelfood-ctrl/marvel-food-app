@@ -1134,29 +1134,22 @@ window.verificarCodigoYGuardar = async () => {
         const userRef = db.collection("usuarios").doc(mail);
         const userSnap = await userRef.get();
 
-        // CORRECCIÓN AQUÍ: Quitamos los () de exists
         if (userSnap.exists) { 
             const dataServidor = userSnap.data();
-            
-            // Verificamos el código
             if (inputCodigo !== dataServidor.codigoTemporal && inputCodigo !== codigoSimulado) {
                 document.body.style.cursor = 'default';
                 return alert("Código incorrecto. Revisá tu mail.");
             }
 
-            // LOGIN: Cargamos los datos
             currentUser = {
                 ...dataServidor,
                 cupones: dataServidor.cupones || []
             };
             
-            // Limpiamos el código usado
             await userRef.update({ 
                 codigoTemporal: firebase.firestore.FieldValue.delete() 
             });
-
         } else {
-            // REGISTRO: Solo si el código coincide con el generado ahora
             if (inputCodigo !== codigoSimulado) {
                 document.body.style.cursor = 'default';
                 return alert("Código incorrecto.");
@@ -1175,8 +1168,16 @@ window.verificarCodigoYGuardar = async () => {
             await userRef.set(currentUser);
         }
 
+        // --- LAS LÍNEAS CLAVE PARA EL CAMBIO VISUAL ---
         localStorage.setItem('marvel_user', JSON.stringify(currentUser));
+        
+        // 1. Ocultamos los contenedores de registro
+        document.getElementById('registro-paso-1').classList.add('hidden');
+        document.getElementById('registro-paso-2').classList.add('hidden');
+        
+        // 2. Actualizamos la vista (esto mostrará perfil-info y ocultará perfil-form)
         actualizarVistasPerfil(); 
+        
         alert("¡Verificación exitosa! Bienvenido " + currentUser.nombre);
 
     } catch (e) {
@@ -1187,7 +1188,6 @@ window.verificarCodigoYGuardar = async () => {
     }
 };
 
-
 window.cerrarSesion = () => {
     if(confirm("¿Estás seguro que quieres cerrar sesión?")) {
         localStorage.removeItem('marvel_user');
@@ -1197,6 +1197,15 @@ window.cerrarSesion = () => {
         location.reload();
     }
 };
+
+// Al cargar la página, verificamos si ya había una sesión
+window.addEventListener('DOMContentLoaded', () => {
+    const savedUser = localStorage.getItem('marvel_user');
+    if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        actualizarVistasPerfil();
+    }
+});
 
         function renderPromosCatalog() {
             const container = document.getElementById('promos-container');

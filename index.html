@@ -160,12 +160,7 @@
 
     <div id="toast">¡Agregado al pedido!</div>
 
-    <header class="top-header" id="header">
-        <div class="brand-container">
-            <img src="https://pency-images.nyc3.digitaloceanspaces.com/marvelfoodabasto/1760661165087.jpg" alt="Logo" class="brand-logo">
-            <span class="brand-name">MARVEL FOOD</span>
-        </div>
-    </header>
+
       
     <div class="hero-slider">
         <div class="hero-slide" style="background-image: url('https://pency-images.nyc3.digitaloceanspaces.com/marvelfoodabasto/1760658566420.jpg');">
@@ -210,14 +205,15 @@
             <button id="btn-tipo-ret" class="type-btn" onclick="setGeneralDelivery(false)">TakeAway</button>
         </div>
 
-        <div class="address-bar">
+<div class="address-bar">
             <select id="main-sucursal" onchange="cambiarSucursalPrincipal()">
-                <option value="" disabled selected>Seleccioná tu sucursal...</option>
-                <option value="Centro">Rosario Centro (Pellegrini)</option>
-                <option value="Norte">Zona Norte (Alberdi)</option>
-                <option value="Sur">Zona Sur / VGG</option>
-                <option value="Funes">Funes (Ruta 9)</option>
+                <option value="" disabled selected>Seleccioná tu sucursal mas cercana para continuar...</option>
+                <option value="Centro">(Pellegrini 1149) Rosario, Centro - Sur </option>
+                <option value="Norte">(Rondeau 2430) Rosario, Zona Norte - Grandero Baigorria </option>
+                <option value="Sur">(San martin 1808) Rosario, Zona Sur / VGG</option>
+                <option value="Funes">(RN9 972) Funes - Fisherton</option>
             </select>
+
         </div>
 
         <div class="nav-cats" id="cat-list"></div>
@@ -241,6 +237,25 @@
         <div class="m-section">CATÁLOGO DE PROMOS</div>
         <div id="promos-container" class="menu-grid"></div>
     </div>
+
+<div id="tab-zonas" class="tab-page hidden" style="padding: 20px;">
+        <div class="m-section" style="margin-top: 0;">ZONAS DE ENVÍO</div>
+        <p style="color: var(--text-light); font-size: 13px; margin-bottom: 20px;">Seleccioná una sucursal para ver el mapa y costos:</p>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 25px;">
+            <button class="type-btn" onclick="verZona('Centro', this)">Centro</button>
+            <button class="type-btn" onclick="verZona('Norte', this)">Norte</button>
+            <button class="type-btn" onclick="verZona('Sur', this)">Sur / VGG</button>
+            <button class="type-btn" onclick="verZona('Funes', this)">Funes</button>
+        </div>
+
+        <div id="info-zona-detalle" class="hidden" style="animation: slideUp 0.4s ease;">
+            <div id="lista-precios-zona" style="background: var(--surface); border-radius: 12px; padding: 15px; border: 1px solid var(--border); margin-bottom: 15px;"></div>
+            <img id="img-mapa-zona" src="" style="width: 100%; border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow-card);">
+        </div>
+    </div>
+
+
 
     <div id="tab-perfil" class="tab-page hidden" style="padding: 20px;">
         <div id="perfil-form" class="hidden">
@@ -287,7 +302,7 @@
         <span id="cart-badge" class="badge-qty">0</span>
     </div>
 
-    <nav class="bottom-nav">
+<nav class="bottom-nav">
         <div class="nav-item active" onclick="switchTab('tab-inicio', this)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
             Inicio
@@ -295,6 +310,10 @@
         <div class="nav-item" onclick="switchTab('tab-promos', this)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="5" x2="5" y2="19"></line><circle cx="6.5" cy="6.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg>
             Promos
+        </div>
+        <div class="nav-item" onclick="switchTab('tab-zonas', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            Zonas
         </div>
         <div class="nav-item" onclick="switchTab('tab-perfil', this)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
@@ -335,10 +354,22 @@
         </div>
     </div>
 
-    <div id="cart-view">
-        <div style="padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--surface);">
-            <h2 style="font-weight: 800; font-size: 20px; color: var(--white);">TU ORDEN</h2>
-            <button onclick="toggleCart()" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--white);">✕</button>
+
+<div class="modal" id="m-info">
+        <div class="modal-sheet" style="height: auto; max-height: 85vh;">
+            <div class="m-close" onclick="document.getElementById('m-info').style.display='none'">✕</div>
+            <div class="m-content">
+                <h2 id="m-info-title" style="font-weight: 800; font-size: 20px; color: var(--primary); margin-bottom: 15px; text-transform: uppercase;"></h2>
+                <div id="m-info-body" style="color: var(--white); font-size: 14px; line-height: 1.5;"></div>
+            </div>
+        </div>
+    </div>
+
+
+<div id="cart-view">
+        <div onclick="toggleCart()" style="padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--surface); cursor: pointer;">
+            <h2 style="font-weight: 800; font-size: 20px; color: var(--white); margin: 0; pointer-events: none;">TU ORDEN</h2>
+            <button style="background: rgba(255,255,255,0.1); border: none; font-size: 16px; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--white); pointer-events: none;">✕</button>
         </div>
         
         <div id="cart-items-list" style="flex: 1; overflow-y: auto; padding: 20px; background: var(--bg);"></div>
@@ -450,11 +481,11 @@
             }
         ];
 
-        const SUC_MAP = {
-            Centro: { n: "Zona Centro", wsp: "3413315885", locs: { "Rosario": 2000 } },
-            Norte: { n: "Zona Norte", wsp: "3413315885", locs: { "Rosario Norte": 2200, "Gdor. Baigorria": 3500 } },
-            Sur: { n: "Zona Sur", wsp: "3413315885", locs: { "Villa Gdor. Gálvez": 3000, "Rosario Sur": 2500 } },
-            Funes: { n: "Funes", wsp: "3413315885", locs: { "Funes": 1800, "Fisherton": 2500 } }
+const SUC_MAP = {
+            Centro: { n: "Rosario, Zona Centro - Sur", mapImg: "https://i.ibb.co/231rcdfJ/CENTRO.png", locs: { "Rosario": 2000 } },
+            Norte: { n: "Rosario, Zona Norte-Baigorria", mapImg: "https://i.ibb.co/tM1NSHTv/NORTE.png", locs: { "Rosario Norte": 2200, "Granadero. Baigorria": 3500 } },
+            Sur: { n: "Rosario, Zona Sur-VGG", mapImg: "https://i.ibb.co/1BNnzX5/VGG.png", locs: { "Villa Gdor. Gálvez": 3000, "Rosario Sur": 2500 } },
+            Funes: { n: "Funes - Fisherton", mapImg: "https://i.ibb.co/84MNBwGC/mapas-2026-5-Funes.png", locs: { "Funes": 1800, "Fisherton": 2500, "Variante costo barrios privados Funes-Fisherton": 0 } }
         };
 
         const MENU = [
@@ -477,7 +508,7 @@
         let isDelivery = true;
         let coordenadasGPS = null;
 
-        window.onload = () => { renderMenu(); renderCenaHoy(); };
+        window.onload = () => { renderMenu(); renderCenaHoy(); renderZonas(); };
 
         window.addEventListener('scroll', () => {
             const header = document.getElementById('header');
@@ -1079,6 +1110,80 @@ window.enviarCodigoVerificacion = async () => {
                 </div>
             `;
         }
+
+        window.verZona = (id, btn) => {
+            // Manejo de botones activos (estilo dark)
+            const botones = btn.parentElement.querySelectorAll('button');
+            botones.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const data = SUC_MAP[id];
+            const detalle = document.getElementById('info-zona-detalle');
+            const lista = document.getElementById('lista-precios-zona');
+            const img = document.getElementById('img-mapa-zona');
+
+            // Render de precios
+            let html = `<h4 style="color: var(--primary); margin-bottom: 10px; font-size: 14px;">${data.n.toUpperCase()}</h4>`;
+            for(let l in data.locs) { 
+                html += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; border-bottom:1px solid #333; padding-bottom:5px; font-size: 13px;">
+                            <span style="color: var(--text-light)">${l}</span> 
+                            <b style="color: var(--white)">$${data.locs[l]}</b>
+                         </div>`; 
+            }
+            
+            lista.innerHTML = html;
+            img.src = data.mapImg;
+            detalle.classList.remove('hidden');
+        };
+
+
+
+        // Función del botón de la barra de direcciones
+        window.verMapaRangos = () => {
+            const sucId = document.getElementById('main-sucursal').value;
+            if(!sucId) return mostrarInfo('Atención', '<p style="color: var(--text-light);">Primero seleccioná una sucursal en la barra superior para ver sus zonas de entrega.</p>');
+            
+            const data = SUC_MAP[sucId];
+            let html = `<div style="margin-bottom:15px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 15px;">`;
+            for(let l in data.locs) { 
+                html += `<div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid var(--border); padding-bottom:8px;">
+                            <span style="color: var(--text-light);">${l}</span> 
+                            <b style="color: var(--white);">$${data.locs[l]}</b>
+                         </div>`; 
+            }
+            html += `</div>`;
+            if(data.mapImg) html += `<img src="${data.mapImg}" style="width:100%; border-radius:12px; border:1px solid var(--border); box-shadow: var(--shadow-card);">`;
+            
+            mostrarInfo(`Cobertura ${data.n}`, html);
+        };
+
+        // Función que renderiza la pestaña ZONAS automáticamente
+        function renderZonas() {
+            const container = document.getElementById('zonas-container');
+            if (!container) return;
+            
+            let html = '';
+            for (const key in SUC_MAP) {
+                const suc = SUC_MAP[key];
+                let locsHtml = '';
+                for (const loc in suc.locs) {
+                    locsHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px dashed var(--border); padding-bottom:8px; color: var(--text-light); font-size: 13px;"><span>${loc}</span> <strong style="color:var(--white);">$${suc.locs[loc]}</strong></div>`;
+                }
+                
+                html += `
+                <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: var(--shadow);">
+                    <h3 style="color: var(--primary); font-weight: 800; font-size: 16px; margin-bottom: 15px; text-transform: uppercase;">${suc.n}</h3>
+                    <div style="margin-bottom: 15px; background: var(--bg); padding: 12px; border-radius: 10px;">
+                        ${locsHtml}
+                    </div>
+                    ${suc.mapImg ? `<img src="${suc.mapImg}" style="width: 100%; border-radius: 10px; border: 1px solid var(--border); object-fit: cover;">` : ''}
+                </div>`;
+            }
+            container.innerHTML = html;
+        }
+
+
+
     </script>
 </body>
 </html>

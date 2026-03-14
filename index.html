@@ -958,7 +958,7 @@ window.actualizarEstadoLocal = () => {
     
     // Si todavía no eligió sucursal, le mostramos un mensaje sutil
     if (!sucId) {
-        banner.innerHTML = `<div style="text-align:center; color: var(--text-light); font-size: 13px; margin: 0 20px 15px;"></div>`;
+        banner.innerHTML = `<div style="text-align:center; color: var(--text-light); font-size: 13px; margin: 0 20px 15px;">Seleccioná una sucursal abajo para ver los horarios de atención.</div>`;
         return;
     }
 
@@ -1593,35 +1593,48 @@ window.procesarPedido = async () => {
 
         // --- Generar Mensaje de WhatsApp ---
         let t = `*NUEVO PEDIDO | MARVEL FOOD*%0A---------------------------%0A`;
-        t += `*Cliente:* ${ordenDatos.cliente}%0A*Sucursal:* ${ordenDatos.sucursal}%0A*Tipo:* ${ordenDatos.tipo}%0A`;
-        
-        // Agregar el horario en el mensaje de WhatsApp
-        t += `*Horario Est.:* ${horarioEstimadoFinal}%0A`; 
-        
+
+        // Bloque 1: datos del local y cliente
+        t += `*Sucursal:* ${ordenDatos.sucursal}%0A`;
+        t += `*Horario Est.:* ${horarioEstimadoFinal}%0A`;
+        t += `*Teléfono:* ${tel}%0A`;
+        t += `*Cliente:* ${ordenDatos.cliente}%0A`;
+        t += `*Tipo:* ${ordenDatos.tipo}%0A`;
+
         if (isDelivery) {
-            t += `*Dirección:* ${dir} ${ordenDatos.piso}%0A*Localidad:* ${loc}%0A`;
+            t += `*Dirección:* ${dir}${ordenDatos.piso ? ' ' + ordenDatos.piso.trim() : ''}%0A`;
+            t += `*Localidad:* ${loc}%0A`;
             if (ordenDatos.gps !== 'No provisto') t += `*Ubicación GPS:* http://maps.google.com/maps?q=${ordenDatos.gps}%0A`;
         }
+
         t += `---------------------------%0A`;
-        
+
+        // Bloque 2: pago y cupón
+        t += `*Pago:* ${pago}%0A`;
+        if (pago === 'Efectivo' && vuelto > 0) {
+            t += `*Abona con:* $${vuelto} (Vuelto: $${vuelto - total})%0A`;
+        }
+        if (cuponAplicado) {
+            t += `*Cupón aplicado:* ${cuponAplicado.titulo}%0A`;
+        }
+
+        t += `---------------------------%0A`;
+
+        // Bloque 3: items
         carrito.forEach(i => {
-            t += `*${i.cant}x ${i.n}* ($${i.totalItem})%0A`;
+            t += `*${i.cant}x ${i.n}* ($${i.totalItem.toLocaleString('es-AR')})%0A`;
             if(i.sin && i.sin.length) t += `   _Sin: ${i.sin.join(', ')}_%0A`;
             if(i.con && i.con.length) t += `   _Extras: ${i.con.map(x=>x.n).join(', ')}_%0A`;
             if(i.obs) t += `   _Nota: ${i.obs}_%0A`;
         });
 
         t += `---------------------------%0A`;
-        t += `*Subtotal:* $${sub}%0A`;
-        if(envio > 0) t += `*Envío:* $${envio}%0A`;
-        if(montoDescuento > 0) t += `*Descuento (${detalleCupon}):* -$${montoDescuento}%0A`;
-        
-        t += `*TOTAL FINAL: $${total}*%0A`;
-        t += `---------------------------%0A`;
-        t += `*Pago:* ${pago}%0A`;
-        if (pago === 'Efectivo' && vuelto > 0) {
-            t += `*Abona con:* $${vuelto} (Vuelto: $${vuelto - total})%0A`;
-        }
+
+        // Bloque 4: totales
+        t += `*Subtotal:* $${sub.toLocaleString('es-AR')}%0A`;
+        if(envio > 0) t += `*Envío:* $${envio.toLocaleString('es-AR')}%0A`;
+        if(montoDescuento > 0) t += `*Descuento (${detalleCupon}):* -$${montoDescuento.toLocaleString('es-AR')}%0A`;
+        t += `%0A*TOTAL FINAL: $${total.toLocaleString('es-AR')}*%0A`;
 
         document.body.style.cursor = 'default';
         window.location.href = `https://wa.me/${SUC_MAP[sucId].wsp}?text=${t}`;

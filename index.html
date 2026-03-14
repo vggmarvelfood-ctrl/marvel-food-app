@@ -958,7 +958,7 @@ window.actualizarEstadoLocal = () => {
     
     // Si todavía no eligió sucursal, le mostramos un mensaje sutil
     if (!sucId) {
-        banner.innerHTML = `<div style="text-align:center; color: var(--text-light); font-size: 13px; margin: 0 20px 15px;">Seleccioná una sucursal abajo para ver los horarios de atención.</div>`;
+        banner.innerHTML = `<div style="text-align:center; color: var(--text-light); font-size: 13px; margin: 0 20px 15px;"></div>`;
         return;
     }
 
@@ -2024,6 +2024,34 @@ async function cargarMenuOverrides() {
               renderMenu(); // re-render con nuevos datos
           });
     } catch(e) { console.warn("Menu overrides no disponible:", e); }
+    // Cargar overrides de promos
+    try {
+        const snapPromos = await db.collection('config_menu').doc('promos_override').get();
+        if (snapPromos.exists) {
+            const ov = snapPromos.data();
+            PROMOS_DATA.forEach(p => {
+                if (ov[p.id]) {
+                    if (ov[p.id].p !== undefined)         p.p         = ov[p.id].p;
+                    if (ov[p.id].pOriginal !== undefined) p.pOriginal = ov[p.id].pOriginal;
+                    if (ov[p.id].diaVenta !== undefined)  p.diaVenta  = ov[p.id].diaVenta;
+                }
+            });
+        }
+    } catch(e) { console.warn("Promos override no disponible:", e); }
+    // Cargar overrides de cupones
+    try {
+        const snapCupones = await db.collection('config_menu').doc('cupones_override').get();
+        if (snapCupones.exists) {
+            const ov = snapCupones.data();
+            [0,1,2,3,4,5,6].forEach(dia => {
+                if (ov[dia] && ov[dia].activo !== false) {
+                    CUPONES_DEL_DIA[dia] = { ...CUPONES_DEL_DIA[dia], ...ov[dia] };
+                } else if (ov[dia] && ov[dia].activo === false) {
+                    CUPONES_DEL_DIA[dia] = null;
+                }
+            });
+        }
+    } catch(e) { console.warn("Cupones override no disponible:", e); }
 }
 
 // ── 2. CARRITO PERSISTENTE ──
@@ -2933,7 +2961,7 @@ function admImprimir(id) {
 // ═══ ADMIN TABS + DASHBOARD + MENU + RESENAS ═══════════════════
 
 function admSwitchTab(tab, btn) {
-    ['pedidos','dashboard','menu','resenas'].forEach(t => {
+    ['pedidos','dashboard','menu','resenas','promos','cupones'].forEach(t => {
         const el = document.getElementById('adm-tab-' + t);
         if (el) el.style.display = t === tab ? 'block' : 'none';
     });
@@ -2943,7 +2971,225 @@ function admSwitchTab(tab, btn) {
     if (tab === 'dashboard') setTimeout(admCargarDashboard, 50);
     if (tab === 'menu')      setTimeout(admCargarMenuGestion, 50);
     if (tab === 'resenas')   setTimeout(admCargarResenas, 50);
+    if (tab === 'promos')    setTimeout(admCargarPromos, 50);
+    if (tab === 'cupones')   setTimeout(admCargarCupones, 50);
 }
+
+// ─── GESTIÓN DE PROMOS ────────────────────────────────
+let admPromosData = [];
+
+async function admCargarPromos() {
+    const cont = document.getElementById('adm-promos-lista');
+    if (!cont) return;
+    cont.innerHTML = '<p style="color:#9ca3af;padding:20px;text-align:center;">Cargando...</p>';
+    // Cargar overrides de Firestore
+    let ovPromos = {};
+    try {
+        const snap = await db.collection('config_menu').doc('promos_override').get();
+        if (snap.exists) ovPromos = snap.data();
+    } catch(e) {}
+    admPromosData = PROMOS_DATA.map(p => ({ ...p, ...(ovPromos[p.id] || {}) }));
+    admRenderPromos(ovPromos);
+}
+
+function admRenderPromos(ovPromos) {
+    const cont = document.getElementById('adm-promos-lista');
+    if (!cont) return;
+    const DIAS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+    cont.innerHTML = admPromosData.map((p, idx) => `
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                <img src="${p.img}" style="width:52px;height:52px;object-fit:cover;border-radius:8px;flex-shrink:0;">
+                <div style="flex:1;min-width:0;">
+                    <div style="font-size:13px;font-weight:800;color:var(--white);margin-bottom:2px;">${p.n}</div>
+                    <div style="font-size:11px;color:#9ca3af;">${p.d}</div>
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+                <div>
+                    <div style="font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:4px;">PRECIO ORIGINAL</div>
+                    <input type="number" id="promo-orig-${p.id}" value="${p.pOriginal}"
+                        style="width:100%;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;outline:none;">
+                </div>
+                <div>
+                    <div style="font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:4px;">PRECIO PROMO</div>
+                    <input type="number" id="promo-precio-${p.id}" value="${p.p}"
+                        style="width:100%;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;outline:none;">
+                </div>
+            </div>
+            <div style="margin-bottom:8px;">
+                <div style="font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:4px;">DÍA DE VENTA</div>
+                <select id="promo-dia-${p.id}" style="width:100%;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;outline:none;">
+                    <option value="null" ${p.diaVenta === null ? 'selected' : ''}>Todos los días</option>
+                    ${DIAS.map((d,i) => `<option value="${i}" ${p.diaVenta === i ? 'selected' : ''}>${d}</option>`).join('')}
+                </select>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <button onclick="admGuardarPromo('${p.id}')"
+                    style="flex:1;background:rgba(245,158,11,.15);border:1px solid var(--primary);color:var(--primary);padding:8px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">
+                    💾 Guardar cambios
+                </button>
+                <button onclick="admResetPromo('${p.id}')"
+                    style="background:rgba(255,255,255,.05);border:1px solid var(--border);color:#9ca3af;padding:8px 12px;border-radius:8px;font-size:12px;cursor:pointer;"
+                    title="Restaurar valores originales">↺</button>
+            </div>
+            <div id="promo-feedback-${p.id}" style="font-size:11px;color:#10b981;text-align:center;height:16px;margin-top:4px;"></div>
+        </div>
+    `).join('');
+}
+
+window.admGuardarPromo = async (id) => {
+    const orig  = parseInt(document.getElementById('promo-orig-' + id)?.value);
+    const precio = parseInt(document.getElementById('promo-precio-' + id)?.value);
+    const diaRaw = document.getElementById('promo-dia-' + id)?.value;
+    const dia = diaRaw === 'null' ? null : parseInt(diaRaw);
+    if (!orig || !precio || precio < 1) return alert('Precios inválidos.');
+    const upd = {}; upd[id] = { pOriginal: orig, p: precio, diaVenta: dia };
+    try {
+        await db.collection('config_menu').doc('promos_override').set(upd, { merge: true });
+        // Actualizar PROMOS_DATA en memoria
+        const idx = PROMOS_DATA.findIndex(p => p.id === id);
+        if (idx >= 0) { PROMOS_DATA[idx].pOriginal = orig; PROMOS_DATA[idx].p = precio; PROMOS_DATA[idx].diaVenta = dia; }
+        const fb = document.getElementById('promo-feedback-' + id);
+        if (fb) { fb.innerText = '✅ Guardado'; setTimeout(() => { fb.innerText = ''; }, 2000); }
+    } catch(e) { alert('Error: ' + e.message); }
+};
+
+window.admResetPromo = async (id) => {
+    if (!confirm('¿Restaurar valores originales de esta promo?')) return;
+    const upd = {}; upd[id] = {};
+    try {
+        await db.collection('config_menu').doc('promos_override').set(upd, { merge: true });
+        admCargarPromos();
+    } catch(e) { alert('Error: ' + e.message); }
+};
+
+// ─── GESTIÓN DE CUPONES ────────────────────────────────
+const DIAS_SEMANA = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const TIPOS_CUPON = [
+    { v: 'porcentaje',         l: '% Descuento sobre total' },
+    { v: 'regalo_papas',       l: 'Papas gratis con burger' },
+    { v: 'regalo_veggie',      l: '% Descuento en Veggies' },
+    { v: 'descuento_efectivo', l: 'Monto fijo de descuento ($)' },
+    { v: 'regalo_libre',       l: 'Regalo personalizado (desc. libre)' },
+];
+
+async function admCargarCupones() {
+    const cont = document.getElementById('adm-cupones-lista');
+    if (!cont) return;
+    cont.innerHTML = '<p style="color:#9ca3af;padding:20px;text-align:center;">Cargando...</p>';
+    let ovCupones = {};
+    try {
+        const snap = await db.collection('config_menu').doc('cupones_override').get();
+        if (snap.exists) ovCupones = snap.data();
+    } catch(e) {}
+    admRenderCupones(ovCupones);
+}
+
+function admRenderCupones(ov) {
+    const cont = document.getElementById('adm-cupones-lista');
+    if (!cont) return;
+    cont.innerHTML = [0,1,2,3,4,5,6].map(dia => {
+        const base = CUPONES_DEL_DIA[dia] || {};
+        const over = ov[dia] || {};
+        const c = { ...base, ...over };
+        const titulo  = c.titulo  || '';
+        const desc    = c.desc    || '';
+        const code    = c.code    || '';
+        const tipo    = c.tipo    || 'porcentaje';
+        const valor   = c.valor   !== undefined ? c.valor : 0;
+        const horario = c.horario || 'siempre';
+        const activo  = over.activo !== false; // default true
+        return `
+        <div style="background:var(--surface);border:1px solid ${activo ? 'var(--border)' : '#ef444455'};border-radius:12px;padding:14px;margin-bottom:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <div style="font-size:13px;font-weight:800;color:var(--primary);">${DIAS_SEMANA[dia]}</div>
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <span style="font-size:10px;color:${activo?'#10b981':'#ef4444'};font-weight:700;">${activo?'ACTIVO':'INACTIVO'}</span>
+                    <label class="adm-toggle"><input type="checkbox" ${activo?'checked':''} onchange="admToggleCupon(${dia})"><span class="adm-toggle-slider"></span></label>
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+                <div>
+                    <div style="font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:4px;">TÍTULO</div>
+                    <input id="cup-titulo-${dia}" type="text" value="${titulo}" placeholder="Ej: LUNES DE BURGER"
+                        style="width:100%;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:12px;outline:none;">
+                </div>
+                <div>
+                    <div style="font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:4px;">CÓDIGO</div>
+                    <input id="cup-code-${dia}" type="text" value="${code}" placeholder="SIN ESPACIOS"
+                        style="width:100%;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:12px;outline:none;text-transform:uppercase;">
+                </div>
+            </div>
+            <div style="margin-bottom:8px;">
+                <div style="font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:4px;">DESCRIPCIÓN</div>
+                <input id="cup-desc-${dia}" type="text" value="${desc}" placeholder="Descripción visible al cliente"
+                    style="width:100%;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:12px;outline:none;">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+                <div>
+                    <div style="font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:4px;">TIPO</div>
+                    <select id="cup-tipo-${dia}" style="width:100%;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:11px;outline:none;">
+                        ${TIPOS_CUPON.map(t => `<option value="${t.v}" ${tipo===t.v?'selected':''}>${t.l}</option>`).join('')}
+                    </select>
+                </div>
+                <div>
+                    <div style="font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:4px;">VALOR (% o $)</div>
+                    <input id="cup-valor-${dia}" type="number" value="${valor}" placeholder="0"
+                        style="width:100%;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;outline:none;">
+                </div>
+            </div>
+            <div style="margin-bottom:10px;">
+                <div style="font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:4px;">HORARIO ACTIVO</div>
+                <select id="cup-horario-${dia}" style="width:100%;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:12px;outline:none;">
+                    <option value="siempre"  ${horario==='siempre'?'selected':''}>Todo el día</option>
+                    <option value="mediodía" ${horario==='mediodía'?'selected':''}>Solo mediodía (11-16hs)</option>
+                    <option value="noche"    ${horario==='noche'?'selected':''}>Solo noche (20-23hs)</option>
+                </select>
+            </div>
+            <button onclick="admGuardarCupon(${dia})"
+                style="width:100%;background:rgba(245,158,11,.15);border:1px solid var(--primary);color:var(--primary);padding:8px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">
+                💾 Guardar cupón del ${DIAS_SEMANA[dia]}
+            </button>
+            <div id="cup-feedback-${dia}" style="font-size:11px;color:#10b981;text-align:center;height:16px;margin-top:4px;"></div>
+        </div>`;
+    }).join('');
+}
+
+window.admToggleCupon = async (dia) => {
+    let ov = {};
+    try { const s = await db.collection('config_menu').doc('cupones_override').get(); if(s.exists) ov = s.data(); } catch(e) {}
+    const cur = ov[dia] || {};
+    const nuevoActivo = cur.activo === false ? true : false;
+    const upd = {}; upd[dia] = { ...cur, activo: nuevoActivo };
+    try {
+        await db.collection('config_menu').doc('cupones_override').set(upd, { merge: true });
+        admCargarCupones();
+    } catch(e) { alert('Error: ' + e.message); }
+};
+
+window.admGuardarCupon = async (dia) => {
+    const get = id => document.getElementById(id)?.value || '';
+    const titulo  = get(`cup-titulo-${dia}`).trim();
+    const code    = get(`cup-code-${dia}`).trim().toUpperCase().replace(/\s/g,'');
+    const desc    = get(`cup-desc-${dia}`).trim();
+    const tipo    = get(`cup-tipo-${dia}`);
+    const valor   = parseFloat(get(`cup-valor-${dia}`)) || 0;
+    const horario = get(`cup-horario-${dia}`);
+    if (!titulo || !code) return alert('Título y Código son obligatorios.');
+    // Leer activo actual
+    let ov = {};
+    try { const s = await db.collection('config_menu').doc('cupones_override').get(); if(s.exists) ov = s.data(); } catch(e) {}
+    const curActivo = (ov[dia] || {}).activo !== false;
+    const upd = {}; upd[dia] = { titulo, code, desc, tipo, valor, horario, activo: curActivo };
+    try {
+        await db.collection('config_menu').doc('cupones_override').set(upd, { merge: true });
+        // Actualizar en memoria
+        CUPONES_DEL_DIA[dia] = { titulo, code, desc, tipo, valor, horario };
+        const fb = document.getElementById(`cup-feedback-${dia}`);
+        if (fb) { fb.innerText = '✅ Guardado'; setTimeout(() => { fb.innerText = ''; }, 2000); }
+    } catch(e) { alert('Error: ' + e.message); }
+};
 
 async function admCargarDashboard() {
     const p = admPedidos;
@@ -3136,6 +3382,8 @@ async function admCargarResenas() {
             <button class="adm-tab active" onclick="admSwitchTab('pedidos',this)">📋 Pedidos</button>
             <button class="adm-tab" onclick="admSwitchTab('dashboard',this)">📊 Dashboard</button>
             <button class="adm-tab" onclick="admSwitchTab('menu',this)">🍔 Menú</button>
+            <button class="adm-tab" onclick="admSwitchTab('promos',this)">🎯 Promos</button>
+            <button class="adm-tab" onclick="admSwitchTab('cupones',this)">🎟️ Cupones</button>
             <button class="adm-tab" onclick="admSwitchTab('resenas',this)">⭐ Reseñas</button>
         </div>
 
@@ -3238,6 +3486,20 @@ async function admCargarResenas() {
                 <div id="res-dist" style="flex:2;background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);display:flex;flex-direction:column;gap:5px;justify-content:center;"></div>
             </div>
             <div id="adm-resenas-lista" style="display:flex;flex-direction:column;gap:10px;"></div>
+        </div>
+
+        <!-- TAB PROMOS -->
+        <div id="adm-tab-promos" style="display:none;padding:20px;">
+            <h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">🎯 GESTIÓN DE PROMOS</h3>
+            <p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Editá precios y el día de venta de cada promo. Los cambios se aplican en tiempo real en la tienda.</p>
+            <div id="adm-promos-lista"></div>
+        </div>
+
+        <!-- TAB CUPONES -->
+        <div id="adm-tab-cupones" style="display:none;padding:20px;">
+            <h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">🎟️ GESTIÓN DE CUPONES</h3>
+            <p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Editá el cupón de cada día de la semana. Podés cambiar título, descripción, tipo de beneficio, valor y horario activo.</p>
+            <div id="adm-cupones-lista"></div>
         </div>
 
     <!-- Modal edición -->

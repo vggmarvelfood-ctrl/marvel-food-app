@@ -181,6 +181,120 @@
     flex: 1; /* Que todos ocupen el mismo ancho */
 }
    
+
+        /* ═══════════════════════ ADMIN ═══════════════════════ */
+        #admin-root { display:none; }
+        .adm-muted { color: #9ca3af; }
+        #adm-login-screen {
+            position:fixed;inset:0;background:var(--bg);
+            display:flex;align-items:center;justify-content:center;z-index:9999;
+        }
+        .adm-login-box {
+            background:var(--surface);border:1px solid var(--border);border-radius:20px;
+            padding:40px 32px;width:340px;text-align:center;
+        }
+        .adm-login-box h1{font-size:22px;font-weight:800;color:var(--primary);margin-bottom:6px;}
+        .adm-login-box p{color:#9ca3af;font-size:13px;margin-bottom:28px;}
+        .adm-inp{width:100%;padding:14px;border-radius:10px;border:1px solid var(--border);
+            background:var(--bg);color:var(--white);font-size:14px;margin-bottom:12px;outline:none;}
+        .adm-inp:focus{border-color:var(--primary);}
+        .adm-btn-primary{width:100%;padding:14px;border-radius:10px;border:none;
+            background:var(--primary);color:#000;font-weight:800;font-size:15px;cursor:pointer;}
+        .adm-header{background:var(--surface);border-bottom:1px solid var(--border);
+            padding:14px 20px;display:flex;align-items:center;justify-content:space-between;
+            position:sticky;top:0;z-index:100;}
+        .adm-header h1{font-size:18px;font-weight:800;color:var(--white);}
+        .adm-header h1 span{color:var(--primary);}
+        .adm-badge-live{background:#10b981;color:white;font-size:10px;font-weight:800;
+            padding:3px 10px;border-radius:20px;animation:adm-pulse 2s infinite;}
+        @keyframes adm-pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+        .adm-stats-bar{padding:12px 20px;display:flex;gap:16px;flex-wrap:wrap;
+            background:var(--bg);border-bottom:1px solid var(--border);}
+        .adm-stat{display:flex;flex-direction:column;}
+        .adm-stat span:first-child{font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;}
+        .adm-stat span:last-child{font-size:20px;font-weight:800;color:var(--primary);}
+        .adm-filters{padding:12px 20px;display:flex;gap:8px;flex-wrap:wrap;
+            border-bottom:1px solid var(--border);background:var(--surface);}
+        .adm-filter-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--border);
+            background:transparent;color:#9ca3af;font-size:12px;font-weight:600;cursor:pointer;transition:.2s;white-space:nowrap;}
+        .adm-filter-btn.active{background:var(--primary);color:#000;border-color:var(--primary);}
+        .adm-filter-btn.f-acep.active{background:#10b981;border-color:#10b981;color:#fff;}
+        .adm-filter-btn.f-list.active{background:#3b82f6;border-color:#3b82f6;color:#fff;}
+        .adm-filter-btn.f-ent.active{background:#6b7280;border-color:#6b7280;color:#fff;}
+        .adm-orders{padding:16px 20px;display:flex;flex-direction:column;gap:12px;}
+        .adm-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+        .adm-card.e-Pendiente{border-left:4px solid var(--primary);}
+        .adm-card.e-Aceptado{border-left:4px solid #10b981;}
+        .adm-card.e-Listo{border-left:4px solid #3b82f6;}
+        .adm-card.e-Entregado{border-left:4px solid #6b7280;opacity:.7;}
+        .adm-card-hdr{padding:13px 15px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;gap:8px;}
+        .adm-num{font-size:10px;color:#9ca3af;font-weight:700;}
+        .adm-cliente{font-weight:800;font-size:15px;color:var(--white);}
+        .adm-resumen{font-size:11px;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;}
+        .adm-badge{font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;white-space:nowrap;}
+        .adm-badge.e-Pendiente{background:rgba(245,158,11,.15);color:var(--primary);}
+        .adm-badge.e-Aceptado{background:rgba(16,185,129,.15);color:#10b981;}
+        .adm-badge.e-Listo{background:rgba(59,130,246,.15);color:#3b82f6;}
+        .adm-badge.e-Entregado{background:rgba(107,114,128,.15);color:#9ca3af;}
+        .adm-card-body{display:none;padding:0 15px 15px;border-top:1px solid var(--border);}
+        .adm-card-body.open{display:block;}
+        .adm-irow{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed var(--border);font-size:13px;}
+        .adm-irow:last-child{border:none;}
+        .adm-irow .l{color:#9ca3af;} .adm-irow .v{font-weight:600;color:var(--white);text-align:right;max-width:60%;}
+        .adm-item{display:flex;justify-content:space-between;padding:7px 10px;
+            background:#222;border-radius:8px;margin-bottom:4px;font-size:13px;}
+        .adm-item .in{font-weight:700;flex:1;}
+        .adm-item .ix{color:#9ca3af;font-size:11px;}
+        .adm-item .ip{color:var(--primary);font-weight:800;white-space:nowrap;margin-left:8px;}
+        .adm-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px;}
+        .adm-btn{flex:1;min-width:70px;padding:10px 7px;border-radius:10px;border:none;
+            font-size:11px;font-weight:800;cursor:pointer;text-transform:uppercase;}
+        .adm-btn:active{transform:scale(.97);}
+        .adm-btn.bv{background:#10b981;color:#fff;}
+        .adm-btn.bl{background:#3b82f6;color:#fff;}
+        .adm-btn.be{background:#6b7280;color:#fff;}
+        .adm-btn.bw{background:#25d366;color:#fff;}
+        .adm-btn.bc{background:rgba(245,158,11,.15);color:var(--primary);border:1px solid var(--primary);}
+        .adm-btn.bp{background:rgba(255,255,255,.07);color:var(--white);border:1px solid var(--border);}
+        /* Modal edición */
+        #adm-modal-edit{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:8000;
+            display:none;align-items:flex-end;justify-content:center;}
+        #adm-modal-edit.open{display:flex;}
+        .adm-modal-sheet{background:var(--surface);width:100%;max-width:520px;max-height:92vh;
+            border-radius:20px 20px 0 0;overflow-y:auto;padding:22px;}
+        .adm-modal-title{font-size:17px;font-weight:800;color:var(--primary);margin-bottom:16px;}
+        .adm-mlabel{font-size:11px;color:#9ca3af;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+        .adm-minp{width:100%;padding:11px 13px;border-radius:9px;border:1px solid var(--border);
+            background:var(--bg);color:var(--white);font-size:14px;margin-bottom:12px;outline:none;}
+        .adm-minp:focus{border-color:var(--primary);}
+        .adm-edit-item{display:flex;align-items:center;gap:8px;background:#222;
+            border-radius:9px;padding:9px 11px;margin-bottom:6px;}
+        .adm-edit-item input{background:transparent;border:none;border-bottom:1px solid var(--border);
+            color:var(--white);font-size:13px;font-weight:700;width:38px;text-align:center;outline:none;padding:2px;}
+        .adm-edit-item .eil{flex:1;font-size:13px;font-weight:600;}
+        .adm-edit-item .eip{font-size:11px;color:#9ca3af;}
+        .adm-del-item{background:rgba(239,68,68,.15);border:none;color:#ef4444;
+            width:26px;height:26px;border-radius:6px;cursor:pointer;font-size:13px;
+            display:flex;align-items:center;justify-content:center;}
+        .adm-mactions{display:flex;gap:10px;margin-top:16px;}
+        .adm-msave{flex:1;padding:14px;border-radius:10px;border:none;
+            background:var(--primary);color:#000;font-weight:800;font-size:14px;cursor:pointer;}
+        .adm-mcancel{padding:14px 18px;border-radius:10px;border:1px solid var(--border);
+            background:transparent;color:#9ca3af;font-weight:700;font-size:13px;cursor:pointer;}
+        .adm-empty{text-align:center;padding:60px 20px;color:#9ca3af;}
+        .adm-empty span{font-size:44px;display:block;margin-bottom:10px;}
+        /* Print */
+        @media print {
+            body > *:not(#adm-print-area){display:none!important;}
+            #adm-print-area{display:block!important;}
+        }
+        #adm-print-area{display:none;font-family:'Courier New',monospace;font-size:12px;color:#000;background:#fff;}
+        .adm-ticket{width:300px;padding:18px;page-break-after:always;}
+        .adm-ticket:last-child{page-break-after:avoid;}
+        .adm-ticket hr{border:none;border-top:1px dashed #000;margin:5px 0;}
+        .adm-tbl th,.adm-tbl td{text-align:left;padding:1px 4px;}
+
+        /* ════════════════════════════ */
    
    </style>
 
@@ -308,43 +422,19 @@
 
 
     <div id="tab-perfil" class="tab-page hidden" style="padding: 20px;">
-        <div id="perfil-form" class="hidden">
-            <h2 style="font-weight: 800; margin-bottom: 10px;">MI PERFIL</h2>
-            <p style="color: var(--text-light); margin-bottom: 20px; font-size: 14px;">Ingresa tus datos para recibir beneficios exclusivos.</p>
-            
-            <div id="registro-paso-1">
-                <input type="text" id="reg-nom" class="ui-input" placeholder="Nombre completo">
-                <input type="email" id="reg-mail" class="ui-input" placeholder="tu@email.com">
-                <input type="number" id="reg-tel" class="ui-input" placeholder="WhatsApp">
-                <button class="btn-action" onclick="enviarCodigoVerificacion()">ENVIAR CÓDIGO AL MAIL</button>
-            </div>
 
-            <div id="registro-paso-2" class="hidden" style="margin-top: 20px; border-top: 1px dashed var(--border); padding-top: 20px;">
-                <p style="color: var(--primary); font-size: 13px; margin-bottom: 10px; font-weight: 700;">Te enviamos un código (simulado) al correo.</p>
-                <input type="number" id="reg-codigo" class="ui-input" placeholder="Ingresa el código de 4 dígitos">
-                <button class="btn-action" style="background: #10b981;" onclick="verificarCodigoYGuardar()">VERIFICAR Y ENTRAR</button>
-                <button onclick="document.getElementById('registro-paso-2').classList.add('hidden'); document.getElementById('registro-paso-1').classList.remove('hidden');" 
-                        style="background: transparent; color: var(--text-light); border: none; width: 100%; margin-top: 10px; font-size: 12px;">Volver a intentar</button>
-            </div>
+        <!-- Título de sección -->
+        <div style="margin-bottom:20px;">
+            <h2 style="font-weight:800; font-size:22px; color:var(--white); margin:0 0 4px;">🎟️ CUPONES</h2>
+            <p style="color:var(--text-light); font-size:13px; margin:0;">Beneficios disponibles para vos hoy.</p>
         </div>
 
-        <div id="perfil-info" class="hidden">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                <div>
-                    <h2 id="lbl-nombre" style="color: var(--primary); font-weight:800; margin:0;"></h2>
-                    <p id="lbl-mail" style="font-size:12px; color:var(--text-light);"></p>
-                </div>
-                <button onclick="cerrarSesion()" style="background:transparent; border:1px solid #333; color:#999; padding:5px 10px; border-radius:8px; font-size:10px;">SALIR</button>
-            </div>
+        <!-- Cupón del día (se rellena por JS) -->
+        <div id="cupon-del-dia-box" style="margin-bottom:20px;"></div>
 
-            <div style="background:var(--surface); border-radius:16px; padding:20px; border:1px solid var(--border);">
-                <h3 style="font-weight:800; font-size:15px; margin-bottom:15px; display:flex; align-items:center; gap:8px;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg> 
-                    BENEFICIOS EXCLUSIVOS
-                </h3>
-                <div id="lista-cupones-p"></div>
-            </div>
-        </div>
+        <!-- Lista de todos los cupones de la semana -->
+        <div id="cupones-semana-box"></div>
+
     </div>
 
 <div id="tab-ayuda" class="tab-page hidden" style="padding: 20px;">
@@ -440,8 +530,8 @@
         Ayuda
     </div>
     <div class="nav-item" onclick="switchTab('tab-perfil', this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-        Perfil
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="5" x2="5" y2="19"></line><circle cx="6.5" cy="6.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg>
+        Cupones
     </div>
 </nav>
 
@@ -554,51 +644,37 @@
         </div>
     </div>
 
-    <script type="module">
+    <script>
 
 
 let cuponAplicado = null; 
 
 window.aplicarCuponDesdeRegalos = (cuponId) => {
-    // 1. Buscamos primero en los cupones propios del usuario (Firebase)
-    let cupon = currentUser.cupones ? currentUser.cupones.find(c => c.id === cuponId) : null;
-    
-    // 2. Si no lo encuentra, verificamos si es el "Cupón Especial del Día"
-    if (!cupon) {
-        const especial = obtenerCuponDelDia();
-        if (especial && especial.code === cuponId) {
-            cupon = {
-                id: especial.code,
-                titulo: especial.titulo,
-                desc: especial.desc,
-                valor: especial.code.includes("10") ? 0.10 : 0, // Si el código tiene "10", descuenta 10%
-                tipo: especial.code.includes("10") ? "porcentaje" : "regalo",
-                usado: false
-            };
-        }
+    // Buscar el cupón en CUPONES_DEL_DIA por código
+    const especial = Object.values(CUPONES_DEL_DIA).find(c => c && c.code === cuponId);
+    if (!especial) return alert("Este cupón ya no está disponible.");
+
+    // Si ya hay uno aplicado con el mismo código, avisar
+    if (cuponAplicado && cuponAplicado.id === cuponId) {
+        return alert("Este cupón ya está aplicado a tu pedido.");
     }
 
-    // 3. Validaciones de seguridad
-    if (!cupon) return alert("Este cupón ya no está disponible.");
-    if (cupon.usado) return alert("Este cupón ya fue canjeado.");
+    // Mapear tipo al sistema de carrito
+    let tipoCarro = "regalo";
+    let valorCarro = 0;
+    if (especial.tipo === "porcentaje")         { tipoCarro = "porcentaje";        valorCarro = especial.valor / 100; }
+    else if (especial.tipo === "regalo_veggie") { tipoCarro = "porcentaje_veggie"; valorCarro = especial.valor / 100; }
+    else if (especial.tipo === "descuento_efectivo") { tipoCarro = "efectivo";     valorCarro = especial.valor; }
 
-    // 4. Aplicar al sistema de carrito
-    cuponAplicado = cupon; 
-    
-    // Mensaje visual
-    mostrarInfo("¡ÉXITO!", `Beneficio "${cupon.titulo}" aplicado correctamente.`);
+    cuponAplicado = { id: especial.code, titulo: especial.titulo, desc: especial.desc, valor: valorCarro, tipo: tipoCarro };
 
-    // 5. Refrescar el carrito y totales
-    if (typeof actualizarTotales === "function") {
-        actualizarTotales(); 
-    }
-    
-    // 6. Redirigir al usuario al inicio para que vea los productos
-    const navInicio = document.querySelector('.nav-item'); // Asegúrate que el primero sea Inicio
-    switchTab('tab-inicio', navInicio);
+    mostrarInfo("¡ÉXITO!", `<p style="color:var(--text-light); font-size:14px;">Cupón <strong style="color:var(--primary);">"${especial.titulo}"</strong> aplicado a tu pedido.</p>`);
 
-    // Opcional: Cerrar el modal o vista de perfil si está abierta
-    // toggleCart(); // Solo si quieres que se abra el carrito automáticamente
+    if (typeof renderCartItems === "function") renderCartItems();
+
+    // Ir al inicio
+    const navInicio = document.querySelector('.nav-item[onclick*="tab-inicio"]') || document.querySelector('.nav-item');
+    if (navInicio) switchTab('tab-inicio', navInicio);
 };
 
         const CALENDARIO_MARVEL = {
@@ -741,9 +817,9 @@ const MENU = [
             { id: 22, n: "Aros de cebolla (10 unidades)", p: 7700, d: "10 unidades de Aros de cebolla.", img: "https://i.ibb.co/21dhfds8/Aros-de-cebolla-3.jpg", ings: [] },
             { id: 23, n: "Combo Aros", p: 11500, d: "10 Aros acompañados con papas chicas.", img: "https://i.ibb.co/21dhfds8/Aros-de-cebolla-3.jpg", ings: ["Papas"] },
            { id: 24, n: "Papas Chicas", p: 5700, d: "Papas clásicas peso 180gr.", img: "https://i.ibb.co/9kTJXzVs/Papas.png", ings: [] },
-            { id: 25, n: "Papas Chicas con Cheddar", p: 6500, d: "Papas clásicas con salsa cheddar peso 180gr.", img: "https://i.ibb.co/8gPmfwg2/Papas-cheddar.png", ings: ["Cheddar"] },
+            { id: 25, n: "Papas Chicas con Cheddar", p: 6500, d: "Papas clásicas con salsa cheddar peso 180gr.", img: "https://i.ibb.co/8gPmfwg2/Papas-cheddar.png", ings: [] },
             { id: 26, n: "Papas Grandes", p: 6700, d: "Papas clásicas peso 250gr.", img: "https://i.ibb.co/9kTJXzVs/Papas.png", ings: [] },
-            { id: 27, n: "Papas Cheddar Grandes", p: 7800, d: "Bañadas en salsa de queso cheddar y panceta crocante.", img: "https://i.ibb.co/8gPmfwg2/Papas-cheddar.png", ings: ["Cheddar", "Panceta"] },
+            { id: 27, n: "Papas Cheddar Grandes", p: 7800, d: "papas grandes con cheddar 250gr + 1 dip cheddar.", img: "https://i.ibb.co/8gPmfwg2/Papas-cheddar.png", ings: [] },
               { id: 28, n: "Marvel Box", p: 15400, d: "Box con 6 nuggets, 6 aros de cebolla acompañada de papas completas con panceta,verdeo,cheddar y bbq.", img: "https://i.ibb.co/xqLrKdV9/DSC-6847.jpg", ings: ["Cheddar", "Panceta","Verdeo","BBQ","AROS DE CEBOLLA 6","NUGGETS 6"] }
         ]
     },
@@ -755,11 +831,22 @@ const MENU = [
     }
 ];
 
-        const EXTRAS = [{ id: "e1", n: "Extra Cheddar", p: 900 }, { id: "e2", n: "Extra Medallón", p: 2100 }];
+const EXTRAS_GLOBALES = [
+    // Extras para Hamburguesas
+    { id: "e1", n: "Extra Cheddar", p: 900, tipo: "burger" }, 
+    { id: "e2", n: "Extra Medallón", p: 2100, tipo: "burger" },
+    // Extras para Papas
+    { id: "p1", n: "Panceta", p: 900, tipo: "papas" },
+    { id: "p2", n: "Verdeo", p: 900, tipo: "papas" },
+    { id: "p3", n: "Cheddar", p: 900, tipo: "papas" },
+    // Extra para Promo del Día
+    { id: "b1", n: "Sumar Bebida", p: 2800, tipo: "promo" } // <--- Nueva línea
+];
+
+
 
         let carrito = [];
         let tProd = null;
-        let codigoSimulado = null;
         let isDelivery = true;
         let coordenadasGPS = null;
 
@@ -860,16 +947,7 @@ function inicializarHeroSlider() {
 document.addEventListener('DOMContentLoaded', () => {
     console.log("Marvel Food cargado correctamente.");
 
-    // A. Cargar Usuario
-    const savedUser = localStorage.getItem('marvel_user');
-    if (savedUser) {
-        try {
-            currentUser = JSON.parse(savedUser);
-            if (typeof actualizarVistasPerfil === 'function') actualizarVistasPerfil();
-        } catch (e) { console.error("Error user local:", e); }
-    }
-
-    // B. Iniciar Slider
+    // A. Iniciar Slider
     inicializarHeroSlider();
 
     // C. Renderizar Menú y Datos (Solo una vez)
@@ -877,10 +955,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof renderCenaHoy === 'function') renderCenaHoy();
     if (typeof renderZonas === 'function') renderZonas();
 
-    // D. Sincronizar Firebase (Compat Mode)
-    if (typeof checkSincronizacionFirebase === 'function') {
-        checkSincronizacionFirebase();
-    }
     actualizarEstadoLocal();
     setInterval(actualizarEstadoLocal, 3000);
 });
@@ -890,6 +964,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         window.addEventListener('scroll', () => {
             const header = document.getElementById('header');
+            if (!header) return;
             if(window.scrollY > 50) header.classList.add('scrolled');
             else header.classList.remove('scrolled');
         });
@@ -900,20 +975,8 @@ document.addEventListener('DOMContentLoaded', () => {
             window.scrollTo({top: y, behavior: 'smooth'});
         };
 
-        let currentUser = JSON.parse(localStorage.getItem('marvel_user')) || { nombre: "", tel: "", cupones: [] };
-
-async function checkSincronizacionFirebase() {
-    if (currentUser.tel) {
-        // Corrección: Sintaxis Compat de Firebase
-        const userRef = db.collection("usuarios").doc(currentUser.tel);
-        const snap = await userRef.get();
-        if (snap.exists) { // En v8 "exists" no lleva paréntesis
-            currentUser = snap.data();
-            localStorage.setItem('marvel_user', JSON.stringify(currentUser));
-        }
-    }
-}
-checkSincronizacionFirebase();
+        // currentUser ya no se usa en el perfil (cupones son directos)
+        let currentUser = {};
 
         window.obtenerUbicacion = () => {
             const statusText = document.getElementById('loc-status');
@@ -941,9 +1004,12 @@ checkSincronizacionFirebase();
 
         window.setGeneralDelivery = (isDel) => {
             isDelivery = isDel;
-            document.getElementById('btn-tipo-del').classList.toggle('active', isDelivery);
-            document.getElementById('btn-tipo-ret').classList.toggle('active', !isDelivery);
-            document.getElementById('box-envio-checkout').style.display = isDelivery ? 'block' : 'none';
+            const btnDel = document.getElementById('btn-tipo-del');
+            const btnRet = document.getElementById('btn-tipo-ret');
+            const boxEnvio = document.getElementById('box-envio-checkout');
+            if (btnDel) btnDel.classList.toggle('active', isDelivery);
+            if (btnRet) btnRet.classList.toggle('active', !isDelivery);
+            if (boxEnvio) boxEnvio.style.display = isDelivery ? 'block' : 'none';
             renderCartItems();
         };
 
@@ -961,83 +1027,136 @@ window.cambiarSucursalPrincipal = () => {
     actualizarEstadoLocal(); 
 };
 
-        function renderMenu() {
-            const cats = document.getElementById('cat-list');
-            const menu = document.getElementById('menu-container');
-            cats.innerHTML = ""; menu.innerHTML = "";
+function renderMenu() {
+    const cats = document.getElementById('cat-list');
+    const menu = document.getElementById('menu-container');
+    cats.innerHTML = ""; menu.innerHTML = "";
 
-            MENU.forEach((c, idx) => {
-                const btn = document.createElement('button');
-                btn.className = `cat-tag ${idx===0?'active':''}`;
-                btn.innerText = c.cat;
-                btn.onclick = () => {
-                    document.querySelector('.cat-tag.active').classList.remove('active');
-                    btn.classList.add('active');
-                    const element = document.getElementById(`sec-${idx}`);
-                    const y = element.getBoundingClientRect().top + window.scrollY - 140;
-                    window.scrollTo({top: y, behavior: 'smooth'});
-                };
-                cats.appendChild(btn);
+    MENU.forEach((c, idx) => {
+        const btn = document.createElement('button');
+        btn.className = `cat-tag ${idx===0?'active':''}`;
+        btn.innerText = c.cat;
+        btn.onclick = () => {
+            document.querySelector('.cat-tag.active').classList.remove('active');
+            btn.classList.add('active');
+            const element = document.getElementById(`sec-${idx}`);
+            const y = element.getBoundingClientRect().top + window.scrollY - 140;
+            window.scrollTo({top: y, behavior: 'smooth'});
+        };
+        cats.appendChild(btn);
 
-                const sec = document.createElement('div');
-                sec.id = `sec-${idx}`;
-                sec.innerHTML = `<h3 class="cat-title">${c.cat}</h3>`;
-                
-                let gridHtml = `<div class="menu-grid">`;
-                c.items.forEach(p => {
-                    gridHtml += `
-                        <div class="card-p" onclick='openModal(${JSON.stringify(p)})'>
-                            <div class="p-img-wrapper"><img class="p-img" src="${p.img}" alt="${p.n}"></div>
-                            <div class="p-txt">
-                                <div>
-                                    <h3>${p.n}</h3>
-                                    <p>${p.d}</p>
-                                </div>
-                                <div class="p-action-row">
-                                    <span class="p-price">$${p.p.toLocaleString()}</span> 
-                                    <button class="add-btn">+</button>
-                                </div>
-                            </div>
+        const sec = document.createElement('div');
+        sec.id = `sec-${idx}`;
+        sec.innerHTML = `<h3 class="cat-title">${c.cat}</h3>`;
+        
+        let gridHtml = `<div class="menu-grid">`;
+        c.items.forEach(p => {
+            
+            // NUEVA LÍNEA: Le pasamos la categoría al producto para que el modal sepa qué extras mostrar
+            p.cat = c.cat; 
+
+            gridHtml += `
+                <div class="card-p" onclick='openModal(${JSON.stringify(p)})'>
+                    <div class="p-img-wrapper"><img class="p-img" src="${p.img}" alt="${p.n}"></div>
+                    <div class="p-txt">
+                        <div>
+                            <h3>${p.n}</h3>
+                            <p>${p.d}</p>
                         </div>
-                    `;
-                });
-                gridHtml += `</div>`;
-                sec.innerHTML += gridHtml;
-                menu.appendChild(sec);
-            });
-        }
+                        <div class="p-action-row">
+                            <span class="p-price">$${p.p.toLocaleString()}</span> 
+                            <button class="add-btn">+</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        gridHtml += `</div>`;
+        sec.innerHTML += gridHtml;
+        menu.appendChild(sec);
+    });
+}
+  
+  
+window.openModal = (p) => {
+    // Inicializamos el producto temporal con los campos necesarios
+    tProd = { ...p, cant: 1, sin: [], con: [], obs: "" };
+    
+    // Seteamos textos e imagen
+    document.getElementById('m-title').innerText = p.n;
+    document.getElementById('m-desc').innerText = p.d;
+    document.getElementById('m-img').style.backgroundImage = `url('${p.img}')`;
+    document.getElementById('m-qty').innerText = "1";
+    document.getElementById('m-obs').value = "";
 
-        window.openModal = (p) => {
-            tProd = { ...p, cant: 1, sin: [], con: [], obs: "" };
-            document.getElementById('m-title').innerText = p.n;
-            document.getElementById('m-desc').innerText = p.d;
-            document.getElementById('m-img').style.backgroundImage = `url('${p.img}')`;
-            document.getElementById('m-qty').innerText = "1";
-            document.getElementById('m-obs').value = "";
+    // 1. LÓGICA DE INGREDIENTES A QUITAR
+    const ingList = document.getElementById('m-list-ings');
+    const secIngs = document.getElementById('m-sec-ings');
+    
+    if(p.ings && p.ings.length > 0) {
+        secIngs.style.display = 'block'; 
+        ingList.innerHTML = p.ings.map(i => `
+            <label class="custom-check">
+                <span>Sin ${i}</span>
+                <input type="checkbox" onchange="toggleSin('${i}')">
+                <div class="check-box"></div>
+            </label>
+        `).join('');
+    } else {
+        secIngs.style.display = 'none'; 
+    }
 
-            const ingList = document.getElementById('m-list-ings');
-            if(p.ings && p.ings.length > 0) {
-                document.getElementById('m-sec-ings').classList.remove('hidden');
-                ingList.innerHTML = p.ings.map(i => `<label class="custom-check"><span>Sin ${i}</span><input type="checkbox" onchange="toggleSin('${i}')"><div class="check-box"></div></label>`).join('');
-            } else {
-                document.getElementById('m-sec-ings').classList.add('hidden');
-            }
+    // 2. LÓGICA FILTRADA DE EXTRAS
+    let extrasParaMostrar = [];
+    
+    // Convertimos a minúsculas para comparar fácilmente
+    const nombreProd = p.n.toLowerCase();
+    const categoriaProd = (p.cat || "").toLowerCase();
 
-            const extList = document.getElementById('m-list-extras');
-            extList.innerHTML = EXTRAS.map(e => `<label class="custom-check"><span>${e.n} (+$${e.p})</span><input type="checkbox" onchange="toggleExt('${e.id}')"><div class="check-box"></div></label>`).join('');
+    if (categoriaProd.includes("hamburguesas")) {
+        // Extras para Hamburguesas
+        extrasParaMostrar = EXTRAS_GLOBALES.filter(e => e.tipo === "burger");
+    } else if (nombreProd.includes("papas") || categoriaProd.includes("papas")) {
+        // Extras para Papas
+        extrasParaMostrar = EXTRAS_GLOBALES.filter(e => e.tipo === "papas");
+    } else if (nombreProd.includes("promo") || categoriaProd.includes("promo")) {
+        // NUEVO: Extras para la Promo (Bebida)
+        extrasParaMostrar = EXTRAS_GLOBALES.filter(e => e.tipo === "promo");
+    }
 
-            updateModalBtn();
-            document.getElementById('m-prod').style.display = 'flex';
-        };
+    const extSec = document.getElementById('m-sec-extras');
+    const extList = document.getElementById('m-list-extras');
 
-        window.toggleSin = (i) => { const idx = tProd.sin.indexOf(i); if(idx > -1) tProd.sin.splice(idx,1); else tProd.sin.push(i); };
-        window.toggleExt = (id) => { 
-            const ex = EXTRAS.find(x => x.id === id);
-            const idx = tProd.con.findIndex(x => x.id === id);
-            if(idx > -1) tProd.con.splice(idx,1); else tProd.con.push(ex);
-            updateModalBtn();
-        };
+    if (extrasParaMostrar.length > 0) {
+        extSec.style.display = 'block'; 
+        extList.innerHTML = extrasParaMostrar.map(e => `
+            <label class="custom-check">
+                <span>${e.n} (+$${e.p})</span>
+                <input type="checkbox" onchange="toggleExt('${e.id}')">
+                <div class="check-box"></div>
+            </label>
+        `).join('');
+    } else {
+        extSec.style.display = 'none'; 
+        extList.innerHTML = "";
+    }
 
+    updateModalBtn();
+    document.getElementById('m-prod').style.display = 'flex';
+};
+
+
+window.toggleSin = (i) => { const idx = tProd.sin.indexOf(i); if(idx > -1) tProd.sin.splice(idx,1); else tProd.sin.push(i); };
+ 
+ 
+window.toggleExt = (id) => { 
+    const ex = EXTRAS_GLOBALES.find(x => x.id === id);
+    const idx = tProd.con.findIndex(x => x.id === id);
+    if(idx > -1) tProd.con.splice(idx,1); else tProd.con.push(ex);
+    updateModalBtn();
+};
+ 
+ 
         window.updateMQty = (v) => { tProd.cant = Math.max(1, tProd.cant + v); document.getElementById('m-qty').innerText = tProd.cant; updateModalBtn(); };
         function updateModalBtn() {
             let u = tProd.p; tProd.con.forEach(e => u += e.p);
@@ -1199,20 +1318,38 @@ function renderCartItems() {
     }
     // -----------------------------------------
 
+
+
+
+
     let montoDescuento = 0;
     let detalleDescuentoHtml = "";
 
     if (cuponAplicado) {
         if (cuponAplicado.tipo === "porcentaje") {
-            montoDescuento = subtotal * cuponAplicado.valor;
+            montoDescuento = Math.round(subtotal * cuponAplicado.valor);
             detalleDescuentoHtml = `
                 <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #10b981; font-weight: 600;">
-                    <span>Beneficio: ${cuponAplicado.titulo}</span> <span>-$${montoDescuento.toLocaleString()}</span>
+                    <span>🏷️ ${cuponAplicado.titulo}</span> <span>-$${montoDescuento.toLocaleString()}</span>
                 </div>`;
-        } else if (cuponAplicado.tipo === "regalo") {
+        } else if (cuponAplicado.tipo === "efectivo") {
+            montoDescuento = cuponAplicado.valor;
             detalleDescuentoHtml = `
                 <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #10b981; font-weight: 600;">
-                    <span>Regalo: ${cuponAplicado.titulo}</span> <span>¡INCLUIDO!</span>
+                    <span>💵 ${cuponAplicado.titulo}</span> <span>-$${montoDescuento.toLocaleString()}</span>
+                </div>`;
+        } else if (cuponAplicado.tipo === "porcentaje_veggie") {
+            // Descuento solo en ítems veggie del carrito
+            const subtotalVeggie = carrito.filter(i => i.cat && i.cat.toLowerCase().includes('veggie')).reduce((a,i) => a + i.totalItem, 0);
+            montoDescuento = Math.round(subtotalVeggie * cuponAplicado.valor);
+            detalleDescuentoHtml = `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #10b981; font-weight: 600;">
+                    <span>🥗 ${cuponAplicado.titulo}</span> <span>-$${montoDescuento.toLocaleString()}</span>
+                </div>`;
+        } else if (cuponAplicado.tipo === "regalo" || cuponAplicado.tipo === "regalo_papas" || cuponAplicado.tipo === "regalo_libre") {
+            detalleDescuentoHtml = `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: #10b981; font-weight: 600;">
+                    <span>🍟 ${cuponAplicado.titulo}</span> <span>¡INCLUIDO!</span>
                 </div>`;
         }
     }
@@ -1304,23 +1441,8 @@ window.procesarPedido = async () => {
 
         await db.collection("pedidos_v2").add(ordenDatos);
 
-        if (currentUser && cuponAplicado) {
-            const userRef = db.collection("usuarios").doc(currentUser.email || currentUser.tel);
-            const userSnap = await userRef.get();
-            
-            if (userSnap.exists) {
-                const userData = userSnap.data();
-                const nuevosCupones = userData.cupones.map(c => {
-                    if (c.id === cuponAplicado.id) return { ...c, usado: true };
-                    return c;
-                });
-                
-                await userRef.set({ cupones: nuevosCupones }, { merge: true });
-                
-                currentUser.cupones = nuevosCupones;
-                localStorage.setItem('marvel_user', JSON.stringify(currentUser));
-            }
-        }
+        // Limpiar cupón aplicado después de enviar el pedido
+        cuponAplicado = null;
 
         // --- Generar Mensaje de WhatsApp ---
         let t = `*NUEVO PEDIDO | MARVEL FOOD*%0A---------------------------%0A`;
@@ -1366,10 +1488,11 @@ window.procesarPedido = async () => {
 
         window.switchTab = (tabId, element) => {
             document.querySelectorAll('.tab-page').forEach(page => page.classList.add('hidden'));
-            document.getElementById(tabId).classList.remove('hidden');
+            const tabEl = document.getElementById(tabId);
+            if (tabEl) tabEl.classList.remove('hidden');
             
             document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-            element.classList.add('active');
+            if (element) element.classList.add('active');
 
             if(tabId === 'tab-perfil') actualizarVistasPerfil();
             if(tabId === 'tab-promos') renderPromosCatalog();
@@ -1377,217 +1500,152 @@ window.procesarPedido = async () => {
             window.scrollTo(0,0);
         };
 
-function actualizarVistasPerfil() {
-    const infoBox = document.getElementById('perfil-info');
-    const formBox = document.getElementById('perfil-form');
-    const cupCont = document.getElementById('lista-cupones-p');
+// ─── RENDER DE LA PESTAÑA CUPONES ─────────────────────────────────────────────
+const ICONOS_CUPON = {
+    porcentaje: '🏷️',
+    regalo_papas: '🍟',
+    regalo_veggie: '🥗',
+    descuento_efectivo: '💵',
+    regalo_libre: '🎁'
+};
 
-    if (!currentUser || !currentUser.email) {
-        if(infoBox) infoBox.classList.add('hidden');
-        if(formBox) formBox.classList.remove('hidden');
-        return;
-    }
+function valorTexto(c) {
+    if (c.tipo === 'porcentaje')         return `${c.valor}% OFF`;
+    if (c.tipo === 'descuento_efectivo') return `$${c.valor.toLocaleString()} OFF`;
+    if (c.tipo === 'regalo_veggie')      return `${c.valor}% en Veggies`;
+    return 'GRATIS';
+}
 
-    if(formBox) formBox.classList.add('hidden');
-    if(infoBox) infoBox.classList.remove('hidden');
-    
-    const lblNombre = document.getElementById('lbl-nombre');
-    if(lblNombre) lblNombre.innerText = `¡Hola, ${currentUser.nombre}!`;
-
-    // Protegemos la lista de cupones con un fallback vacío []
-    let cuponesAMostrar = [...(currentUser.cupones || [])];
-    
-    const cuponEspecial = (typeof obtenerCuponDelDia === 'function') ? obtenerCuponDelDia() : null; 
-    if (cuponEspecial) {
-        cuponesAMostrar.unshift({
-            id: cuponEspecial.code,
-            titulo: cuponEspecial.titulo,
-            desc: cuponEspecial.desc,
-            usado: false,
-            especial: true 
-        });
-    }
-
-    if (cuponesAMostrar.length > 0) {
-        cupCont.innerHTML = cuponesAMostrar.map(c => `
-            <div style="background:var(--surface); border:1px solid ${c.usado ? '#333' : (c.especial ? 'var(--primary)' : 'var(--border)')}; padding:15px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; opacity: ${c.usado ? '0.6' : '1'}; position: relative; overflow: hidden;">
-                ${c.especial ? '<div style="position:absolute; top:0; left:0; background:var(--primary); color:black; font-size:8px; font-weight:800; padding:2px 8px; border-radius:0 0 8px 0;">¡SÓLO POR HOY!</div>' : ''}
-                <div style="flex: 1; ${c.especial ? 'margin-top:5px;' : ''}">
-                    <h4 style="color:var(--white); font-weight:700; font-size:14px; margin-bottom:2px;">${c.titulo}</h4>
-                    <p style="color:var(--text-light); font-size:11px;">${c.desc}</p>
+function renderTarjetaCupon(c, esHoy) {
+    const icono = ICONOS_CUPON[c.tipo] || '🎁';
+    const usado = c.usado === true;
+    if (esHoy) {
+        return `
+        <div style="background:linear-gradient(135deg,rgba(245,158,11,0.15),rgba(245,158,11,0.04)); border:2px solid var(--primary); border-radius:16px; padding:18px; position:relative; overflow:hidden; margin-bottom:12px;">
+            <div style="position:absolute;top:0;right:0;background:var(--primary);color:black;font-size:9px;font-weight:800;padding:4px 12px;border-radius:0 14px 0 10px;">${c.horario === 'noche' ? '🌙 ESTA NOCHE' : c.horario === 'mediodía' ? '☀️ AL MEDIODÍA' : '✨ HOY TODO EL DÍA'}</div>
+            <div style="display:flex;align-items:center;gap:14px;margin-top:10px;">
+                <span style="font-size:40px;">${icono}</span>
+                <div style="flex:1;">
+                    <h4 style="color:var(--primary);font-weight:800;font-size:16px;margin:0 0 3px;">${c.titulo}</h4>
+                    <p style="color:var(--text-light);font-size:12px;margin:0 0 10px;">${c.desc}</p>
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                        <span style="background:rgba(245,158,11,0.2);border:1px dashed var(--primary);color:var(--primary);font-size:11px;font-weight:800;padding:3px 10px;border-radius:6px;letter-spacing:1px;">${c.code}</span>
+                        <span style="background:var(--primary);color:black;font-size:11px;font-weight:800;padding:3px 10px;border-radius:6px;">${valorTexto(c)}</span>
+                    </div>
                 </div>
-                <button 
-                    onclick="window.aplicarCuponDesdeRegalos('${c.id}')" 
-                    style="background: ${c.usado ? 'transparent' : 'var(--primary)'}; border: 1px solid ${c.usado ? 'var(--border)' : 'var(--primary)'}; color: ${c.usado ? 'var(--text-light)' : 'black'}; padding: 8px 15px; border-radius: 8px; font-weight: 800; font-size: 11px; cursor: pointer; min-width: 80px;" 
-                    ${c.usado ? 'disabled' : ''}>
-                    ${c.usado ? 'CANJEADO' : 'USAR'}
-                </button>
             </div>
-        `).join('');
+            <button onclick="window.aplicarCuponDesdeRegalos('${c.code}')"
+                style="background:var(--primary);border:none;color:black;padding:13px;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;width:100%;margin-top:14px;text-transform:uppercase;letter-spacing:1px;">
+                🎯 USAR ESTE CUPÓN
+            </button>
+        </div>`;
     } else {
-        cupCont.innerHTML = `
-            <div style="text-align:center; padding:20px; border:1px dashed var(--border); border-radius:12px;">
-                <p style='color:var(--text-light); font-size:13px;'>No tienes beneficios disponibles aún.</p>
-            </div>`;
+        return `
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px;margin-bottom:10px;opacity:0.55;">
+            <span style="font-size:28px;">${icono}</span>
+            <div style="flex:1;">
+                <h4 style="color:var(--text-light);font-weight:700;font-size:13px;margin:0 0 2px;">${c.titulo}</h4>
+                <p style="color:var(--text-light);font-size:11px;margin:0;opacity:0.7;">${c.desc}</p>
+            </div>
+            <span style="color:var(--border);font-size:10px;font-weight:700;white-space:nowrap;">${c.dia}</span>
+        </div>`;
     }
 }
-// Función auxiliar para determinar el regalo del día
+
+function actualizarVistasPerfil() {
+    const diaHoy = new Date().getDay();
+    const hora   = new Date().getHours();
+    const DIAS   = ["DOM","LUN","MAR","MIÉ","JUE","VIE","SÁB"];
+
+    // ── Cupón del día ──
+    const boxHoy = document.getElementById('cupon-del-dia-box');
+    const cuponHoy = obtenerCuponDelDia();
+    if (boxHoy) {
+        if (cuponHoy) {
+            boxHoy.innerHTML = renderTarjetaCupon(cuponHoy, true);
+        } else {
+            // ver si existe para hoy pero fuera de horario
+            const c = CUPONES_DEL_DIA[diaHoy];
+            if (c && c.horario === 'mediodía') {
+                boxHoy.innerHTML = `
+                <div style="background:var(--surface);border:1px dashed var(--border);border-radius:14px;padding:18px;text-align:center;margin-bottom:12px;">
+                    <span style="font-size:32px;">⏰</span>
+                    <p style="color:var(--text-light);font-size:13px;margin:8px 0 0;">El cupón de hoy estará disponible<br><strong style="color:var(--primary);">de 11:00 a 16:00 hs</strong></p>
+                </div>`;
+            } else if (c && c.horario === 'noche') {
+                boxHoy.innerHTML = `
+                <div style="background:var(--surface);border:1px dashed var(--border);border-radius:14px;padding:18px;text-align:center;margin-bottom:12px;">
+                    <span style="font-size:32px;">🌙</span>
+                    <p style="color:var(--text-light);font-size:13px;margin:8px 0 0;">El cupón de hoy estará disponible<br><strong style="color:var(--primary);">de 20:00 a 23:59 hs</strong></p>
+                </div>`;
+            } else {
+                boxHoy.innerHTML = `
+                <div style="background:var(--surface);border:1px dashed var(--border);border-radius:14px;padding:18px;text-align:center;margin-bottom:12px;">
+                    <span style="font-size:32px;">😔</span>
+                    <p style="color:var(--text-light);font-size:13px;margin:8px 0 0;">Hoy no hay cupón activo.<br>¡Volvé otro día!</p>
+                </div>`;
+            }
+        }
+    }
+
+    // ── Resto de la semana ──
+    const boxSemana = document.getElementById('cupones-semana-box');
+    if (boxSemana) {
+        const otrosDias = Object.entries(CUPONES_DEL_DIA)
+            .filter(([d, c]) => parseInt(d) !== diaHoy && c !== null)
+            .map(([d, c]) => ({ ...c, dia: DIAS[parseInt(d)] }));
+
+        if (otrosDias.length > 0) {
+            boxSemana.innerHTML = `
+                <p style="color:var(--text-light);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">PRÓXIMOS CUPONES</p>
+                ${otrosDias.map(c => renderTarjetaCupon(c, false)).join('')}`;
+        } else {
+            boxSemana.innerHTML = '';
+        }
+    }
+}
+// =============================================
+//   CUPONES DEL DÍA — EDITÁ AQUÍ DIRECTAMENTE
+// =============================================
+//
+//  Cada entrada es un día de la semana (0=Dom, 1=Lun ... 6=Sáb).
+//  Si el día no tiene cupón, poné: null
+//
+//  Tipos disponibles:
+//    "porcentaje"        → descuento % sobre el total       (valor: número, ej: 10)
+//    "regalo_papas"      → papas gratis con burger           (valor: 0)
+//    "regalo_veggie"     → % descuento solo en Veggies       (valor: número, ej: 15)
+//    "descuento_efectivo"→ monto fijo de descuento           (valor: número, ej: 2000)
+//    "regalo_libre"      → regalo personalizado               (valor: 0)
+//
+//  "horario" puede ser:
+//    "mediodía"  → activo de 11:00 a 16:00 hs
+//    "noche"     → activo de 20:00 a 23:59 hs
+//    "siempre"   → activo todo el día
+//
+//  "code" es el código interno, sin espacios.
+//
+const CUPONES_DEL_DIA = {
+    0: { titulo: "DOMINGO NOCHE",      desc: "Dip de cheddar gratis con la compra de papas",     code: "CHEESEDIP",  tipo: "regalo_libre",        valor: 0,    horario: "noche"    }, // Domingo
+    1: { titulo: "LUNES DE BURGER",    desc: "10% OFF en toda la carta",                         code: "LUNES10",    tipo: "porcentaje",          valor: 10,   horario: "mediodía" }, // Lunes
+    2: { titulo: "MARTES COMPAÑERO",   desc: "Papas chicas de regalo con tu burger",              code: "PAPASGRATIS",tipo: "regalo_papas",         valor: 0,    horario: "mediodía" }, // Martes
+    3: { titulo: "MIÉRCOLES VEGGIE",   desc: "15% OFF en hamburguesas Veggie",                    code: "VEGGIE15",   tipo: "regalo_veggie",        valor: 15,   horario: "mediodía" }, // Miércoles
+    4: { titulo: "JUEVES EFECTIVO",    desc: "$2000 de descuento pagando en efectivo al mediodía",code: "JUEVES2K",   tipo: "descuento_efectivo",   valor: 2000, horario: "mediodía" }, // Jueves
+    5: { titulo: "VIERNES NOCHE",      desc: "Dip de cheddar gratis con la compra de papas",     code: "VIERNESDIP", tipo: "regalo_libre",         valor: 0,    horario: "noche"    }, // Viernes
+    6: { titulo: "SÁBADO NOCHE",       desc: "Dip de cheddar gratis con la compra de papas",     code: "SABADODIP",  tipo: "regalo_libre",         valor: 0,    horario: "noche"    }, // Sábado
+};
+
+// Función auxiliar para determinar el cupón activo del día
 function obtenerCuponDelDia() {
     const ahora = new Date();
-    const dia = ahora.getDay(); // 0: Dom, 1: Lun...
+    const dia  = ahora.getDay();
     const hora = ahora.getHours();
-    
-    // Activo de 11:00 a 16:00 (Mediodía)
-    if (hora >= 11 && hora <= 16) {
-        if (dia === 1) return { titulo: "LUNES DE BURGER", desc: "10% OFF en toda la carta", code: "LUNES10" };
-        if (dia === 2) return { titulo: "MARTES COMPAÑERO", desc: "Papas chicas de regalo con tu compra", code: "PAPASGRATIS" };
-        if (dia === 3) return { titulo: "MIÉRCOLES RELAX", desc: "Gaseosa de regalo pidiendo 2 burgers", code: "DRINKFREE" };
-    }
-    return null;
+    const cupon = CUPONES_DEL_DIA[dia];
+    if (!cupon) return null;
+    if (cupon.horario === "mediodía"  && !(hora >= 11 && hora <= 16)) return null;
+    if (cupon.horario === "noche"     && !(hora >= 20 && hora <= 23)) return null;
+    return cupon;
 }
-// Variable global para el código
-
-window.enviarCodigoVerificacion = async () => {
-    const mailInput = document.getElementById('reg-mail').value.trim().toLowerCase();
-    const nomInput = document.getElementById('reg-nom').value.trim();
-    const telInput = document.getElementById('reg-tel').value.trim();
-    const btn = document.querySelector('#registro-paso-1 .btn-action');
-
-    if(!mailInput || !nomInput || !telInput) return alert("Completá todos los campos.");
-
-    btn.disabled = true;
-    btn.innerText = "CONECTANDO...";
-    document.body.style.cursor = 'wait';
-
-    try {
-        // Referencia a la colección de usuarios
-        const usuariosRef = db.collection("usuarios");
-        
-        // BUSQUEDA POR TELÉFONO
-        const querySnapshot = await usuariosRef.where("tel", "==", telInput).get();
-        
-        let mailFinal = mailInput;
-        let nombreFinal = nomInput;
-
-        if (!querySnapshot.empty) {
-            const docExistente = querySnapshot.docs[0];
-            mailFinal = docExistente.id; 
-            nombreFinal = docExistente.data().nombre || nomInput;
-            
-            document.getElementById('reg-mail').value = mailFinal;
-            document.getElementById('reg-nom').value = nombreFinal;
-            alert("Cuenta encontrada. Enviando código a: " + mailFinal);
-        }
-
-        codigoSimulado = Math.floor(1000 + Math.random() * 9000).toString();
-
-        // GUARDAR EN FIRESTORE
-        // Usamos db.collection().doc().set() que es el estándar de la v10 compat
-        await db.collection("usuarios").doc(mailFinal).set({
-            codigoTemporal: codigoSimulado,
-            nombre: nombreFinal,
-            tel: telInput,
-            fechaActividad: new Date().toISOString()
-        }, { merge: true });
-
-        // ENVIAR EMAILJS
-        await emailjs.send('service_2y6217j', 'template_1qepw99', {
-            nombre: nombreFinal,
-            email_cliente: mailFinal, 
-            codigo: codigoSimulado
-        });
-        
-        document.getElementById('registro-paso-1').classList.add('hidden');
-        document.getElementById('registro-paso-2').classList.remove('hidden');
-
-    } catch (error) {
-        console.error("Error detallado:", error);
-        // Esto te dirá exactamente si es un error de Firebase, de Red o de Permisos
-        alert("Error de Sistema: " + (error.message || "No se pudo conectar con la base de datos"));
-    } finally {
-        btn.disabled = false;
-        btn.innerText = "ENVIAR CÓDIGO AL MAIL";
-        document.body.style.cursor = 'default';
-    }
-};
-
-
-window.verificarCodigoYGuardar = async () => {
-    const inputCodigo = document.getElementById('reg-codigo').value.trim();
-    const mail = document.getElementById('reg-mail').value.trim().toLowerCase();
-    const nom = document.getElementById('reg-nom').value.trim();
-    const tel = document.getElementById('reg-tel').value.trim();
-
-    if (!inputCodigo) return alert("Por favor ingresa el código.");
-
-    try {
-        document.body.style.cursor = 'wait';
-        const userRef = db.collection("usuarios").doc(mail);
-        const userSnap = await userRef.get();
-
-        if (userSnap.exists) { 
-            const dataServidor = userSnap.data();
-            if (inputCodigo !== dataServidor.codigoTemporal && inputCodigo !== codigoSimulado) {
-                document.body.style.cursor = 'default';
-                return alert("Código incorrecto. Revisá tu mail.");
-            }
-
-            currentUser = {
-                ...dataServidor,
-                cupones: dataServidor.cupones || []
-            };
-            
-            await userRef.update({ 
-                codigoTemporal: firebase.firestore.FieldValue.delete() 
-            });
-        } else {
-            if (inputCodigo !== codigoSimulado) {
-                document.body.style.cursor = 'default';
-                return alert("Código incorrecto.");
-            }
-
-            currentUser = {
-                nombre: nom,
-                email: mail,
-                tel: tel,
-                fechaRegistro: new Date().toISOString(),
-                cupones: [
-                    { id: 'CUPON-BIENVENIDA', titulo: "10% OFF", desc: "En tu primer pedido", valor: 0.10, tipo: "porcentaje", usado: false },
-                    { id: 'CUPON-PAPAS', titulo: "PAPAS GRATIS", desc: "Papas chicas de regalo", valor: 0, tipo: "regalo", usado: false }
-                ]
-            };
-            await userRef.set(currentUser);
-        }
-
-        // --- LAS LÍNEAS CLAVE PARA EL CAMBIO VISUAL ---
-        localStorage.setItem('marvel_user', JSON.stringify(currentUser));
-        
-        // 1. Ocultamos los contenedores de registro
-        document.getElementById('registro-paso-1').classList.add('hidden');
-        document.getElementById('registro-paso-2').classList.add('hidden');
-        
-        // 2. Actualizamos la vista (esto mostrará perfil-info y ocultará perfil-form)
-        actualizarVistasPerfil(); 
-        
-        alert("¡Verificación exitosa! Bienvenido " + currentUser.nombre);
-
-    } catch (e) {
-        console.error("Error detallado:", e);
-        alert("Error de Sistema: " + e.message);
-    } finally {
-        document.body.style.cursor = 'default';
-    }
-};
-
-window.cerrarSesion = () => {
-    if(confirm("¿Estás seguro que quieres cerrar sesión?")) {
-        localStorage.removeItem('marvel_user');
-        currentUser = { nombre: "", tel: "", cupones: [] };
-        actualizarVistasPerfil();
-        // Opcional: recargar la página para limpiar estados
-        location.reload();
-    }
-};
 
 // Al cargar la página, verificamos si ya había una sesión
 
@@ -1798,5 +1856,89 @@ window.obtenerHorarioEstimado = (esDelivery) => {
 };
 
     </script>
+
+<!-- ═══════════════ ADMIN PANEL ═══════════════ -->
+<div id="admin-root">
+
+    <!-- Login admin -->
+    <div id="adm-login-screen">
+        <div class="adm-login-box">
+            <h1>MARVEL FOOD</h1>
+            <p>Panel de administración</p>
+            <input class="adm-inp" type="password" id="adm-pin" placeholder="PIN de acceso"
+                onkeydown="if(event.key==='Enter') admCheckPin()">
+            <button class="adm-btn-primary" onclick="admCheckPin()">INGRESAR</button>
+        </div>
+    </div>
+
+    <!-- Panel principal -->
+    <div id="adm-app" style="display:none; min-height:100vh; background:var(--bg);">
+
+        <div class="adm-header">
+            <h1>MARVEL <span>ADMIN</span></h1>
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span class="adm-badge-live">● EN VIVO</span>
+                <span style="color:#9ca3af;font-size:11px;" id="adm-last-update">—</span>
+                <button onclick="admLogout()" style="background:transparent;border:1px solid var(--border);color:#9ca3af;padding:5px 10px;border-radius:8px;font-size:10px;cursor:pointer;">SALIR</button>
+            </div>
+        </div>
+
+        <div class="adm-stats-bar">
+            <div class="adm-stat"><span>Pendientes</span><span id="adm-s-pend">0</span></div>
+            <div class="adm-stat"><span>Aceptados</span><span id="adm-s-acep" style="color:#10b981">0</span></div>
+            <div class="adm-stat"><span>Listos</span><span id="adm-s-list" style="color:#3b82f6">0</span></div>
+            <div class="adm-stat"><span>Total hoy</span><span id="adm-s-total" style="color:var(--white)">0</span></div>
+            <div class="adm-stat"><span>Recaudado</span><span id="adm-s-cash" style="color:#10b981">$0</span></div>
+        </div>
+
+        <div class="adm-filters">
+            <button class="adm-filter-btn active"  onclick="admFiltro('Todos',this)">Todos</button>
+            <button class="adm-filter-btn"         onclick="admFiltro('Pendiente',this)">⏳ Pendientes</button>
+            <button class="adm-filter-btn f-acep"  onclick="admFiltro('Aceptado',this)">✅ Aceptados</button>
+            <button class="adm-filter-btn f-list"  onclick="admFiltro('Listo',this)">📦 Listos</button>
+            <button class="adm-filter-btn f-ent"   onclick="admFiltro('Entregado',this)">🏁 Entregados</button>
+            <button class="adm-filter-btn"         onclick="admFiltro('Delivery',this)">🛵 Delivery</button>
+            <button class="adm-filter-btn"         onclick="admFiltro('Retiro',this)">🏃 Retiro</button>
+        </div>
+
+        <div class="adm-orders" id="adm-orders"></div>
+    </div>
+
+    <!-- Modal edición -->
+    <div id="adm-modal-edit">
+        <div class="adm-modal-sheet">
+            <div class="adm-modal-title">✏️ EDITAR PEDIDO</div>
+            <div class="adm-mlabel">CLIENTE</div>
+            <input class="adm-minp" id="adm-e-cliente" type="text" placeholder="Nombre cliente">
+            <div class="adm-mlabel">TELÉFONO</div>
+            <input class="adm-minp" id="adm-e-tel" type="text" placeholder="Teléfono">
+            <div id="adm-e-dir-block">
+                <div class="adm-mlabel">DIRECCIÓN</div>
+                <input class="adm-minp" id="adm-e-dir" type="text" placeholder="Dirección">
+            </div>
+            <div class="adm-mlabel">ITEMS DEL PEDIDO</div>
+            <div id="adm-e-items"></div>
+            <div class="adm-mlabel" style="margin-top:4px;">COSTO ENVÍO</div>
+            <input class="adm-minp" id="adm-e-envio" type="number" placeholder="0" oninput="admRecalc()">
+            <div class="adm-mlabel">DESCUENTO</div>
+            <input class="adm-minp" id="adm-e-desc" type="number" placeholder="0" oninput="admRecalc()">
+            <div class="adm-mlabel">OBSERVACIONES</div>
+            <input class="adm-minp" id="adm-e-obs" type="text" placeholder="Notas adicionales">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg);border-radius:10px;margin-top:4px;">
+                <span style="color:#9ca3af;font-size:13px;">TOTAL CALCULADO</span>
+                <span id="adm-e-total" style="color:var(--primary);font-size:20px;font-weight:800;">$0</span>
+            </div>
+            <div class="adm-mactions">
+                <button class="adm-mcancel" onclick="admCloseModal()">Cancelar</button>
+                <button class="adm-msave"   onclick="admGuardar()">GUARDAR CAMBIOS</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Área impresión -->
+    <div id="adm-print-area"></div>
+</div>
+<!-- ════════════════ FIN ADMIN ════════════════ -->
+
 </body>
 </html>

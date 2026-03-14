@@ -294,6 +294,19 @@
             background:transparent;color:#9ca3af;font-weight:700;font-size:13px;cursor:pointer;}
         .adm-empty{text-align:center;padding:60px 20px;color:#9ca3af;}
         .adm-empty span{font-size:44px;display:block;margin-bottom:10px;}
+
+        .adm-tab { padding:12px 16px; border:none; background:transparent; color:#9ca3af; font-size:12px; font-weight:700; cursor:pointer; border-bottom:2px solid transparent; transition:.2s; white-space:nowrap; }
+        .adm-tab.active { color:var(--primary); border-bottom-color:var(--primary); }
+        .adm-menu-row { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px; display:flex; align-items:center; gap:10px; }
+        .adm-price-inp { background:var(--bg); border:1px solid var(--border); border-radius:7px; color:var(--white); font-size:13px; font-weight:700; padding:5px 8px; width:90px; outline:none; }
+        .adm-price-inp:focus { border-color:var(--primary); }
+        .adm-toggle { position:relative; width:36px; height:20px; flex-shrink:0; }
+        .adm-toggle input { opacity:0; width:0; height:0; }
+        .adm-toggle-slider { position:absolute; inset:0; background:#333; border-radius:20px; transition:.3s; cursor:pointer; }
+        .adm-toggle input:checked + .adm-toggle-slider { background:#10b981; }
+        .adm-toggle-slider::before { content:''; position:absolute; width:14px; height:14px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.3s; }
+        .adm-toggle input:checked + .adm-toggle-slider::before { transform:translateX(16px); }
+
         .adm-filterbar { padding:12px 20px; background:var(--surface); border-bottom:1px solid var(--border); }
         .adm-filterrow  { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
         .adm-date-inp   { padding:7px 10px; border-radius:8px; border:1px solid var(--border);
@@ -315,7 +328,47 @@
         .adm-tbl th,.adm-tbl td{text-align:left;padding:1px 4px;}
 
         /* ════════════════════════════ */
-   
+
+        /* ── SEGUIMIENTO PEDIDO ── */
+        #tracking-bar { position:fixed; bottom:80px; left:0; right:0; z-index:450; padding:0 12px; pointer-events:none; }
+        .tracking-pill { background:var(--surface); border:1px solid var(--primary); border-radius:16px; padding:10px 16px; display:flex; align-items:center; gap:10px; pointer-events:all; cursor:pointer; box-shadow:0 4px 20px rgba(245,158,11,0.25); animation:slideUp2 0.4s ease; }
+        @keyframes slideUp2 { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+        .tracking-dot { width:8px; height:8px; border-radius:50%; background:var(--primary); animation:blink 1.5s infinite; flex-shrink:0; }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+        .tracking-steps { display:flex; gap:6px; align-items:center; }
+        .tracking-step { font-size:10px; font-weight:700; padding:3px 8px; border-radius:10px; background:rgba(255,255,255,0.07); color:var(--text-light); }
+        .tracking-step.done { background:rgba(16,185,129,0.2); color:#10b981; }
+        .tracking-step.active { background:var(--primary); color:#000; }
+        /* Modal seguimiento */
+        #tracking-modal { position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:6000; display:none; align-items:flex-end; justify-content:center; }
+        #tracking-modal.open { display:flex; }
+        .tracking-sheet { background:var(--surface); width:100%; max-width:500px; border-radius:20px 20px 0 0; padding:24px; max-height:85vh; overflow-y:auto; }
+        .tracking-progress { display:flex; flex-direction:column; gap:0; margin:20px 0; }
+        .tp-item { display:flex; gap:14px; align-items:flex-start; }
+        .tp-line-col { display:flex; flex-direction:column; align-items:center; }
+        .tp-circle { width:32px; height:32px; border-radius:50%; border:2px solid var(--border); background:var(--bg); display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; transition:.3s; }
+        .tp-circle.done { border-color:#10b981; background:rgba(16,185,129,0.15); }
+        .tp-circle.active { border-color:var(--primary); background:rgba(245,158,11,0.15); }
+        .tp-vline { width:2px; height:40px; background:var(--border); margin:4px 0; transition:.3s; }
+        .tp-vline.done { background:#10b981; }
+        .tp-content { padding-bottom:40px; }
+        .tp-title { font-weight:700; font-size:14px; color:var(--white); }
+        .tp-time { font-size:11px; color:var(--text-light); margin-top:2px; }
+        /* ── CARRITO PERSISTENTE badge ── */
+        #cart-restore-banner { display:none; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); border-radius:12px; padding:12px 16px; margin:0 20px 15px; }
+        /* ── REORDEN ── */
+        .reorder-btn { width:100%; padding:12px; border-radius:10px; border:1px solid var(--primary); background:rgba(245,158,11,0.1); color:var(--primary); font-weight:700; font-size:13px; cursor:pointer; margin-top:10px; display:flex; align-items:center; justify-content:center; gap:8px; }
+        /* ── RESEÑA ── */
+        #resena-modal { position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:7000; display:none; align-items:center; justify-content:center; padding:20px; }
+        #resena-modal.open { display:flex; }
+        .resena-sheet { background:var(--surface); border-radius:20px; padding:28px 24px; width:100%; max-width:420px; text-align:center; }
+        .stars-row { display:flex; justify-content:center; gap:10px; margin:20px 0; }
+        .star-btn { font-size:36px; cursor:pointer; opacity:0.3; transition:.15s; }
+        .star-btn.lit { opacity:1; }
+        /* ── MENU CARD agotado ── */
+        .card-p.agotado { opacity:0.45; pointer-events:none; position:relative; }
+        .agotado-badge { position:absolute; top:8px; left:8px; background:#ef4444; color:#fff; font-size:9px; font-weight:800; padding:3px 8px; border-radius:6px; text-transform:uppercase; z-index:2; }
+
    </style>
 
 
@@ -384,6 +437,7 @@
         
         <div id="store-status-banner"></div>
 
+        <div id="cart-restore-banner"></div>
         <div class="type-toggle">
             <button id="btn-tipo-del" class="type-btn active" onclick="setGeneralDelivery(true)">Delivery</button>
             <button id="btn-tipo-ret" class="type-btn" onclick="setGeneralDelivery(false)">TakeAway</button>
@@ -783,6 +837,8 @@ const SUC_MAP = {
             Funes: { n: "RN9 972,Funes ", wsp: "5493413315885", mapImg: "https://i.ibb.co/84MNBwGC/mapas-2026-5-Funes.png", locs: { "Funes": 1800, "Fisherton": 2500, "Variante costo barrios privados Funes-Fisherton": 0 } }
         };
 
+let menuOverrides = {}; // precios/disponibilidad dinámicos desde Firebase
+
 const MENU = [
     {
         cat: "Hamburguesas",
@@ -963,17 +1019,35 @@ function inicializarHeroSlider() {
     heroSlider.addEventListener('touchend', () => setTimeout(startAutoSlide, 2000), { passive: true });
 }
 
-// 2. BLOQUE DE INICIO ÚNICO (SOLUCIÓN AL BLOQUEO DE BOTONES)
+// 2. BLOQUE DE INICIO ÚNICO
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("Marvel Food cargado correctamente.");
+    if (window.__IS_ADMIN__) return;
 
-    // A. Iniciar Slider
+    // Cargar overrides del menú (precios/disponibilidad) desde Firebase
+    if (typeof cargarMenuOverrides === 'function') cargarMenuOverrides();
+
+    // Restaurar carrito persistente
+    if (typeof restaurarCarrito === 'function') restaurarCarrito();
+
+    // Reanudar seguimiento si hay pedido activo
+    try {
+        const lastPedido = localStorage.getItem('mf_last_pedido');
+        if (lastPedido) {
+            const p = JSON.parse(lastPedido);
+            if (p && p.id && typeof iniciarSeguimiento === 'function') iniciarSeguimiento(p.id);
+        }
+    } catch(e) {}
+
+    // Iniciar Slider
     inicializarHeroSlider();
 
-    // C. Renderizar Menú y Datos (Solo una vez)
+    // Renderizar Menú y Datos
     if (typeof renderMenu === 'function') renderMenu();
     if (typeof renderCenaHoy === 'function') renderCenaHoy();
     if (typeof renderZonas === 'function') renderZonas();
+
+    // Mostrar botón de reorden en carrito si hay historial
+    if (typeof mostrarBannerReorden === 'function') mostrarBannerReorden();
 
     actualizarEstadoLocal();
     setInterval(actualizarEstadoLocal, 3000);
@@ -1075,8 +1149,12 @@ function renderMenu() {
             // NUEVA LÍNEA: Le pasamos la categoría al producto para que el modal sepa qué extras mostrar
             p.cat = c.cat; 
 
+            // Precio y disponibilidad dinámicos desde Firebase
+            const precioFinal = (menuOverrides[p.id] && menuOverrides[p.id].precio) ? menuOverrides[p.id].precio : p.p;
+            const agotado = menuOverrides[p.id] && menuOverrides[p.id].agotado === true;
             gridHtml += `
-                <div class="card-p" onclick='openModal(${JSON.stringify(p)})'>
+                <div class="card-p${agotado?' agotado':''}" onclick='${agotado?'':'openModal('+JSON.stringify({...p,p:precioFinal})+')'}'>
+                    ${agotado?'<div class=\"agotado-badge\">Agotado</div>':''}
                     <div class="p-img-wrapper"><img class="p-img" src="${p.img}" alt="${p.n}"></div>
                     <div class="p-txt">
                         <div>
@@ -1084,7 +1162,7 @@ function renderMenu() {
                             <p>${p.d}</p>
                         </div>
                         <div class="p-action-row">
-                            <span class="p-price">$${p.p.toLocaleString()}</span> 
+                            <span class="p-price">$${precioFinal.toLocaleString()}</span> 
                             <button class="add-btn">+</button>
                         </div>
                     </div>
@@ -1189,12 +1267,22 @@ window.toggleExt = (id) => {
             tProd.obs = document.getElementById('m-obs').value;
             let u = tProd.p; tProd.con.forEach(e => u += e.p);
             carrito.push({ ...tProd, totalItem: u * tProd.cant });
+            guardarCarritoPersistente();
             updateCartUI(); renderCartItems(); closeModal();
             const t = document.getElementById('toast');
             t.classList.add('show'); setTimeout(() => { t.classList.remove('show'); }, 2000);
         };
 
-        window.toggleCart = () => { document.getElementById('cart-view').classList.toggle('open'); };
+        window.toggleCart = () => {
+            const cv = document.getElementById('cart-view');
+            cv.classList.toggle('open');
+            if (cv.classList.contains('open')) {
+                // Inyectar reorder si hay historial y no existe ya
+                if (!document.getElementById('reorder-section')) {
+                    if (typeof mostrarBannerReorden === 'function') mostrarBannerReorden();
+                }
+            }
+        };
         function updateCartUI() { document.getElementById('cart-badge').innerText = carrito.reduce((s,i)=>s+i.cant,0); }
         window.toggleVuelto = () => document.getElementById('vuelto-box').style.display = (document.getElementById('p-metodo').value === 'Efectivo') ? 'block' : 'none';
 
@@ -1393,7 +1481,7 @@ function renderCartItems() {
     document.getElementById('res-total').innerText = `$${Math.max(0, totalFinal).toLocaleString()}`;
 }
 
-        window.delItem = (i) => { carrito.splice(i,1); updateCartUI(); renderCartItems(); };
+        window.delItem = (i) => { carrito.splice(i,1); guardarCarritoPersistente(); updateCartUI(); renderCartItems(); };
 
 window.procesarPedido = async () => {
     if (carrito.length === 0) return alert("Agregá productos a tu pedido primero.");
@@ -1459,10 +1547,34 @@ window.procesarPedido = async () => {
     try {
         document.body.style.cursor = 'wait'; 
 
-        await db.collection("pedidos_v2").add(ordenDatos);
+        const docRef = await db.collection("pedidos_v2").add(ordenDatos);
+        const pedidoId = docRef.id;
 
-        // Limpiar cupón aplicado después de enviar el pedido
+        // Guardar pedidoId para seguimiento en tiempo real
+        localStorage.setItem('mf_last_pedido', JSON.stringify({
+            id: pedidoId,
+            cliente: nombre.toUpperCase(),
+            sucursal: SUC_MAP[sucId].n,
+            total: total,
+            items: carrito,
+            fecha: new Date().toISOString()
+        }));
+
+        // Guardar historial para reorden
+        let historial = JSON.parse(localStorage.getItem('mf_historial') || '[]');
+        historial.unshift({ items: carrito, fecha: new Date().toISOString(), total });
+        historial = historial.slice(0, 5); // max 5 pedidos
+        localStorage.setItem('mf_historial', JSON.stringify(historial));
+
+        // Limpiar cupón y carrito persistente
         cuponAplicado = null;
+        localStorage.removeItem('mf_carrito');
+
+        // Iniciar seguimiento
+        iniciarSeguimiento(pedidoId);
+
+        // Registrar venta para estadísticas
+        registrarVentaStats(carrito, total, SUC_MAP[sucId].n);
 
         // --- Generar Mensaje de WhatsApp ---
         let t = `*NUEVO PEDIDO | MARVEL FOOD*%0A---------------------------%0A`;
@@ -1882,6 +1994,281 @@ window.obtenerHorarioEstimado = (esDelivery) => {
 // ════════════════════════════════════════════
 
 
+
+// ══════════════════════════════════════════════════════════
+//  NUEVAS FUNCIONALIDADES — Marvel Food
+// ══════════════════════════════════════════════════════════
+
+// ── 1. MENU OVERRIDES (precios/disponibilidad desde Firebase) ──
+async function cargarMenuOverrides() {
+    try {
+        db.collection("config_menu").doc("overrides")
+          .onSnapshot(snap => {
+              if (snap.exists) menuOverrides = snap.data();
+              else menuOverrides = {};
+              renderMenu(); // re-render con nuevos datos
+          });
+    } catch(e) { console.warn("Menu overrides no disponible:", e); }
+}
+
+// ── 2. CARRITO PERSISTENTE ──
+function guardarCarritoPersistente() {
+    try { localStorage.setItem('mf_carrito', JSON.stringify(carrito)); } catch(e) {}
+}
+
+function restaurarCarrito() {
+    try {
+        const saved = localStorage.getItem('mf_carrito');
+        if (!saved) return;
+        const items = JSON.parse(saved);
+        if (!items || !items.length) return;
+        carrito = items;
+        updateCartUI();
+        renderCartItems();
+        // Banner de restauración
+        const banner = document.getElementById('cart-restore-banner');
+        if (banner) {
+            banner.style.display = 'block';
+            banner.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+                    <span style="font-size:13px;color:var(--white);">🛒 Tenés <strong>${items.length} producto${items.length!==1?'s':''}</strong> en tu carrito anterior</span>
+                    <div style="display:flex;gap:8px;">
+                        <button onclick="limpiarCarritoBanner()" style="background:transparent;border:1px solid var(--border);color:var(--text-light);padding:5px 10px;border-radius:8px;font-size:11px;cursor:pointer;">Limpiar</button>
+                        <button onclick="toggleCart();document.getElementById('cart-restore-banner').style.display='none'" style="background:var(--primary);border:none;color:#000;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;">Ver carrito</button>
+                    </div>
+                </div>`;
+        }
+    } catch(e) { localStorage.removeItem('mf_carrito'); }
+}
+
+window.limpiarCarritoBanner = () => {
+    carrito = [];
+    localStorage.removeItem('mf_carrito');
+    updateCartUI();
+    renderCartItems();
+    const banner = document.getElementById('cart-restore-banner');
+    if (banner) banner.style.display = 'none';
+};
+
+// ── 3. REORDEN ──
+function mostrarBannerReorden() {
+    try {
+        const historial = JSON.parse(localStorage.getItem('mf_historial') || '[]');
+        if (!historial.length) return;
+        const ultimo = historial[0];
+        const cartView = document.getElementById('cart-items-list');
+        if (!cartView) return;
+        // Agregar botón reorden arriba de la lista del carrito
+        const reorderDiv = document.createElement('div');
+        reorderDiv.id = 'reorder-section';
+        reorderDiv.innerHTML = `
+            <div style="margin-bottom:16px;padding:14px;background:var(--surface);border-radius:12px;border:1px solid var(--border);">
+                <p style="font-size:12px;color:var(--text-light);margin-bottom:6px;">⟳ ÚLTIMO PEDIDO</p>
+                <p style="font-size:13px;color:var(--white);font-weight:600;margin-bottom:8px;">${ultimo.items.map(i=>`${i.cant}x ${i.n}`).join(', ')}</p>
+                <button class="reorder-btn" onclick="reordenarUltimo()">⟳ REPETIR ESTE PEDIDO</button>
+            </div>`;
+        cartView.parentNode.insertBefore(reorderDiv, cartView);
+    } catch(e) {}
+}
+
+window.reordenarUltimo = () => {
+    try {
+        const historial = JSON.parse(localStorage.getItem('mf_historial') || '[]');
+        if (!historial.length) return;
+        const ultimo = historial[0];
+        carrito = [...ultimo.items];
+        guardarCarritoPersistente();
+        updateCartUI();
+        renderCartItems();
+        toggleCart();
+        const t = document.getElementById('toast');
+        if (t) { t.innerText = '⟳ Pedido anterior restaurado'; t.classList.add('show'); setTimeout(() => { t.classList.remove('show'); t.innerText='¡Agregado al pedido!'; }, 2500); }
+    } catch(e) { alert("No se pudo restaurar el pedido."); }
+};
+
+// ── 4. SEGUIMIENTO EN TIEMPO REAL ──
+let trackingUnsubscribe = null;
+
+const TRACKING_ESTADOS = [
+    { key: 'Pendiente',  label: 'Pedido recibido',   emoji: '📋' },
+    { key: 'Aceptado',   label: 'En preparación',    emoji: '👨‍🍳' },
+    { key: 'Listo',      label: 'Listo para envío',  emoji: '📦' },
+    { key: 'Entregado',  label: 'Entregado',          emoji: '✅' }
+];
+
+function iniciarSeguimiento(pedidoId) {
+    if (window.__IS_ADMIN__) return; // no mostrar en admin
+    if (trackingUnsubscribe) trackingUnsubscribe();
+    trackingUnsubscribe = db.collection("pedidos_v2").doc(pedidoId)
+        .onSnapshot(snap => {
+            if (!snap.exists) {
+                // Pedido eliminado
+                cerrarTracking();
+                localStorage.removeItem('mf_last_pedido');
+                return;
+            }
+            const p = snap.data();
+            actualizarTrackingUI(p, pedidoId);
+        });
+}
+
+function actualizarTrackingUI(p, pedidoId) {
+    const bar = document.getElementById('tracking-bar');
+    if (!bar) return;
+
+    if (p.estado === 'Entregado') {
+        // Mostrar modal de reseña si no se envió aún
+        const yaReseno = localStorage.getItem('mf_resena_' + pedidoId);
+        if (!yaReseno) {
+            // Solo mostrar si el pedido fue entregado hace menos de 30 minutos
+            const fechaPedido = p.fecha ? (p.fecha.toDate ? p.fecha.toDate() : new Date(p.fecha)) : null;
+            const minutosDesde = fechaPedido ? (Date.now() - fechaPedido.getTime()) / 60000 : 999;
+            if (minutosDesde < 30) {
+                setTimeout(() => mostrarModalResena(pedidoId, p), 2000);
+            }
+        }
+        // Limpiar tracking después de 5 min
+        setTimeout(() => {
+            bar.innerHTML = '';
+            localStorage.removeItem('mf_last_pedido');
+        }, 120000); // 2 minutos
+    }
+
+    const idxActual = TRACKING_ESTADOS.findIndex(e => e.key === p.estado);
+    const pasos = TRACKING_ESTADOS.map((e, i) => {
+        let cls = i < idxActual ? 'done' : i === idxActual ? 'active' : '';
+        return `<span class="tracking-step ${cls}">${e.emoji} ${e.label}</span>`;
+    }).join('');
+
+    bar.innerHTML = `
+        <div class="tracking-pill" onclick="abrirTrackingModal('${pedidoId}')">
+            <div class="tracking-dot"></div>
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:11px;font-weight:700;color:var(--primary);margin-bottom:4px;">TU PEDIDO · ${p.cliente}</div>
+                <div class="tracking-steps" style="flex-wrap:wrap;">${pasos}</div>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </div>`;
+
+    // Actualizar modal si está abierto
+    if (document.getElementById('tracking-modal').classList.contains('open')) {
+        renderTrackingModal(p);
+    }
+}
+
+window.abrirTrackingModal = (pedidoId) => {
+    const lastRaw = localStorage.getItem('mf_last_pedido');
+    if (!lastRaw) return;
+    const last = JSON.parse(lastRaw);
+    db.collection("pedidos_v2").doc(pedidoId).get().then(snap => {
+        if (!snap.exists) return;
+        renderTrackingModal(snap.data());
+        document.getElementById('tracking-modal').classList.add('open');
+    });
+};
+
+function renderTrackingModal(p) {
+    const idxActual = TRACKING_ESTADOS.findIndex(e => e.key === p.estado);
+
+    document.getElementById('tracking-cliente').innerText = `Cliente: ${p.cliente} · ${p.tel}`;
+    document.getElementById('tracking-sucursal').innerText = `${p.sucursal} · ${p.tipo} · ${p.horarioEstimado || ''}`;
+
+    const progHtml = TRACKING_ESTADOS.map((e, i) => {
+        const isDone   = i < idxActual;
+        const isActive = i === idxActual;
+        const cirCls   = isDone ? 'done' : isActive ? 'active' : '';
+        const linCls   = isDone ? 'done' : '';
+        return `
+        <div class="tp-item">
+            <div class="tp-line-col">
+                <div class="tp-circle ${cirCls}">${isDone ? '✓' : e.emoji}</div>
+                ${i < TRACKING_ESTADOS.length - 1 ? `<div class="tp-vline ${linCls}"></div>` : ''}
+            </div>
+            <div class="tp-content">
+                <div class="tp-title" style="color:${isActive?'var(--primary)':isDone?'#10b981':'var(--text-light)'}">${e.label}</div>
+                ${isActive ? `<div class="tp-time">En curso...</div>` : isDone ? `<div class="tp-time" style="color:#10b981">Completado</div>` : ''}
+            </div>
+        </div>`;
+    }).join('');
+
+    document.getElementById('tracking-progress').innerHTML = progHtml;
+
+    const itemsHtml = (p.items || []).map(i =>
+        `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed var(--border);font-size:13px;">
+            <span style="color:var(--text-light);">${i.cant}x ${i.n}</span>
+            <span style="color:var(--white);font-weight:600;">$${(i.totalItem||0).toLocaleString('es-AR')}</span>
+        </div>`
+    ).join('');
+    document.getElementById('tracking-items').innerHTML = itemsHtml;
+    document.getElementById('tracking-total').innerText = `Total: $${(p.total||0).toLocaleString('es-AR')}`;
+}
+
+window.cerrarTracking = () => {
+    document.getElementById('tracking-modal').classList.remove('open');
+};
+
+// ── 5. SISTEMA DE RESEÑAS ──
+let resenaActualPedidoId = null;
+let resenaPuntuacion = 0;
+
+function mostrarModalResena(pedidoId, pedido) {
+    resenaActualPedidoId = pedidoId;
+    resenaPuntuacion = 0;
+    setStars(0);
+    document.getElementById('resena-comentario').value = '';
+    document.getElementById('resena-modal').classList.add('open');
+}
+
+window.setStars = (v) => {
+    resenaPuntuacion = v;
+    document.querySelectorAll('.star-btn').forEach((s, i) => {
+        s.classList.toggle('lit', i < v);
+    });
+};
+
+window.enviarResena = async () => {
+    if (!resenaPuntuacion) return alert('Seleccioná al menos 1 estrella.');
+    const comentario = document.getElementById('resena-comentario').value.trim();
+    const btn = document.getElementById('resena-btn');
+    btn.disabled = true; btn.innerText = 'Enviando...';
+
+    try {
+        await db.collection("resenas").add({
+            pedidoId: resenaActualPedidoId,
+            puntuacion: resenaPuntuacion,
+            comentario,
+            fecha: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        localStorage.setItem('mf_resena_' + resenaActualPedidoId, '1');
+        document.getElementById('resena-modal').classList.remove('open');
+        const t = document.getElementById('toast');
+        if (t) { t.innerText = '⭐ ¡Gracias por tu reseña!'; t.classList.add('show'); setTimeout(() => { t.classList.remove('show'); t.innerText='¡Agregado al pedido!'; }, 3000); }
+    } catch(e) { alert("Error al enviar la reseña: " + e.message); }
+    finally { btn.disabled = false; btn.innerText = 'ENVIAR RESEÑA'; }
+};
+
+// ── 6. ESTADÍSTICAS DE VENTAS ──
+async function registrarVentaStats(items, total, sucursal) {
+    try {
+        const hoy = new Date();
+        const key = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}-${String(hoy.getDate()).padStart(2,'0')}`;
+        const hora = hoy.getHours();
+        const ref = db.collection("stats_ventas").doc(key);
+        // Usamos un array de ventas para agregación simple
+        await ref.set({
+            fecha: key,
+            sucursal,
+            ventas: firebase.firestore.FieldValue.arrayUnion({
+                hora,
+                total,
+                items: items.map(i => ({ id: i.id, n: i.n, cant: i.cant, precio: i.totalItem })),
+                ts: Date.now()
+            })
+        }, { merge: true });
+    } catch(e) { console.warn("Stats:", e); }
+}
+
+
 // ── Abrir/cerrar panel admin ──────────────────────────
 function abrirAdmin() {
     const root = document.getElementById('admin-root');
@@ -1918,6 +2305,8 @@ function admCheckPin() {
         document.getElementById('adm-app').style.display = 'block';
         admFechaHoy();
         admIniciar();
+        // Precarga dashboard stats en background
+        setTimeout(() => { admSwitchTab('pedidos', document.querySelector('.adm-tab')); }, 100);
     } else {
         input.value = '';
         input.placeholder = 'PIN incorrecto, reintentá';
@@ -2036,6 +2425,11 @@ function admPedidosFiltrados() {
 function admRenderPedidos() {
     const cont = document.getElementById('adm-orders');
     if (!cont) return;
+    // Auto-actualizar dashboard si está visible
+    const dashTab = document.getElementById('adm-tab-dashboard');
+    if (dashTab && dashTab.style.display !== 'none') {
+        setTimeout(admCargarDashboard, 100);
+    }
     const lista = admPedidosFiltrados();
 
     if (!lista.length) {
@@ -2520,7 +2914,169 @@ function admImprimir(id) {
     }
 }
 
+
+// ═══ ADMIN TABS + DASHBOARD + MENU + RESENAS ═══════════════════
+
+function admSwitchTab(tab, btn) {
+    ['pedidos','dashboard','menu','resenas'].forEach(t => {
+        const el = document.getElementById('adm-tab-' + t);
+        if (el) el.style.display = t === tab ? 'block' : 'none';
+    });
+    document.querySelectorAll('.adm-tab').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    // Cargar datos de cada tab
+    if (tab === 'dashboard') setTimeout(admCargarDashboard, 50);
+    if (tab === 'menu')      setTimeout(admCargarMenuGestion, 50);
+    if (tab === 'resenas')   setTimeout(admCargarResenas, 50);
+}
+
+async function admCargarDashboard() {
+    const p = admPedidos;
+    const g = id => document.getElementById(id);
+    const cash = p.reduce((a,x) => a+(x.total||0), 0);
+    if(g('dash-total'))  g('dash-total').innerText  = p.length;
+    if(g('dash-cash'))   g('dash-cash').innerText   = '$'+cash.toLocaleString('es-AR');
+    if(g('dash-ticket')) g('dash-ticket').innerText = '$'+(p.length?Math.round(cash/p.length):0).toLocaleString('es-AR');
+    if(g('dash-tipos'))  g('dash-tipos').innerText  = p.filter(x=>x.tipo==='Delivery').length+' / '+p.filter(x=>x.tipo==='Retiro').length;
+
+    // Ventas por hora
+    const ph = {};
+    p.forEach(x => { if(!x.fecha) return; const d=x.fecha.toDate?x.fecha.toDate():new Date(x.fecha); ph[d.getHours()]=(ph[d.getHours()]||0)+(x.total||0); });
+    const mx = Math.max(...Object.values(ph),1);
+    if(g('dash-chart-horas')) g('dash-chart-horas').innerHTML = Array.from({length:24},(_,h) => {
+        const v=ph[h]||0; const pct=Math.round(v/mx*100);
+        return '<div style="flex:1;height:'+Math.max(pct,2)+'%;background:'+(v>0?'var(--primary)':'#2a2a2a')+';border-radius:3px 3px 0 0;min-width:6px;" title="'+h+'hs"></div>';
+    }).join('');
+
+    // Top productos
+    const pc = {};
+    p.forEach(x => (x.items||[]).forEach(i => { pc[i.n]=(pc[i.n]||{cant:0,tot:0}); pc[i.n].cant+=i.cant; pc[i.n].tot+=(i.totalItem||0); }));
+    const top = Object.entries(pc).sort((a,b)=>b[1].cant-a[1].cant).slice(0,8);
+    const mc = top.length?top[0][1].cant:1;
+    if(g('dash-top-prods')) g('dash-top-prods').innerHTML = top.map(([n,d],i) =>
+        '<div style="margin-bottom:8px;"><div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--white);">'+(i+1)+'. '+n+'</span><span style="color:#9ca3af;">'+d.cant+' ud</span></div><div style="height:6px;background:#333;border-radius:3px;margin-top:3px;"><div style="height:100%;width:'+Math.round(d.cant/mc*100)+'%;background:var(--primary);border-radius:3px;"></div></div></div>'
+    ).join('') || '<p style="color:#9ca3af;font-size:13px;">Sin datos.</p>';
+
+    // Zonas
+    const zn = {};
+    p.forEach(x => { const z=x.loc||'Retiro'; zn[z]=(zn[z]||0)+1; });
+    const mz = Math.max(...Object.values(zn),1);
+    if(g('dash-zonas')) g('dash-zonas').innerHTML = Object.entries(zn).sort((a,b)=>b[1]-a[1]).map(([z,n]) =>
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;"><div style="width:100px;font-size:12px;color:var(--white);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+z+'</div><div style="flex:1;height:14px;background:#333;border-radius:4px;overflow:hidden;"><div style="height:100%;width:'+Math.round(n/mz*100)+'%;background:#3b82f6;border-radius:4px;"></div></div><span style="font-size:11px;color:#9ca3af;width:20px;">'+n+'</span></div>'
+    ).join('') || '<p style="color:#9ca3af;font-size:13px;">Sin datos.</p>';
+}
+
+async function admCargarMenuGestion() {
+    const lista = document.getElementById('adm-menu-lista');
+    if(!lista) return;
+    let ov = {};
+    try { const s=await db.collection("config_menu").doc("overrides").get(); if(s.exists) ov=s.data(); } catch(e) {}
+    lista.innerHTML = '';
+    MENU.forEach(cat => {
+        const h = document.createElement('div');
+        h.style.cssText='font-size:11px;color:#9ca3af;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin:12px 0 6px;';
+        h.innerText = cat.cat; lista.appendChild(h);
+        cat.items.forEach(item => {
+            const o = ov[item.id]||{}; const agotado=o.agotado===true; const precio=o.precio||item.p;
+            const row = document.createElement('div'); row.className='adm-menu-row';
+            row.innerHTML = '<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:700;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+item.n+'</div><div style="font-size:11px;color:#9ca3af;">Base: $'+item.p.toLocaleString('es-AR')+'</div></div>'
+                +'<input class="adm-price-inp" type="number" value="'+precio+'" id="price-'+item.id+'">'
+                +'<div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><label class="adm-toggle"><input type="checkbox" '+(agotado?'':'checked')+' onchange="admToggleProducto('+item.id+')" id="tog-'+item.id+'"><span class="adm-toggle-slider"></span></label><span style="font-size:9px;color:'+(agotado?'#ef4444':'#10b981')+';" id="lbl-tog-'+item.id+'">'+(agotado?'Agotado':'Activo')+'</span></div>'
+                +'<button onclick="admGuardarPrecio('+item.id+')" style="background:rgba(245,158,11,.15);border:1px solid var(--primary);color:var(--primary);padding:6px 10px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">Guardar</button>';
+            lista.appendChild(row);
+        });
+    });
+}
+
+window.admToggleProducto = async (id) => {
+    const tog = document.getElementById('tog-'+id);
+    const agotado = !tog.checked;
+    const upd = {}; upd[id] = { agotado };
+    try {
+        await db.collection("config_menu").doc("overrides").set(upd,{merge:true});
+        const lbl = document.getElementById('lbl-tog-'+id);
+        if (lbl) { lbl.innerText = agotado?'Agotado':'Activo'; lbl.style.color = agotado?'#ef4444':'#10b981'; }
+    }
+    catch(e) { alert("Error: "+e.message); }
+};
+
+window.admGuardarPrecio = async (id) => {
+    const inp = document.getElementById('price-'+id);
+    if (!inp) return;
+    const precio = parseInt(inp.value);
+    if(!precio||precio<1) return alert("Precio invalido (debe ser mayor a 0).");
+    const upd={}; upd[id]={precio};
+    try {
+        await db.collection("config_menu").doc("overrides").set(upd,{merge:true});
+        // Feedback visual en el input
+        inp.style.borderColor = '#10b981';
+        setTimeout(() => { inp.style.borderColor = ''; }, 1500);
+    } catch(e) { alert("Error: "+e.message); }
+};
+
+async function admCargarResenas() {
+    const g = id => document.getElementById(id);
+    try {
+        const snap = await db.collection("resenas").orderBy("fecha","desc").limit(50).get();
+        const rs = []; snap.forEach(d => rs.push({id:d.id,...d.data()}));
+        const prom = rs.length?(rs.reduce((a,r)=>a+(r.puntuacion||0),0)/rs.length).toFixed(1):null;
+        if(g('res-promedio')) g('res-promedio').innerText = prom?prom+' *':'--';
+        if(g('res-count'))    g('res-count').innerText    = rs.length+' resenas';
+
+        const dist={1:0,2:0,3:0,4:0,5:0};
+        rs.forEach(r=>{if(r.puntuacion)dist[r.puntuacion]++;});
+        const md=Math.max(...Object.values(dist),1);
+        if(g('res-dist')) g('res-dist').innerHTML=[5,4,3,2,1].map(s=>'<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;"><span style="font-size:10px;color:#9ca3af;width:18px;">'+s+'*</span><div style="flex:1;height:10px;background:#333;border-radius:4px;"><div style="height:100%;width:'+Math.round(dist[s]/md*100)+'%;background:var(--primary);border-radius:4px;"></div></div><span style="font-size:10px;color:#9ca3af;width:16px;">'+dist[s]+'</span></div>').join('');
+
+        if(g('adm-resenas-lista')) g('adm-resenas-lista').innerHTML=rs.length?rs.map(r=>{
+            const f=r.fecha?(r.fecha.toDate?r.fecha.toDate():new Date(r.fecha)).toLocaleDateString('es-AR'):'--';
+            return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;"><div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="color:var(--primary);font-weight:800;">'+(r.puntuacion||0)+'/5 *</span><span style="font-size:11px;color:#9ca3af;">'+f+'</span></div>'+(r.comentario?'<p style="color:var(--white);font-size:13px;">"'+r.comentario+'"</p>':'<p style="color:#9ca3af;font-size:12px;">Sin comentario</p>')+'</div>';
+        }).join(''):'<div style="text-align:center;padding:40px;color:#9ca3af;">Aun no hay resenas.</div>';
+    } catch(e) {
+        if(g('adm-resenas-lista')) g('adm-resenas-lista').innerHTML='<p style="color:#9ca3af;padding:20px;">Error al cargar.</p>';
+    }
+}
+
     </script>
+
+
+<!-- BARRA SEGUIMIENTO PEDIDO -->
+<div id="tracking-bar"></div>
+
+<!-- MODAL SEGUIMIENTO -->
+<div id="tracking-modal">
+  <div class="tracking-sheet">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+      <h2 style="font-weight:800;font-size:18px;color:var(--primary);">📦 TU PEDIDO</h2>
+      <button onclick="document.getElementById('tracking-modal').classList.remove('open')" style="background:rgba(255,255,255,0.1);border:none;color:var(--white);width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;">✕</button>
+    </div>
+    <div id="tracking-cliente" style="color:var(--text-light);font-size:13px;margin-bottom:4px;"></div>
+    <div id="tracking-sucursal" style="color:var(--text-light);font-size:12px;margin-bottom:16px;"></div>
+    <div class="tracking-progress" id="tracking-progress"></div>
+    <div id="tracking-items" style="background:var(--bg);border-radius:10px;padding:12px;margin-bottom:16px;"></div>
+    <div id="tracking-total" style="font-size:18px;font-weight:800;color:var(--primary);text-align:right;"></div>
+    <button onclick="cerrarTracking()" style="width:100%;padding:12px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text-light);font-weight:700;margin-top:16px;cursor:pointer;">CERRAR</button>
+  </div>
+</div>
+
+<!-- MODAL RESEÑA -->
+<div id="resena-modal">
+  <div class="resena-sheet">
+    <div style="font-size:40px;margin-bottom:8px;">🍔</div>
+    <h3 style="font-weight:800;font-size:18px;color:var(--white);margin-bottom:6px;">¿Cómo estuvo tu pedido?</h3>
+    <p style="color:var(--text-light);font-size:13px;">Tu opinión nos ayuda a mejorar</p>
+    <div class="stars-row" id="stars-row">
+      <span class="star-btn" data-v="1" onclick="setStars(1)">⭐</span>
+      <span class="star-btn" data-v="2" onclick="setStars(2)">⭐</span>
+      <span class="star-btn" data-v="3" onclick="setStars(3)">⭐</span>
+      <span class="star-btn" data-v="4" onclick="setStars(4)">⭐</span>
+      <span class="star-btn" data-v="5" onclick="setStars(5)">⭐</span>
+    </div>
+    <textarea id="resena-comentario" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--white);font-size:13px;resize:none;height:80px;margin-bottom:16px;" placeholder="Comentario opcional..."></textarea>
+    <button onclick="enviarResena()" id="resena-btn" style="width:100%;padding:14px;border-radius:10px;border:none;background:var(--primary);color:#000;font-weight:800;font-size:15px;cursor:pointer;">ENVIAR RESEÑA</button>
+    <button onclick="document.getElementById('resena-modal').classList.remove('open')" style="width:100%;padding:10px;border-radius:10px;border:none;background:transparent;color:var(--text-light);font-size:13px;margin-top:8px;cursor:pointer;">Ahora no</button>
+  </div>
+</div>
 
 <!-- ═══════════════ ADMIN PANEL ═══════════════ -->
 <div id="admin-root">
@@ -2560,6 +3116,16 @@ function admImprimir(id) {
         </div>
 
         <!-- Barra de filtros -->
+        <!-- Tabs del admin -->
+        <div style="display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);overflow-x:auto;">
+            <button class="adm-tab active" onclick="admSwitchTab('pedidos',this)">📋 Pedidos</button>
+            <button class="adm-tab" onclick="admSwitchTab('dashboard',this)">📊 Dashboard</button>
+            <button class="adm-tab" onclick="admSwitchTab('menu',this)">🍔 Menú</button>
+            <button class="adm-tab" onclick="admSwitchTab('resenas',this)">⭐ Reseñas</button>
+        </div>
+
+        <!-- TAB PEDIDOS -->
+        <div id="adm-tab-pedidos">
         <div class="adm-filterbar">
 
             <!-- Fila 1: Fecha + Sucursal -->
@@ -2597,7 +3163,67 @@ function admImprimir(id) {
 
         <!-- Lista pedidos -->
         <div class="adm-orders" id="adm-orders"></div>
-    </div>
+        </div><!-- /adm-tab-pedidos -->
+
+        <!-- TAB DASHBOARD -->
+        <div id="adm-tab-dashboard" style="display:none;padding:20px;">
+            <h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:16px;">📊 MÉTRICAS DEL DÍA</h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+                <div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);">
+                    <div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Pedidos hoy</div>
+                    <div id="dash-total" style="font-size:28px;font-weight:800;color:var(--primary);">0</div>
+                </div>
+                <div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);">
+                    <div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Recaudado</div>
+                    <div id="dash-cash" style="font-size:22px;font-weight:800;color:#10b981;">$0</div>
+                </div>
+                <div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);">
+                    <div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Ticket promedio</div>
+                    <div id="dash-ticket" style="font-size:22px;font-weight:800;color:#3b82f6;">$0</div>
+                </div>
+                <div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);">
+                    <div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Delivery / Retiro</div>
+                    <div id="dash-tipos" style="font-size:16px;font-weight:800;color:var(--white);">0 / 0</div>
+                </div>
+            </div>
+            <!-- Ventas por hora -->
+            <div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;">
+                <div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Ventas por hora</div>
+                <div id="dash-chart-horas" style="display:flex;align-items:flex-end;gap:4px;height:80px;"></div>
+                <div id="dash-chart-labels" style="display:flex;gap:4px;margin-top:4px;"></div>
+            </div>
+            <!-- Productos más pedidos -->
+            <div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;">
+                <div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">🏆 Productos más pedidos hoy</div>
+                <div id="dash-top-prods"></div>
+            </div>
+            <!-- Mapa de calor de zonas -->
+            <div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);">
+                <div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">📍 Pedidos por zona</div>
+                <div id="dash-zonas"></div>
+            </div>
+        </div>
+
+        <!-- TAB MENÚ -->
+        <div id="adm-tab-menu" style="display:none;padding:20px;">
+            <h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:6px;">🍔 GESTIÓN DE MENÚ</h3>
+            <p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Pausá productos o editá precios. Los cambios son inmediatos en la tienda.</p>
+            <div id="adm-menu-lista" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+
+        <!-- TAB RESEÑAS -->
+        <div id="adm-tab-resenas" style="display:none;padding:20px;">
+            <h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:6px;">⭐ RESEÑAS DE CLIENTES</h3>
+            <div style="display:flex;gap:16px;margin-bottom:20px;">
+                <div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);flex:1;text-align:center;">
+                    <div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Promedio</div>
+                    <div id="res-promedio" style="font-size:32px;font-weight:800;color:var(--primary);">—</div>
+                    <div style="color:#9ca3af;font-size:11px;" id="res-count">0 reseñas</div>
+                </div>
+                <div id="res-dist" style="flex:2;background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);display:flex;flex-direction:column;gap:5px;justify-content:center;"></div>
+            </div>
+            <div id="adm-resenas-lista" style="display:flex;flex-direction:column;gap:10px;"></div>
+        </div>
 
     <!-- Modal edición -->
     <div id="adm-modal-edit">
@@ -2636,6 +3262,8 @@ function admImprimir(id) {
             </div>
         </div>
     </div>
+
+    </div><!-- /adm-app -->
 
     <!-- Área impresión -->
     <div id="adm-print-area"></div>

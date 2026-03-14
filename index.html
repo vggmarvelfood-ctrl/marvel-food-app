@@ -294,6 +294,15 @@
             background:transparent;color:#9ca3af;font-weight:700;font-size:13px;cursor:pointer;}
         .adm-empty{text-align:center;padding:60px 20px;color:#9ca3af;}
         .adm-empty span{font-size:44px;display:block;margin-bottom:10px;}
+        .adm-filterbar { padding:12px 20px; background:var(--surface); border-bottom:1px solid var(--border); }
+        .adm-filterrow  { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+        .adm-date-inp   { padding:7px 10px; border-radius:8px; border:1px solid var(--border);
+            background:#111; color:var(--white); font-size:12px; outline:none; }
+        .adm-date-inp:focus { border-color:var(--primary); }
+        .adm-suc-header { display:flex; justify-content:space-between; align-items:center;
+            padding:10px 16px; background:#111; border-radius:10px; margin-bottom:8px; margin-top:16px;
+            border-left:3px solid var(--primary); }
+        .adm-suc-header:first-child { margin-top:0; }
         /* Print */
         @media print {
             body > *:not(#adm-print-area){display:none!important;}
@@ -1887,22 +1896,18 @@ function cerrarAdmin() {
     window.location.hash = '';
 }
 
-// Detectar #admin en la URL al cargar
 window.addEventListener('DOMContentLoaded', function() {
-    if (window.location.hash === '#admin' || 
+    if (window.location.hash === '#admin' ||
         window.location.pathname.replace(/\/$/, '').endsWith('/admin')) {
         abrirAdmin();
     }
 });
 
-// Detectar cambio de hash en tiempo real (ej: usuario pone #admin en la URL)
 window.addEventListener('hashchange', function() {
-    if (window.location.hash === '#admin') {
-        abrirAdmin();
-    }
+    if (window.location.hash === '#admin') abrirAdmin();
 });
 
-// ─── PIN ─────────────────────────────────────
+// ─── PIN ──────────────────────────────────────────────
 const ADM_PIN = "1234"; // ← cambiá el PIN acá
 
 function admCheckPin() {
@@ -1911,15 +1916,13 @@ function admCheckPin() {
     if (input.value === ADM_PIN) {
         document.getElementById('adm-login-screen').style.display = 'none';
         document.getElementById('adm-app').style.display = 'block';
+        admFechaHoy();
         admIniciar();
     } else {
         input.value = '';
         input.placeholder = 'PIN incorrecto, reintentá';
         input.style.borderColor = '#ef4444';
-        setTimeout(() => {
-            input.placeholder = 'PIN de acceso';
-            input.style.borderColor = '';
-        }, 2000);
+        setTimeout(() => { input.placeholder = 'PIN de acceso'; input.style.borderColor = ''; }, 2000);
     }
 }
 
@@ -1932,19 +1935,46 @@ function admLogout() {
     }
 }
 
-// ─── ESTADO ──────────────────────────────────
-let admPedidos   = [];
-let admFiltroAct = 'Todos';
-let admEditId    = null;
+// ─── ESTADO GLOBAL ────────────────────────────────────
+let admPedidos    = [];
+let admFiltroEst  = 'Todos';   // filtro de estado/tipo
+let admEditId     = null;
+let admUnsubscribe = null;
 
-function admNumero(docId) {
-    return docId.slice(-6).toUpperCase();
+function admNumero(docId) { return docId.slice(-6).toUpperCase(); }
+
+// ─── FECHA ────────────────────────────────────────────
+function admFechaHoy() {
+    const hoy = new Date();
+    const yyyy = hoy.getFullYear();
+    const mm   = String(hoy.getMonth() + 1).padStart(2, '0');
+    const dd   = String(hoy.getDate()).padStart(2, '0');
+    const el   = document.getElementById('adm-fecha-filtro');
+    if (el) { el.value = `${yyyy}-${mm}-${dd}`; }
 }
 
-// ─── LISTENER FIREBASE ───────────────────────
+function admGetFechaFiltro() {
+    const val = document.getElementById('adm-fecha-filtro')?.value;
+    if (!val) return null;
+    const [y, m, d] = val.split('-').map(Number);
+    const inicio = new Date(y, m - 1, d, 0, 0, 0);
+    const fin    = new Date(y, m - 1, d, 23, 59, 59);
+    return { inicio, fin };
+}
+
+// ─── LISTENER FIREBASE ────────────────────────────────
 function admIniciar() {
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
+    if (admUnsubscribe) admUnsubscribe();
+
+    const rango = admGetFechaFiltro();
+    let query = db.collection("pedidos_v2").orderBy("fecha", "desc").limit(200);
+
+    if (rango) {
+        query = db.collection("pedidos_v2")
+            .where("fecha", ">=", rango.inicio)
+            .where("fecha", "<=", rango.fin)
+            .orderBy("fecha", "desc");
+    }
 
     const procesar = snap => {
         admPedidos = [];
@@ -1952,58 +1982,89 @@ function admIniciar() {
         admRenderPedidos();
         admActualizarStats();
         const el = document.getElementById('adm-last-update');
-        if (el) el.innerText = 'Actualizado ' +
-            new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+        if (el) el.innerText = new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
     };
 
-    // Intentar con filtro de fecha (requiere índice en Firestore)
-    db.collection("pedidos_v2")
-        .where("fecha", ">=", hoy)
-        .orderBy("fecha", "desc")
-        .onSnapshot(procesar, () => {
-            // Fallback sin filtro de fecha
-            db.collection("pedidos_v2")
-                .orderBy("fecha", "desc")
-                .limit(100)
-                .onSnapshot(procesar);
-        });
+    admUnsubscribe = query.onSnapshot(procesar, () => {
+        // fallback sin filtro de fecha (Firestore necesita índice compuesto)
+        admUnsubscribe = db.collection("pedidos_v2")
+            .orderBy("fecha", "desc").limit(200)
+            .onSnapshot(procesar);
+    });
 }
 
-// ─── STATS ───────────────────────────────────
+function admAplicarFiltros() {
+    admIniciar(); // re-suscribir con nueva fecha
+}
+
+// ─── STATS ────────────────────────────────────────────
 function admActualizarStats() {
-    const s = id => document.getElementById(id);
-    if (!s('adm-s-pend')) return;
-    s('adm-s-pend').innerText  = admPedidos.filter(p => p.estado === 'Pendiente').length;
-    s('adm-s-acep').innerText  = admPedidos.filter(p => p.estado === 'Aceptado').length;
-    s('adm-s-list').innerText  = admPedidos.filter(p => p.estado === 'Listo').length;
-    s('adm-s-total').innerText = admPedidos.length;
-    s('adm-s-cash').innerText  = '$' + admPedidos
-        .reduce((a, p) => a + (p.total || 0), 0).toLocaleString('es-AR');
+    const lista = admPedidosFiltrados();
+    const g = id => document.getElementById(id);
+    if (!g('adm-s-pend')) return;
+    g('adm-s-pend').innerText  = admPedidos.filter(p => p.estado === 'Pendiente').length;
+    g('adm-s-acep').innerText  = admPedidos.filter(p => p.estado === 'Aceptado').length;
+    g('adm-s-list').innerText  = admPedidos.filter(p => p.estado === 'Listo').length;
+    g('adm-s-total').innerText = admPedidos.length;
+    g('adm-s-cash').innerText  = '$' + admPedidos.reduce((a, p) => a + (p.total || 0), 0).toLocaleString('es-AR');
 }
 
-// ─── FILTRO ──────────────────────────────────
-function admFiltro(f, btn) {
-    admFiltroAct = f;
-    document.querySelectorAll('.adm-filter-btn').forEach(b => b.classList.remove('active'));
+// ─── FILTROS ──────────────────────────────────────────
+function admFiltroEstado(f, btn) {
+    admFiltroEst = f;
+    document.querySelectorAll('.adm-filter-btn[data-f]').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
     admRenderPedidos();
 }
 
-// ─── RENDER LISTA ────────────────────────────
+function admPedidosFiltrados() {
+    let lista = [...admPedidos];
+
+    // Filtro sucursal
+    const sucVal = document.getElementById('adm-suc-filtro')?.value || '';
+    if (sucVal) lista = lista.filter(p => (p.sucursal || '').includes(sucVal));
+
+    // Filtro estado/tipo
+    if (admFiltroEst !== 'Todos') {
+        lista = lista.filter(p => p.estado === admFiltroEst || p.tipo === admFiltroEst);
+    }
+
+    return lista;
+}
+
+// ─── RENDER ───────────────────────────────────────────
 function admRenderPedidos() {
     const cont = document.getElementById('adm-orders');
     if (!cont) return;
-
-    let lista = [...admPedidos];
-    if (admFiltroAct !== 'Todos') {
-        lista = lista.filter(p => p.estado === admFiltroAct || p.tipo === admFiltroAct);
-    }
+    const lista = admPedidosFiltrados();
 
     if (!lista.length) {
         cont.innerHTML = '<div class="adm-empty"><span>🍔</span>No hay pedidos para este filtro.</div>';
         return;
     }
-    cont.innerHTML = lista.map(admRenderCard).join('');
+
+    // Agrupar por sucursal
+    const grupos = {};
+    lista.forEach(p => {
+        const suc = p.sucursal || 'Sin sucursal';
+        if (!grupos[suc]) grupos[suc] = [];
+        grupos[suc].push(p);
+    });
+
+    let html = '';
+    for (const [suc, pedidos] of Object.entries(grupos)) {
+        const totalSuc = pedidos.reduce((a, p) => a + (p.total || 0), 0);
+        html += `
+        <div class="adm-suc-header">
+            <div>
+                <span style="font-weight:800;font-size:14px;color:var(--primary);">🏠 ${suc}</span>
+                <span style="color:#9ca3af;font-size:11px;margin-left:10px;">${pedidos.length} pedido${pedidos.length !== 1 ? 's' : ''}</span>
+            </div>
+            <span style="font-weight:800;color:#10b981;font-size:13px;">$${totalSuc.toLocaleString('es-AR')}</span>
+        </div>`;
+        html += pedidos.map(p => admRenderCard(p)).join('');
+    }
+    cont.innerHTML = html;
 }
 
 function admFmt(ts) {
@@ -2016,6 +2077,18 @@ function admRenderCard(p) {
     const esDel = p.tipo === 'Delivery';
     const num   = admNumero(p.id);
     const res   = (p.items || []).map(i => `${i.cant}x ${i.n}`).join(', ');
+
+    const SUCURSALES_OPTS = [
+        'PELLEGRINI 1149, Rosario Centro',
+        'Rondeau 2430, Rosario Norte',
+        'San Martin 1808, Rosario Sur',
+        'RN9 972,Funes '
+    ];
+    const otrosSuc = SUCURSALES_OPTS.filter(s => s !== p.sucursal);
+    const moverOpts = otrosSuc.map(s => {
+        const label = s.includes('PELLEGRINI') ? 'Centro' : s.includes('Rondeau') ? 'Norte' : s.includes('Martin') ? 'Sur' : 'Funes';
+        return `<option value="${s}">→ ${label}</option>`;
+    }).join('');
 
     const btnEstado = p.estado === 'Pendiente'
         ? `<button class="adm-btn bv" onclick="admCambiarEstado('${p.id}','Aceptado')">✅ Aceptar</button>`
@@ -2076,11 +2149,23 @@ function admRenderCard(p) {
                     </div>
                 </div>
 
+                <!-- Acciones principales -->
                 <div class="adm-actions">
                     ${btnEstado}
-                    <button class="adm-btn bw" onclick="admWhatsapp('${p.id}')">💬 WhatsApp</button>
+                    <button class="adm-btn bw" onclick="admWhatsapp('${p.id}')">💬 WA</button>
                     <button class="adm-btn bc" onclick="admEditar('${p.id}')">✏️ Editar</button>
                     <button class="adm-btn bp" onclick="admImprimir('${p.id}')">🖨️ Imprimir</button>
+                    <button class="adm-btn" onclick="admEliminar('${p.id}')" style="background:rgba(239,68,68,.15);color:#ef4444;border:1px solid #ef4444;">🗑️</button>
+                </div>
+
+                <!-- Mover a sucursal -->
+                <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+                    <span style="color:#9ca3af;font-size:11px;font-weight:700;white-space:nowrap;">MOVER A:</span>
+                    <select id="adm-mover-${p.id}" class="adm-date-inp" style="flex:1;">
+                        <option value="">Seleccioná sucursal...</option>
+                        ${moverOpts}
+                    </select>
+                    <button onclick="admMover('${p.id}')" style="background:rgba(59,130,246,.2);border:1px solid #3b82f6;color:#3b82f6;padding:7px 12px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;">↗ MOVER</button>
                 </div>
             </div>
         </div>
@@ -2092,14 +2177,66 @@ function admToggle(id) {
     if (b) b.classList.toggle('open');
 }
 
-// ─── CAMBIAR ESTADO ──────────────────────────
+// ─── CAMBIAR ESTADO ───────────────────────────────────
 async function admCambiarEstado(id, estado) {
+    try { await db.collection("pedidos_v2").doc(id).update({ estado }); }
+    catch (e) { alert("Error: " + e.message); }
+}
+
+// ─── ELIMINAR PEDIDO ──────────────────────────────────
+async function admEliminar(id) {
+    const p = admPedidos.find(x => x.id === id);
+    const nombre = p ? p.cliente : id;
+    if (!confirm(`¿Eliminar el pedido de ${nombre}? Esta acción no se puede deshacer.`)) return;
     try {
-        await db.collection("pedidos_v2").doc(id).update({ estado });
+        await db.collection("pedidos_v2").doc(id).delete();
+    } catch (e) { alert("Error al eliminar: " + e.message); }
+}
+
+// ─── LIMPIAR DÍA ──────────────────────────────────────
+async function admLimpiarDia() {
+    const rango = admGetFechaFiltro();
+    const sucVal = document.getElementById('adm-suc-filtro')?.value || '';
+
+    let msg = '¿Eliminar TODOS los pedidos';
+    if (rango) {
+        const d = document.getElementById('adm-fecha-filtro').value;
+        msg += ` del día ${d}`;
+    }
+    if (sucVal) msg += ` de sucursal ${sucVal}`;
+    msg += '? Esta acción no se puede deshacer.';
+
+    if (!confirm(msg)) return;
+
+    const lista = admPedidosFiltrados();
+    if (!lista.length) return alert('No hay pedidos para eliminar con el filtro actual.');
+
+    try {
+        // Firebase permite máx 500 ops por batch
+        const batch = db.batch();
+        lista.forEach(p => {
+            batch.delete(db.collection("pedidos_v2").doc(p.id));
+        });
+        await batch.commit();
+        alert(`✅ ${lista.length} pedido${lista.length !== 1 ? 's' : ''} eliminado${lista.length !== 1 ? 's' : ''}.`);
     } catch (e) { alert("Error: " + e.message); }
 }
 
-// ─── WHATSAPP ─────────────────────────────────
+// ─── MOVER SUCURSAL ───────────────────────────────────
+async function admMover(id) {
+    const sel = document.getElementById('adm-mover-' + id);
+    if (!sel || !sel.value) return alert('Seleccioná una sucursal destino.');
+    const nuevaSuc = sel.value;
+    const p = admPedidos.find(x => x.id === id);
+    if (!p) return;
+    if (!confirm(`¿Mover el pedido de ${p.cliente} a "${nuevaSuc}"?`)) return;
+    try {
+        await db.collection("pedidos_v2").doc(id).update({ sucursal: nuevaSuc });
+        sel.value = '';
+    } catch (e) { alert("Error: " + e.message); }
+}
+
+// ─── WHATSAPP ─────────────────────────────────────────
 function admWhatsapp(id) {
     const p = admPedidos.find(x => x.id === id);
     if (!p || !p.tel) return alert("No hay teléfono disponible.");
@@ -2115,19 +2252,21 @@ function admWhatsapp(id) {
     window.open(`https://wa.me/${num}?text=${msg}`, '_blank');
 }
 
-// ─── EDICIÓN ─────────────────────────────────
+// ─── EDICIÓN ──────────────────────────────────────────
 function admEditar(id) {
     const p = admPedidos.find(x => x.id === id);
     if (!p) return;
     admEditId = id;
-
-    document.getElementById('adm-e-cliente').value = p.cliente || '';
-    document.getElementById('adm-e-tel').value     = p.tel || '';
-    document.getElementById('adm-e-dir').value     = p.dir || '';
-    document.getElementById('adm-e-envio').value   = p.envio || 0;
-    document.getElementById('adm-e-desc').value    = p.descuento || 0;
-    document.getElementById('adm-e-obs').value     = p.obs || '';
+    document.getElementById('adm-e-cliente').value  = p.cliente || '';
+    document.getElementById('adm-e-tel').value      = p.tel || '';
+    document.getElementById('adm-e-dir').value      = p.dir || '';
+    document.getElementById('adm-e-envio').value    = p.envio || 0;
+    document.getElementById('adm-e-desc').value     = p.descuento || 0;
+    document.getElementById('adm-e-obs').value      = p.obs || '';
     document.getElementById('adm-e-dir-block').style.display = p.tipo === 'Delivery' ? 'block' : 'none';
+    // Seleccionar sucursal actual
+    const selSuc = document.getElementById('adm-e-sucursal');
+    if (selSuc) selSuc.value = p.sucursal || '';
 
     document.getElementById('adm-e-items').innerHTML = (p.items || []).map((item, idx) => `
         <div class="adm-edit-item" id="adm-ei-${idx}">
@@ -2179,12 +2318,14 @@ async function admGuardar() {
     const env  = parseFloat(document.getElementById('adm-e-envio').value) || 0;
     const desc = parseFloat(document.getElementById('adm-e-desc').value)  || 0;
     const tot  = Math.max(0, sub + env - desc);
+    const sucursal = document.getElementById('adm-e-sucursal')?.value || p.sucursal;
     try {
         await db.collection("pedidos_v2").doc(admEditId).update({
             cliente:  document.getElementById('adm-e-cliente').value.toUpperCase().trim(),
             tel:      document.getElementById('adm-e-tel').value.trim(),
             dir:      document.getElementById('adm-e-dir').value.trim(),
             obs:      document.getElementById('adm-e-obs').value.trim(),
+            sucursal,
             items: nuevosItems, subtotal: sub, envio: env, descuento: desc, total: tot,
             editadoPor: 'admin',
             fechaEdicion: firebase.firestore.FieldValue.serverTimestamp()
@@ -2199,15 +2340,93 @@ function admCloseModal() {
     admEditId = null;
 }
 
-// Cerrar modal al click fuera
 document.addEventListener('DOMContentLoaded', function() {
     const m = document.getElementById('adm-modal-edit');
-    if (m) m.addEventListener('click', function(e) {
-        if (e.target === this) admCloseModal();
-    });
-    document.getElementById('adm-e-envio')?.addEventListener('input', admRecalc);
-    document.getElementById('adm-e-desc')?.addEventListener('input', admRecalc);
+    if (m) m.addEventListener('click', function(e) { if (e.target === this) admCloseModal(); });
 });
+
+// ─── IMPRIMIR ─────────────────────────────────────────
+function admImprimir(id) {
+    const p = admPedidos.find(x => x.id === id);
+    if (!p) return;
+    const num  = admNumero(p.id);
+    const fd   = p.fecha ? (p.fecha.toDate ? p.fecha.toDate() : new Date(p.fecha)) : new Date();
+    const fstr = fd.toLocaleDateString('es-AR') + ' ' +
+                 fd.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+    const esDel = p.tipo === 'Delivery';
+
+    const filas = (p.items || []).map(i => `
+        <tr>
+            <td style="padding:1px 4px">${String(i.cant).padStart(2, '0')}</td>
+            <td style="padding:1px 4px">${i.n.toUpperCase()}${i.sin && i.sin.length ? ' (Sin: ' + i.sin.join(', ') + ')' : ''}${i.con && i.con.length ? ' (+' + i.con.map(x => x.n).join(', ') + ')' : ''}</td>
+            <td style="padding:1px 4px;text-align:right">${(i.totalItem || 0).toLocaleString('es-AR')}</td>
+        </tr>`).join('');
+
+    const filasCocina = (p.items || []).map(i => `
+        <tr>
+            <td style="padding:1px 4px">${String(i.cant).padStart(2, '0')}</td>
+            <td style="padding:1px 4px"><b>${i.n.toUpperCase()}</b>${i.sin && i.sin.length ? ' <b>(Sin: ' + i.sin.join(', ') + ')</b>' : ''}${i.con && i.con.length ? ' <b>(+' + i.con.map(x => x.n).join(', ') + ')</b>' : ''}</td>
+        </tr>`).join('');
+
+    const totalBurgers = (p.items || [])
+        .filter(i => !['PAPAS', 'BEBIDA', 'GASEOSA', 'AGUA', 'JUGO', 'DIP', 'AROS', 'NUGGETS']
+            .some(k => i.n.toUpperCase().includes(k)))
+        .reduce((a, i) => a + i.cant, 0);
+
+    const tCliente = `
+    <div class="adm-ticket">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+            <b style="font-size:14px;">Ticket Cliente</b><b style="font-size:17px;">MARVEL Food</b>
+        </div>
+        <hr>
+        <div><b>Fecha :</b> ${fstr} &nbsp; <b>Número :</b> ${num}</div>
+        <div><b>Pedido para :</b> ${p.cliente || '—'}</div>
+        <div><b>Teléfono :</b> ${p.tel || '—'}</div>
+        ${esDel ? `<div><b>Domicilio:</b> ${p.dir || ''} ${p.piso || ''}</div><div><b>CP - Zona:</b> ${p.loc || ''}</div>` : `<div><b>Modalidad:</b> RETIRO EN LOCAL</div>`}
+        <div><b>Horario:</b> ${p.horarioEstimado || '—'}</div>
+        <hr>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <thead><tr><th style="text-align:left;padding:1px 4px">Cant.</th><th style="text-align:left;padding:1px 4px">Descripción</th><th style="text-align:right;padding:1px 4px">Precio</th></tr></thead>
+            <tr><td colspan="3"><hr></td></tr>
+            <tbody>${filas}</tbody>
+        </table>
+        <hr>
+        <div style="text-align:right;">
+            <div>Sub total : ${(p.subtotal || 0).toLocaleString('es-AR')}</div>
+            ${esDel ? `<div>Envío : ${(p.envio || 0).toLocaleString('es-AR')}</div>` : ''}
+            ${p.descuento ? `<div>Descuento : -${p.descuento.toLocaleString('es-AR')}</div>` : ''}
+            <div><b>Total : ${(p.total || 0).toLocaleString('es-AR')}</b></div>
+        </div>
+        <hr>
+        <div style="font-size:10px;text-align:center;margin-top:5px;">¡Gracias por elegirnos! 🍔</div>
+    </div>`;
+
+    const tCocina = `
+    <div class="adm-ticket">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+            <b style="font-size:14px;">Ticket Interno</b><b style="font-size:11px;">${esDel ? 'ENVÍO' : 'RETIRO'}</b>
+        </div>
+        <hr>
+        <div><b>Fecha :</b> ${fstr} &nbsp; <b>Número :</b> ${num}</div>
+        <div><b>Cocción:</b> ${p.horarioEstimado || '—'}</div>
+        <div><b>Pedido para :</b> ${p.cliente || '—'}</div>
+        <div><b>Teléfono :</b> ${p.tel || '—'}</div>
+        ${esDel ? `<div><b>Domicilio :</b> ${p.dir || ''} ${p.piso || ''}</div><div><b>CP - Zona:</b> ${p.loc || ''}</div>` : `<div><b>Retira en local</b></div>`}
+        <hr>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <thead><tr><th style="text-align:left;padding:1px 4px">Cant.</th><th style="text-align:left;padding:1px 4px">Descripción</th></tr></thead>
+            <tr><td colspan="2"><hr></td></tr>
+            <tbody>${filasCocina}</tbody>
+        </table>
+        <hr>
+        <div style="text-align:right;">Total hamburguesas: ${String(totalBurgers).padStart(2, '0')}</div>
+        <div style="text-align:center;font-size:15px;font-weight:bold;letter-spacing:2px;margin-top:5px;">${num}${String(totalBurgers).padStart(2, '0')}${(p.items || []).length}</div>
+        <hr>
+    </div>`;
+
+    const printArea = document.getElementById('adm-print-area');
+    if (printArea) { printArea.innerHTML = tCliente + tCocina; window.print(); }
+}
 
 // ─── IMPRIMIR ────────────────────────────────
 function admImprimir(id) {
@@ -2306,9 +2525,10 @@ function admImprimir(id) {
 <!-- ═══════════════ ADMIN PANEL ═══════════════ -->
 <div id="admin-root">
 
-    <!-- Login admin -->
+    <!-- LOGIN -->
     <div id="adm-login-screen">
         <div class="adm-login-box">
+            <div style="font-size:36px;margin-bottom:8px;">🍔</div>
             <h1>MARVEL FOOD</h1>
             <p>Panel de administración</p>
             <input class="adm-inp" type="password" id="adm-pin" placeholder="PIN de acceso"
@@ -2317,36 +2537,65 @@ function admImprimir(id) {
         </div>
     </div>
 
-    <!-- Panel principal -->
-    <div id="adm-app" style="display:none; min-height:100vh; background:var(--bg);">
+    <!-- PANEL PRINCIPAL -->
+    <div id="adm-app" style="display:none;">
 
+        <!-- Header -->
         <div class="adm-header">
             <h1>MARVEL <span>ADMIN</span></h1>
-            <div style="display:flex;align-items:center;gap:10px;">
+            <div style="display:flex;align-items:center;gap:8px;">
                 <span class="adm-badge-live">● EN VIVO</span>
-                <span style="color:#9ca3af;font-size:11px;" id="adm-last-update">—</span>
-                <button onclick="admLogout()" style="background:transparent;border:1px solid var(--border);color:#9ca3af;padding:5px 10px;border-radius:8px;font-size:10px;cursor:pointer;">SALIR</button>
+                <span style="color:#9ca3af;font-size:10px;" id="adm-last-update">—</span>
+                <button onclick="admLogout()" style="background:transparent;border:1px solid #333;color:#9ca3af;padding:5px 10px;border-radius:8px;font-size:10px;cursor:pointer;">SALIR</button>
             </div>
         </div>
 
+        <!-- Stats -->
         <div class="adm-stats-bar">
             <div class="adm-stat"><span>Pendientes</span><span id="adm-s-pend">0</span></div>
             <div class="adm-stat"><span>Aceptados</span><span id="adm-s-acep" style="color:#10b981">0</span></div>
             <div class="adm-stat"><span>Listos</span><span id="adm-s-list" style="color:#3b82f6">0</span></div>
-            <div class="adm-stat"><span>Total hoy</span><span id="adm-s-total" style="color:var(--white)">0</span></div>
+            <div class="adm-stat"><span>Hoy</span><span id="adm-s-total" style="color:#fff">0</span></div>
             <div class="adm-stat"><span>Recaudado</span><span id="adm-s-cash" style="color:#10b981">$0</span></div>
         </div>
 
-        <div class="adm-filters">
-            <button class="adm-filter-btn active"  onclick="admFiltro('Todos',this)">Todos</button>
-            <button class="adm-filter-btn"         onclick="admFiltro('Pendiente',this)">⏳ Pendientes</button>
-            <button class="adm-filter-btn f-acep"  onclick="admFiltro('Aceptado',this)">✅ Aceptados</button>
-            <button class="adm-filter-btn f-list"  onclick="admFiltro('Listo',this)">📦 Listos</button>
-            <button class="adm-filter-btn f-ent"   onclick="admFiltro('Entregado',this)">🏁 Entregados</button>
-            <button class="adm-filter-btn"         onclick="admFiltro('Delivery',this)">🛵 Delivery</button>
-            <button class="adm-filter-btn"         onclick="admFiltro('Retiro',this)">🏃 Retiro</button>
+        <!-- Barra de filtros -->
+        <div class="adm-filterbar">
+
+            <!-- Fila 1: Fecha + Sucursal -->
+            <div class="adm-filterrow">
+                <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;">
+                    <span style="color:#9ca3af;font-size:11px;font-weight:700;white-space:nowrap;">📅 FECHA</span>
+                    <input type="date" id="adm-fecha-filtro" class="adm-date-inp" onchange="admAplicarFiltros()">
+                    <button onclick="admFechaHoy()" class="adm-filter-btn" style="white-space:nowrap;padding:5px 10px;">Hoy</button>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;">
+                    <span style="color:#9ca3af;font-size:11px;font-weight:700;white-space:nowrap;">🏠 SUCURSAL</span>
+                    <select id="adm-suc-filtro" class="adm-date-inp" onchange="admAplicarFiltros()" style="flex:1;">
+                        <option value="">Todas</option>
+                        <option value="PELLEGRINI">Centro</option>
+                        <option value="Rondeau">Norte</option>
+                        <option value="San Martin">Sur</option>
+                        <option value="Funes">Funes</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Fila 2: Estado + Tipo + Limpiar -->
+            <div class="adm-filterrow" style="margin-top:8px;">
+                <button class="adm-filter-btn active" data-f="Todos"    onclick="admFiltroEstado('Todos',this)">Todos</button>
+                <button class="adm-filter-btn"        data-f="Pendiente" onclick="admFiltroEstado('Pendiente',this)">⏳ Pendientes</button>
+                <button class="adm-filter-btn f-acep" data-f="Aceptado" onclick="admFiltroEstado('Aceptado',this)">✅ Aceptados</button>
+                <button class="adm-filter-btn f-list" data-f="Listo"    onclick="admFiltroEstado('Listo',this)">📦 Listos</button>
+                <button class="adm-filter-btn f-ent"  data-f="Entregado" onclick="admFiltroEstado('Entregado',this)">🏁 Entregados</button>
+                <button class="adm-filter-btn"        data-f="Delivery" onclick="admFiltroEstado('Delivery',this)">🛵 Delivery</button>
+                <button class="adm-filter-btn"        data-f="Retiro"   onclick="admFiltroEstado('Retiro',this)">🏃 Retiro</button>
+                <button onclick="admLimpiarDia()" style="margin-left:auto;background:rgba(239,68,68,.15);border:1px solid #ef4444;color:#ef4444;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">🗑️ Limpiar día</button>
+            </div>
+
         </div>
 
+        <!-- Lista pedidos -->
         <div class="adm-orders" id="adm-orders"></div>
     </div>
 
@@ -2362,6 +2611,13 @@ function admImprimir(id) {
                 <div class="adm-mlabel">DIRECCIÓN</div>
                 <input class="adm-minp" id="adm-e-dir" type="text" placeholder="Dirección">
             </div>
+            <div class="adm-mlabel">SUCURSAL</div>
+            <select class="adm-minp" id="adm-e-sucursal">
+                <option value="PELLEGRINI 1149, Rosario Centro">Centro — Pellegrini 1149</option>
+                <option value="Rondeau 2430, Rosario Norte">Norte — Rondeau 2430</option>
+                <option value="San Martin 1808, Rosario Sur">Sur — San Martin 1808</option>
+                <option value="RN9 972,Funes ">Funes — RN9 972</option>
+            </select>
             <div class="adm-mlabel">ITEMS DEL PEDIDO</div>
             <div id="adm-e-items"></div>
             <div class="adm-mlabel" style="margin-top:4px;">COSTO ENVÍO</div>
@@ -2370,7 +2626,7 @@ function admImprimir(id) {
             <input class="adm-minp" id="adm-e-desc" type="number" placeholder="0" oninput="admRecalc()">
             <div class="adm-mlabel">OBSERVACIONES</div>
             <input class="adm-minp" id="adm-e-obs" type="text" placeholder="Notas adicionales">
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:var(--bg);border-radius:10px;margin-top:4px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:#111;border-radius:10px;margin-top:4px;">
                 <span style="color:#9ca3af;font-size:13px;">TOTAL CALCULADO</span>
                 <span id="adm-e-total" style="color:var(--primary);font-size:20px;font-weight:800;">$0</span>
             </div>

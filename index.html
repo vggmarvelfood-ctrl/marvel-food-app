@@ -2830,133 +2830,163 @@ function admImprimir(id) {
     const fecha = fd.toLocaleDateString('es-AR', { day:'2-digit', month:'2-digit', year:'numeric' });
     const esDel = p.tipo === 'Delivery';
     const SEP   = '_________________________________________________________';
-
-    // Código de ítem: índice 00001, 00002...
     const items = (p.items || []);
 
-    /* ── TICKET CLIENTE ── */
-    const filasCliente = items.map((i, idx) => {
-        const cod  = String((idx + 1) * 10).padStart(5, '0');
-        const desc = i.n.toUpperCase()
-            + (i.sin && i.sin.length  ? ' (Sin: '    + i.sin.join(', ') + ')' : '')
-            + (i.con && i.con.length  ? ' (+'        + i.con.map(x => x.n).join(', ') + ')' : '')
-            + (i.obs                  ? ' [' + i.obs + ']' : '');
-        const cant  = String(i.cant).padStart(2, '0');
-        const precio = (i.totalItem || 0).toFixed(2);
-        return `<tr>
-            <td style="padding:1px 3px;white-space:nowrap">${cod}</td>
-            <td style="padding:1px 6px">${desc}</td>
-            <td style="padding:1px 3px;white-space:nowrap;text-align:center">${cant}</td>
-            <td style="padding:1px 3px;white-space:nowrap;text-align:right">${precio}</td>
-        </tr>`;
-    }).join('');
-
-    /* ── TICKET COCINA ── */
-    const filasCocina = items.map((i, idx) => {
-        const cod  = String((idx + 1) * 10).padStart(5, '0');
-        const desc = '<b>' + i.n.toUpperCase() + '</b>'
-            + (i.sin && i.sin.length ? ' <b>(Sin: ' + i.sin.join(', ') + ')</b>' : '')
-            + (i.con && i.con.length ? ' <b>(+' + i.con.map(x => x.n).join(', ') + ')</b>' : '')
-            + (i.obs                 ? ' [' + i.obs + ']' : '');
-        const cant = String(i.cant).padStart(2, '0');
-        return `<tr>
-            <td style="padding:1px 3px;white-space:nowrap">${cod}</td>
-            <td style="padding:1px 6px">${desc}</td>
-            <td style="padding:1px 3px;text-align:center">${cant}</td>
-        </tr>`;
-    }).join('');
-
+    // Conteo de hamburguesas (excluye acompañamientos)
     const totalBurgers = items
-        .filter(i => !['PAPAS','BEBIDA','GASEOSA','AGUA','JUGO','DIP','AROS','NUGGETS','SANDWICH','ENSALADA']
+        .filter(i => !['PAPAS','BEBIDA','GASEOSA','AGUA','JUGO','DIP','AROS','NUGGETS','SANDWICH','ENSALADA','COMBO']
             .some(k => i.n.toUpperCase().includes(k)))
         .reduce((a, i) => a + i.cant, 0);
 
-    const dirLine = esDel
-        ? `<div>Domicilio : ${(p.dir || '') + (p.piso && p.piso.trim() ? ' ' + p.piso.trim() : '')}</div>
-           <div>CP - Zona: ${p.loc || ''}</div>`
-        : `<div>Modalidad : RETIRO EN LOCAL</div>`;
+    // Dirección
+    const dirCliente = esDel
+        ? `Domicilio:${(p.dir||'').trim()}${p.piso&&p.piso.trim()?' '+p.piso.trim():''}\nCP - Zona: ${p.loc||''}`
+        : `Modalidad: RETIRO EN LOCAL`;
 
-    /* ═══ TICKET CLIENTE ═══ */
-    const tCliente = `
-    <div class="adm-ticket">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
-            <b style="font-size:13px;">Ticket Cliente</b>
-            <div style="text-align:right;font-family:sans-serif;line-height:1;">
-                <div style="font-size:15px;font-weight:900;letter-spacing:1px;">MARVEL</div>
-                <div style="font-size:11px;font-weight:700;font-style:italic;">Food</div>
-            </div>
-        </div>
-        <div style="font-size:10px;">${SEP}</div>
-        <div><b>Fecha :</b> ${fecha} &nbsp;&nbsp; <b>Número :</b> ${num}</div>
-        <div>Pedido para : ${p.cliente || '—'}</div>
-        <div>Teléfono : ${p.tel || '—'}</div>
-        ${dirLine}
-        ${p.horarioEstimado ? `<div>Horario estimado : ${p.horarioEstimado}</div>` : ''}
-        <div style="font-size:10px;">${SEP}</div>
-        <table style="width:100%;border-collapse:collapse;font-size:11px;">
-            <thead>
-                <tr>
-                    <th style="text-align:left;padding:1px 3px">Código</th>
-                    <th style="text-align:left;padding:1px 6px">Descripción</th>
-                    <th style="text-align:center;padding:1px 3px">Cant.</th>
-                    <th style="text-align:right;padding:1px 3px">Precio</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr><td colspan="4" style="font-size:10px;">${SEP}</td></tr>
-                ${filasCliente}
-            </tbody>
-        </table>
-        <div style="font-size:10px;">${SEP}</div>
-        <div style="text-align:right;padding-right:4px;">
-            <div>Sub total :${(p.subtotal || 0).toFixed(2)}</div>
-            ${esDel ? `<div>Envío     : ${(p.envio || 0).toFixed(2)}</div>` : ''}
-            ${p.descuento ? `<div>Descuento : -${p.descuento.toFixed(2)}${p.cuponUsado ? ' (' + p.cuponUsado + ')' : ''}</div>` : ''}
-            <div><b>Total     :${(p.total || 0).toFixed(2)}</b></div>
-        </div>
-        <div style="font-size:10px;">${SEP}</div>
-        <div style="margin-top:4px;">Pago : ${p.pago || '—'}</div>
-        <div style="font-size:10px;text-align:center;margin-top:8px;">¡Gracias por elegirnos!</div>
-        <div style="font-size:10px;">${SEP}</div>
-    </div>`;
+    // Filas tabla cliente
+    const filasCliente = items.map((i, idx) => {
+        const cod   = String((idx+1)*10).padStart(5,'0');
+        const desc  = i.n.toUpperCase()
+            + (i.sin&&i.sin.length ? ' (Sin: '+i.sin.join(', ')+')' : '')
+            + (i.con&&i.con.length ? ' (+'+i.con.map(x=>x.n).join(', ')+')' : '')
+            + (i.obs ? ' ['+i.obs+']' : '');
+        const cant  = String(i.cant).padStart(2,'0');
+        const prec  = (i.totalItem||0).toFixed(2);
+        return `<tr><td>${cod}</td><td class="td-desc">${desc}</td><td class="td-c">${cant}</td><td class="td-r">${prec}</td></tr>`;
+    }).join('');
 
-    /* ═══ TICKET COCINA ═══ */
-    const tCocina = `
-    <div class="adm-ticket">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-            <b style="font-size:13px;">Ticket Interno</b>
-            <b style="font-size:11px;letter-spacing:1px;">${esDel ? 'ENVÍO' : 'RETIRO'}</b>
-        </div>
-        <div style="font-size:10px;">${SEP}</div>
-        <div><b>Fecha :</b> ${fecha} &nbsp;&nbsp; <b>Número :</b> ${num}</div>
-        <div>Cocción: ${p.horarioEstimado || '—'}</div>
-        <div>Pedido para : ${p.cliente || '—'}</div>
-        <div>Teléfono : ${p.tel || '—'}</div>
-        ${dirLine}
-        <div style="font-size:10px;">${SEP}</div>
-        <table style="width:100%;border-collapse:collapse;font-size:11px;">
-            <thead>
-                <tr>
-                    <th style="text-align:left;padding:1px 3px">Código</th>
-                    <th style="text-align:left;padding:1px 6px">Descripción</th>
-                    <th style="text-align:center;padding:1px 3px">Cantidad</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr><td colspan="3" style="font-size:10px;">${SEP}</td></tr>
-                ${filasCocina}
-            </tbody>
-        </table>
-        <div style="font-size:10px;">${SEP}</div>
-        <div style="text-align:right;padding-right:4px;">Total hamburguesas: ${String(totalBurgers).padStart(2, '0')}</div>
-        <div style="text-align:center;font-size:14px;font-weight:bold;letter-spacing:3px;margin:6px 0;">${num}${String(totalBurgers).padStart(2,'0')}${String(items.length).padStart(2,'0')}</div>
-        <div style="font-size:10px;">${SEP}</div>
-    </div>`;
+    // Filas tabla cocina
+    const filasCocina = items.map((i, idx) => {
+        const cod  = String((idx+1)*10).padStart(5,'0');
+        const desc = '<strong>'+i.n.toUpperCase()+'</strong>'
+            + (i.sin&&i.sin.length ? ' <strong>(Sin: '+i.sin.join(', ')+')</strong>' : '')
+            + (i.con&&i.con.length ? ' <strong>(+'+i.con.map(x=>x.n).join(', ')+')</strong>' : '')
+            + (i.obs ? ' ['+i.obs+']' : '');
+        const cant = String(i.cant).padStart(2,'0');
+        return `<tr><td>${cod}</td><td class="td-desc">${desc}</td><td class="td-c">${cant}</td></tr>`;
+    }).join('');
 
-    const printArea = document.getElementById('adm-print-area');
-    if (printArea) {
-        printArea.innerHTML = tCliente + tCocina;
-        window.print();
+    // Totales cliente
+    const totalesCliente = `
+        <tr><td colspan="3" class="td-r"> Sub total :${(p.subtotal||0).toFixed(2)}</td></tr>
+        ${esDel ? `<tr><td colspan="3" class="td-r"> Envío     : ${(p.envio||0).toFixed(2)}</td></tr>` : ''}
+        ${p.descuento ? `<tr><td colspan="3" class="td-r"> Descuento : -${Number(p.descuento).toFixed(2)}${p.cuponUsado?' ('+p.cuponUsado+')':''}</td></tr>` : ''}
+        <tr><td colspan="3" class="td-r"><strong> Total     :${(p.total||0).toFixed(2)}</strong></td></tr>`;
+
+    const codigoBarras = `${num}${String(totalBurgers).padStart(2,'0')}${String(items.length).padStart(2,'0')}`;
+
+    const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Tickets Pedido ${num}</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Courier New',Courier,monospace; font-size:11px; color:#000; background:#fff; }
+  @page { size:80mm auto; margin:4mm 3mm; }
+  .ticket { width:100%; max-width:76mm; padding:0; page-break-after:always; }
+  .ticket:last-child { page-break-after:avoid; }
+  .sep { font-size:10px; letter-spacing:0; line-height:1.2; overflow:hidden; white-space:nowrap; }
+  .header-row { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:3px; }
+  .logo-text { text-align:right; line-height:1.1; }
+  .logo-marvel { font-family:Arial,sans-serif; font-size:14px; font-weight:900; letter-spacing:1px; }
+  .logo-food   { font-family:Arial,sans-serif; font-size:10px; font-weight:700; font-style:italic; }
+  .info { line-height:1.5; margin:2px 0; }
+  table { width:100%; border-collapse:collapse; margin:2px 0; }
+  th { text-align:left; font-weight:bold; padding:0 2px; }
+  td { padding:1px 2px; vertical-align:top; }
+  .td-desc { width:55%; word-break:break-word; }
+  .td-c { text-align:center; white-space:nowrap; }
+  .td-r { text-align:right; white-space:nowrap; }
+  .totales { text-align:right; margin:3px 0; line-height:1.6; }
+  .total-final { font-weight:bold; }
+  .barcode { text-align:center; font-size:13px; font-weight:bold; letter-spacing:3px; margin:5px 0 2px; }
+  .footer { text-align:center; font-size:10px; margin-top:6px; }
+  .badge { font-size:10px; font-weight:bold; }
+</style>
+</head>
+<body>
+
+<!-- ══════════ TICKET CLIENTE ══════════ -->
+<div class="ticket">
+  <div class="header-row">
+    <strong>Ticket Cliente</strong>
+    <div class="logo-text">
+      <div class="logo-marvel">MARVEL</div>
+      <div class="logo-food">Food</div>
+    </div>
+  </div>
+  <div class="sep">${SEP}</div>
+  <div class="info">
+    <strong>Fecha : ${fecha} &nbsp;&nbsp; Número : ${num}</strong><br>
+    Pedido para : ${p.cliente||'—'}<br>
+    Teléfono : ${p.tel||'—'}<br>
+    ${esDel
+      ? `Domicilio:${(p.dir||'').trim()}${p.piso&&p.piso.trim()?' '+p.piso.trim():''}<br>CP - Zona: ${p.loc||''}`
+      : `Modalidad: RETIRO EN LOCAL`}
+    ${p.horarioEstimado ? `<br>Horario : ${p.horarioEstimado}` : ''}
+  </div>
+  <div class="sep">${SEP}</div>
+  <table>
+    <thead><tr><th>Código</th><th class="td-desc">Descripción</th><th class="td-c">Cant.</th><th class="td-r">Precio</th></tr></thead>
+    <tbody>
+      <tr><td colspan="4"><div class="sep">${SEP}</div></td></tr>
+      ${filasCliente}
+      <tr><td colspan="4"><div class="sep">${SEP}</div></td></tr>
+      ${totalesCliente}
+    </tbody>
+  </table>
+  <div class="sep">${SEP}</div>
+  <div class="info">Pago : ${p.pago||'—'}${p.pago==='Efectivo'&&p.vuelto?`<br>Abona con: $${p.vuelto}`:''}</div>
+  <div class="footer">¡Gracias por elegirnos! 🍔</div>
+  <div class="sep">${SEP}</div>
+</div>
+
+<!-- ══════════ TICKET COCINA ══════════ -->
+<div class="ticket">
+  <div class="header-row">
+    <strong>Ticket Interno</strong>
+    <span class="badge">${esDel ? 'ENVÍO' : 'RETIRO'}</span>
+  </div>
+  <div class="sep">${SEP}</div>
+  <div class="info">
+    Fecha : ${fecha} &nbsp;&nbsp; Número : ${num}<br>
+    Cocción: ${p.horarioEstimado||'—'}<br>
+    Pedido para : ${p.cliente||'—'}<br>
+    Teléfono : ${p.tel||'—'}<br>
+    ${esDel
+      ? `Domicilio : ${(p.dir||'').trim()}${p.piso&&p.piso.trim()?' '+p.piso.trim():''}<br>CP - Zona: ${p.loc||''}`
+      : `Retira en local`}
+  </div>
+  <div class="sep">${SEP}</div>
+  <table>
+    <thead><tr><th>Código</th><th class="td-desc">Descripción</th><th class="td-c">Cantidad</th></tr></thead>
+    <tbody>
+      <tr><td colspan="3"><div class="sep">${SEP}</div></td></tr>
+      ${filasCocina}
+    </tbody>
+  </table>
+  <div class="sep">${SEP}</div>
+  <div style="text-align:right;"> Total hamburguesas: ${String(totalBurgers).padStart(2,'0')}</div>
+  <div class="barcode">${codigoBarras}</div>
+  <div class="sep">${SEP}</div>
+</div>
+
+<script>window.onload=function(){window.print();setTimeout(function(){window.close();},1000);};<\/script>
+</body>
+</html>`;
+
+    const win = window.open('', '_blank', 'width=340,height=600,scrollbars=yes');
+    if (win) {
+        win.document.write(html);
+        win.document.close();
+    } else {
+        // Fallback si el popup fue bloqueado: usar printArea
+        const printArea = document.getElementById('adm-print-area');
+        if (printArea) {
+            printArea.innerHTML = `<iframe srcdoc="${html.replace(/"/g,"'")}" style="width:100%;height:100vh;border:none;"></iframe>`;
+        }
+        alert('⚠️ El navegador bloqueó la ventana emergente. Habilitá los popups para este sitio y volvé a intentarlo.');
     }
 }
 

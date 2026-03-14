@@ -12,7 +12,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
 <script>
-    // Tu configuración oficial
+    // Configuración Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyAeRlE9S5pnEUuhxRXoOX6lMX4Ryky0uSI",
         authDomain: "marvel-food-fa570.firebaseapp.com",
@@ -22,9 +22,17 @@
         appId: "1:351263580699:web:9ba99708a021e5eabecebe",
         measurementId: "G-Z7X80SVSX6"
     };
-    // Inicializar Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+    // Inicializar Firebase de forma segura
+    try {
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        window.db = firebase.firestore();
+    } catch(e) {
+        console.error("Firebase init error:", e);
+        window.db = null;
+    }
+    var db = window.db;
 </script>
 
     <meta charset="utf-8" />
@@ -438,21 +446,6 @@
         <div id="store-status-banner"></div>
 
         <div id="cart-restore-banner"></div>
-        <div class="type-toggle">
-            <button id="btn-tipo-del" class="type-btn active" onclick="setGeneralDelivery(true)">Delivery</button>
-            <button id="btn-tipo-ret" class="type-btn" onclick="setGeneralDelivery(false)">TakeAway</button>
-        </div>
-
-
-<div class="address-bar">
-    <select id="main-sucursal" onchange="cambiarSucursalPrincipal()">
-        <option value="" disabled selected>Seleccioná tu sucursal mas cercana para continuar...</option>
-        <option value="Centro">(Pellegrini 1149) Rosario, Centro - Sur </option>
-        <option value="Norte">(Rondeau 2430) Rosario, Zona Norte - Grandero Baigorria </option>
-        <option value="Sur">(San martin 1808) Rosario, Zona Sur / VGG</option>
-        <option value="Funes">(RN9 972) Funes - Fisherton</option>
-    </select>
-</div>
 
         <div class="nav-cats" id="cat-list"></div>
         
@@ -664,6 +657,28 @@
         
         <div style="padding: 20px; background: var(--surface); border-top: 1px solid var(--border); overflow-y:auto; max-height: 50vh;">
             <div id="checkout-form">
+                <!-- SUCURSAL Y TIPO DE PEDIDO -->
+                <div class="m-section" style="margin-top: 0;">SUCURSAL Y TIPO DE PEDIDO</div>
+                <div class="address-bar" style="margin: 0 0 12px; border-radius: 10px;">
+                    <select id="main-sucursal" onchange="cambiarSucursalPrincipal()" style="padding: 14px 15px; border: none; outline: none; font-weight: 600; font-size: 14px; color: var(--white); background: transparent; cursor: pointer; width: 100%;">
+                        <option value="" disabled selected>Seleccioná tu sucursal más cercana...</option>
+                        <option value="Centro">(Pellegrini 1149) Rosario, Centro - Sur</option>
+                        <option value="Norte">(Rondeau 2430) Rosario, Zona Norte - Baigorria</option>
+                        <option value="Sur">(San Martin 1808) Rosario, Zona Sur / VGG</option>
+                        <option value="Funes">(RN9 972) Funes - Fisherton</option>
+                    </select>
+                </div>
+                <div class="type-toggle" style="padding: 0 0 15px;">
+                    <button id="btn-tipo-del" class="type-btn active" onclick="setGeneralDelivery(true)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/><rect x="9" y="11" width="14" height="10" rx="1"/><circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/></svg>
+                        Delivery
+                    </button>
+                    <button id="btn-tipo-ret" class="type-btn" onclick="setGeneralDelivery(false)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        TakeAway
+                    </button>
+                </div>
+
                 <div class="m-section" style="margin-top: 0;">DATOS DEL CLIENTE</div>
                 <input type="text" id="c-nombre" class="ui-input" placeholder="Nombre completo">
                 <input type="number" id="c-tel" class="ui-input" placeholder="WhatsApp (Ej: 3416107498)">

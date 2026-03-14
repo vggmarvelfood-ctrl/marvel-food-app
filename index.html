@@ -1,19 +1,27 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<!-- EmailJS: cargado con defer para no bloquear el parser -->
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js" defer></script>
 
-    <script type="text/javascript">
-       (function(){
-          emailjs.init("sATMMVYtIbZLT1tMD"); 
-       })();
-    </script>
+<!-- Firebase: cargados de forma síncrona (son pequeños y necesarios antes del DOMContentLoaded) -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
 <script>
-    // Configuración Firebase
-    const firebaseConfig = {
+    // ── EmailJS: inicializar cuando el script esté disponible ──
+    function _initEmailJS() {
+        if (window.emailjs) {
+            emailjs.init("sATMMVYtIbZLT1tMD");
+        } else {
+            // emailjs aún no cargó (defer), reintentar
+            setTimeout(_initEmailJS, 200);
+        }
+    }
+    document.addEventListener('DOMContentLoaded', _initEmailJS);
+
+    // ── Firebase: inicializar con reintentos por si el SDK tarda ──
+    const _fbConfig = {
         apiKey: "AIzaSyAeRlE9S5pnEUuhxRXoOX6lMX4Ryky0uSI",
         authDomain: "marvel-food-fa570.firebaseapp.com",
         projectId: "marvel-food-fa570",
@@ -22,17 +30,27 @@
         appId: "1:351263580699:web:9ba99708a021e5eabecebe",
         measurementId: "G-Z7X80SVSX6"
     };
-    // Inicializar Firebase de forma segura
-    try {
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
+
+    function _initFirebase(intentos) {
+        intentos = intentos || 0;
+        try {
+            if (typeof firebase === 'undefined' || !firebase.firestore) {
+                if (intentos < 30) { setTimeout(function(){ _initFirebase(intentos+1); }, 100); return; }
+                throw new Error('Firebase SDK no cargó en 3 segundos');
+            }
+            if (!firebase.apps.length) firebase.initializeApp(_fbConfig);
+            window.db = firebase.firestore();
+            // Actualizar alias global
+            try { db = window.db; } catch(e) {}
+        } catch(e) {
+            console.error("Firebase init error:", e);
+            window.db = null;
         }
-        window.db = firebase.firestore();
-    } catch(e) {
-        console.error("Firebase init error:", e);
-        window.db = null;
     }
-    var db = window.db;
+    _initFirebase();
+
+    // Alias global — se actualiza cada vez que _initFirebase resuelve
+    var db = window.db || null;
 </script>
 
     <meta charset="utf-8" />
@@ -139,7 +157,7 @@
         .nav-item svg { width: 22px; height: 22px; }
         .nav-item.active { color: var(--primary); }
 
-        .cart-float { position: fixed; bottom: 85px; right: 20px; background: var(--primary); color: var(--dark); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(245, 158, 11, 0.4); z-index: 400; cursor: pointer; transition: 0.3s; }
+        .cart-float { position: fixed; bottom: 90px; right: 20px; background: var(--primary); color: var(--dark); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(245, 158, 11, 0.4); z-index: 400; cursor: pointer; transition: 0.3s; }
         .cart-float:active { transform: scale(0.9); }
         .badge-qty { position: absolute; top: -2px; right: -2px; background: var(--white); color: var(--dark); border-radius: 50%; width: 24px; height: 24px; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; border: 2px solid var(--primary); }
 
@@ -399,6 +417,75 @@
 
     <div id="toast">¡Agregado al pedido!</div>
 
+<!-- ════ PANTALLA DE BIENVENIDA / VERIFICACIÓN DE ZONA ════ -->
+<div id="welcome-screen" style="
+    position:fixed; inset:0; z-index:99000;
+    background:#0f0f0f;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:28px 24px;
+    font-family:'Plus Jakarta Sans',sans-serif;
+">
+    <!-- Logo + marca -->
+    <div style="text-align:center;margin-bottom:32px;">
+        <div style="width:72px;height:72px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 0 32px rgba(245,158,11,0.4);">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        </div>
+        <h1 style="font-size:26px;font-weight:800;color:#fff;margin:0 0 6px;">MARVEL FOOD</h1>
+        <p style="color:#9ca3af;font-size:14px;margin:0;">¿A dónde te enviamos el pedido?</p>
+    </div>
+
+    <!-- Card principal -->
+    <div style="width:100%;max-width:400px;background:#1e1e1e;border:1px solid #333;border-radius:20px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
+
+        <!-- Botón GPS -->
+        <button id="ws-btn-gps" onclick="welcomeUsarGPS()" style="
+            width:100%;padding:16px;border-radius:14px;border:2px solid #10b981;
+            background:rgba(16,185,129,0.08);color:#10b981;
+            font-weight:800;font-size:15px;cursor:pointer;
+            display:flex;align-items:center;justify-content:center;gap:10px;
+            margin-bottom:14px;transition:.2s;
+        ">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span id="ws-gps-txt">Usar mi ubicación actual</span>
+        </button>
+
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+            <div style="flex:1;height:1px;background:#333;"></div>
+            <span style="color:#6b7280;font-size:12px;font-weight:700;">O ESCRIBÍ TU DIRECCIÓN</span>
+            <div style="flex:1;height:1px;background:#333;"></div>
+        </div>
+
+        <!-- Input dirección -->
+        <div style="position:relative;margin-bottom:10px;">
+            <input id="ws-dir-input" type="text" placeholder="Ej: Pellegrini 1149"
+                style="width:100%;padding:14px 14px 14px 42px;border-radius:12px;border:1px solid #444;
+                background:#121212;color:#fff;font-size:14px;font-weight:500;outline:none;box-sizing:border-box;"
+                oninput="welcomeDirInput()"
+            />
+            <svg style="position:absolute;left:13px;top:50%;transform:translateY(-50%);opacity:.5;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
+        <p style="color:#6b7280;font-size:11px;margin:0 0 14px;text-align:center;">Rosario y alrededores</p>
+
+        <!-- Resultado zona -->
+        <div id="ws-zona-result" style="display:none;border-radius:12px;padding:14px;margin-bottom:14px;"></div>
+
+        <!-- Botón continuar -->
+        <button id="ws-btn-continuar" onclick="welcomeContinuar()" disabled style="
+            width:100%;padding:16px;border-radius:14px;border:none;
+            background:#444;color:#888;
+            font-weight:800;font-size:15px;cursor:not-allowed;
+            transition:.3s;
+        ">Continuar →</button>
+
+        <!-- Saltar -->
+        <button onclick="welcomeSkip()" style="
+            width:100%;padding:10px;background:transparent;border:none;
+            color:#6b7280;font-size:13px;cursor:pointer;margin-top:8px;
+        ">Saltar por ahora</button>
+    </div>
+</div>
+<!-- ════ FIN PANTALLA DE BIENVENIDA ════ -->
+
 
       
     <div class="hero-slider">
@@ -586,6 +673,20 @@
     </div>
 </div>
 
+<!-- TAB PEDIDOS -->
+<div id="tab-pedidos" class="tab-page hidden" style="padding: 20px; padding-bottom: 100px;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+        <div>
+            <h2 style="font-weight:800; font-size:22px; color:var(--white); margin:0 0 4px;">📋 MIS PEDIDOS</h2>
+            <p style="color:var(--text-light); font-size:13px; margin:0;">Historial de tus últimas órdenes</p>
+        </div>
+        <button onclick="limpiarHistorialPedidos()" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#ef4444;padding:8px 12px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;">
+            🗑️ Limpiar
+        </button>
+    </div>
+    <div id="historial-pedidos-lista"></div>
+</div>
+
     <div class="cart-float" onclick="toggleCart()">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
         <span id="cart-badge" class="badge-qty">0</span>
@@ -604,9 +705,9 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
         Locales
     </div>
-    <div class="nav-item" onclick="switchTab('tab-ayuda', this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-        Ayuda
+    <div class="nav-item" id="nav-pedidos" onclick="switchTab('tab-pedidos', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+        Pedidos
     </div>
     <div class="nav-item" onclick="switchTab('tab-perfil', this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="5" x2="5" y2="19"></line><circle cx="6.5" cy="6.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg>
@@ -1046,12 +1147,22 @@ function inicializarHeroSlider() {
     heroSlider.addEventListener('touchend', () => setTimeout(startAutoSlide, 2000), { passive: true });
 }
 
+// ── Helper: esperar a que Firebase esté disponible ──────────
+function _esperarDB(fn, intentos) {
+    intentos = intentos || 0;
+    if (window.db) { fn(); return; }
+    if (intentos > 20) { console.warn('Firebase no disponible, continuando sin él.'); fn(); return; }
+    setTimeout(function(){ _esperarDB(fn, intentos + 1); }, 100);
+}
+
 // 2. BLOQUE DE INICIO ÚNICO
 document.addEventListener('DOMContentLoaded', () => {
     if (window.__IS_ADMIN__) return;
 
-    // Cargar overrides del menú (precios/disponibilidad) desde Firebase
-    if (typeof cargarMenuOverrides === 'function') cargarMenuOverrides();
+    // Cargar overrides del menú — esperar a que Firebase esté listo
+    _esperarDB(function() {
+        if (typeof cargarMenuOverrides === 'function') cargarMenuOverrides();
+    });
 
     // Restaurar carrito persistente
     if (typeof restaurarCarrito === 'function') restaurarCarrito();
@@ -1303,12 +1414,7 @@ window.toggleExt = (id) => {
         window.toggleCart = () => {
             const cv = document.getElementById('cart-view');
             cv.classList.toggle('open');
-            if (cv.classList.contains('open')) {
-                // Inyectar reorder si hay historial y no existe ya
-                if (!document.getElementById('reorder-section')) {
-                    if (typeof mostrarBannerReorden === 'function') mostrarBannerReorden();
-                }
-            }
+            // El historial de reorden ahora vive en la pestaña Pedidos, no en el carrito
         };
         function updateCartUI() { document.getElementById('cart-badge').innerText = carrito.reduce((s,i)=>s+i.cant,0); }
         window.toggleVuelto = () => document.getElementById('vuelto-box').style.display = (document.getElementById('p-metodo').value === 'Efectivo') ? 'block' : 'none';
@@ -1668,6 +1774,7 @@ window.procesarPedido = async () => {
 
             if(tabId === 'tab-perfil') actualizarVistasPerfil();
             if(tabId === 'tab-promos') renderPromosCatalog();
+            if(tabId === 'tab-pedidos') renderHistorialPedidos();
 
             window.scrollTo(0,0);
         };
@@ -2042,6 +2149,7 @@ window.obtenerHorarioEstimado = (esDelivery) => {
 
 // ── 1. MENU OVERRIDES (precios/disponibilidad desde Firebase) ──
 async function cargarMenuOverrides() {
+    if (!window.db) { console.warn("cargarMenuOverrides: db no disponible, saltando."); return; }
     try {
         db.collection("config_menu").doc("overrides")
           .onSnapshot(snap => {
@@ -2130,25 +2238,10 @@ window.limpiarCarritoBanner = () => {
     if (banner) banner.style.display = 'none';
 };
 
-// ── 3. REORDEN ──
+// ── 3. REORDEN — el banner ya no va en el carrito, sino en tab-pedidos ──
 function mostrarBannerReorden() {
-    try {
-        const historial = JSON.parse(localStorage.getItem('mf_historial') || '[]');
-        if (!historial.length) return;
-        const ultimo = historial[0];
-        const cartView = document.getElementById('cart-items-list');
-        if (!cartView) return;
-        // Agregar botón reorden arriba de la lista del carrito
-        const reorderDiv = document.createElement('div');
-        reorderDiv.id = 'reorder-section';
-        reorderDiv.innerHTML = `
-            <div style="margin-bottom:16px;padding:14px;background:var(--surface);border-radius:12px;border:1px solid var(--border);">
-                <p style="font-size:12px;color:var(--text-light);margin-bottom:6px;">⟳ ÚLTIMO PEDIDO</p>
-                <p style="font-size:13px;color:var(--white);font-weight:600;margin-bottom:8px;">${ultimo.items.map(i=>`${i.cant}x ${i.n}`).join(', ')}</p>
-                <button class="reorder-btn" onclick="reordenarUltimo()">⟳ REPETIR ESTE PEDIDO</button>
-            </div>`;
-        cartView.parentNode.insertBefore(reorderDiv, cartView);
-    } catch(e) {}
+    // No-op: el historial ahora vive en la pestaña "Pedidos"
+    renderHistorialPedidos();
 }
 
 window.reordenarUltimo = () => {
@@ -2164,6 +2257,71 @@ window.reordenarUltimo = () => {
         const t = document.getElementById('toast');
         if (t) { t.innerText = '⟳ Pedido anterior restaurado'; t.classList.add('show'); setTimeout(() => { t.classList.remove('show'); t.innerText='¡Agregado al pedido!'; }, 2500); }
     } catch(e) { alert("No se pudo restaurar el pedido."); }
+};
+
+// ── RENDER DE HISTORIAL DE PEDIDOS ──────────────────────────
+function renderHistorialPedidos() {
+    const lista = document.getElementById('historial-pedidos-lista');
+    if (!lista) return;
+    try {
+        const historial = JSON.parse(localStorage.getItem('mf_historial') || '[]');
+        if (!historial.length) {
+            lista.innerHTML = `
+                <div style="text-align:center;padding:60px 20px;">
+                    <div style="font-size:56px;margin-bottom:16px;">🍔</div>
+                    <p style="color:var(--text-light);font-size:15px;font-weight:600;">Todavía no hiciste ningún pedido</p>
+                    <p style="color:var(--text-light);font-size:13px;margin-top:6px;opacity:0.7;">Cuando hagas tu primera orden, aparecerá acá</p>
+                </div>`;
+            return;
+        }
+        lista.innerHTML = historial.map((p, idx) => {
+            const fecha = p.fecha ? new Date(p.fecha).toLocaleDateString('es-AR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
+            const items = (p.items || []).map(i => `${i.cant}x ${i.n}`).join(', ');
+            return `
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px;position:relative;overflow:hidden;">
+                <div style="position:absolute;top:0;left:0;width:4px;height:100%;background:var(--primary);border-radius:4px 0 0 4px;"></div>
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;padding-left:8px;">
+                    <div>
+                        <div style="font-size:11px;color:var(--text-light);font-weight:700;text-transform:uppercase;letter-spacing:.5px;">${fecha}</div>
+                        <div style="font-size:16px;font-weight:800;color:var(--primary);margin-top:2px;">$${(p.total||0).toLocaleString('es-AR')}</div>
+                    </div>
+                    <div style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:800;color:var(--primary);">
+                        ${(p.items||[]).reduce((s,i)=>s+i.cant,0)} item${(p.items||[]).reduce((s,i)=>s+i.cant,0)!==1?'s':''}
+                    </div>
+                </div>
+                <div style="font-size:12px;color:var(--text-light);line-height:1.5;padding-left:8px;margin-bottom:10px;">${items}</div>
+                <button onclick="reordenarDesdeHistorial(${idx})"
+                    style="width:100%;padding:10px;background:transparent;border:1px solid var(--primary);color:var(--primary);border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;transition:.2s;"
+                    onmouseover="this.style.background='rgba(245,158,11,0.1)'" onmouseout="this.style.background='transparent'">
+                    ⟳ Repetir este pedido
+                </button>
+            </div>`;
+        }).join('');
+    } catch(e) {
+        lista.innerHTML = '<p style="color:var(--text-light);text-align:center;padding:40px;">Error cargando historial</p>';
+    }
+}
+
+window.reordenarDesdeHistorial = (idx) => {
+    try {
+        const historial = JSON.parse(localStorage.getItem('mf_historial') || '[]');
+        if (!historial[idx]) return;
+        carrito = [...historial[idx].items];
+        guardarCarritoPersistente();
+        updateCartUI();
+        renderCartItems();
+        toggleCart();
+        const nav = document.querySelector('.nav-item[onclick*="tab-inicio"]');
+        if (nav) switchTab('tab-inicio', nav);
+        const t = document.getElementById('toast');
+        if (t) { t.innerText = '⟳ Pedido restaurado al carrito'; t.classList.add('show'); setTimeout(() => { t.classList.remove('show'); t.innerText='¡Agregado al pedido!'; }, 2500); }
+    } catch(e) { alert("No se pudo restaurar el pedido."); }
+};
+
+window.limpiarHistorialPedidos = () => {
+    if (!confirm('¿Borrar todo el historial de pedidos?')) return;
+    localStorage.removeItem('mf_historial');
+    renderHistorialPedidos();
 };
 
 // ── 4. SEGUIMIENTO EN TIEMPO REAL ──
@@ -3890,6 +4048,514 @@ async function admCargarResenas() {
     <div id="adm-print-area"></div>
 </div>
 <!-- ════════════════ FIN ADMIN ════════════════ -->
+
+<!-- ════════════════ SISTEMA DE VERIFICACIÓN DE ZONA ════════════════ -->
+<div id="zona-alert" style="
+    display:none; position:fixed; bottom:90px; left:12px; right:12px;
+    background:#1e1e1e; border:2px solid #f59e0b; border-radius:16px;
+    padding:16px; z-index:4500; box-shadow:0 8px 32px rgba(0,0,0,0.7);
+    animation: slideUpZona 0.35s ease-out;
+    max-width:480px; margin:0 auto;
+">
+    <style>
+        @keyframes slideUpZona { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+        #zona-alert .za-close { position:absolute; top:10px; right:12px; background:transparent; border:none; color:#9ca3af; font-size:18px; cursor:pointer; line-height:1; }
+        #zona-alert .za-title { font-weight:800; font-size:15px; color:#f59e0b; margin-bottom:4px; padding-right:20px; }
+        #zona-alert .za-body  { font-size:13px; color:#d1d5db; margin-bottom:12px; line-height:1.4; }
+        #zona-alert .za-suc   { background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.4); border-radius:10px; padding:10px 12px; margin-bottom:10px; }
+        #zona-alert .za-suc-name { font-weight:800; color:#fff; font-size:13px; }
+        #zona-alert .za-suc-addr { font-size:11px; color:#9ca3af; margin-top:2px; }
+        #zona-alert .za-btn  { width:100%; padding:12px; border-radius:10px; border:none; background:#f59e0b; color:#000; font-weight:800; font-size:14px; cursor:pointer; letter-spacing:.5px; }
+        #zona-alert .za-btn:active { opacity:0.85; }
+        #zona-alert .za-link { display:block; text-align:center; margin-top:8px; font-size:12px; color:#9ca3af; cursor:pointer; text-decoration:underline; }
+    </style>
+    <button class="za-close" onclick="cerrarZonaAlert()">✕</button>
+    <div class="za-title" id="za-title">⚠️ Dirección fuera de cobertura</div>
+    <div class="za-body"  id="za-body">Tu dirección está fuera del área de entrega de esta sucursal.</div>
+    <div class="za-suc" id="za-suc-info" style="display:none;">
+        <div class="za-suc-name" id="za-suc-name"></div>
+        <div class="za-suc-addr" id="za-suc-addr"></div>
+    </div>
+    <button class="za-btn" id="za-btn-cambiar" onclick="aplicarSucursalSugerida()" style="display:none;">
+        🔄 Cambiar a esta sucursal
+    </button>
+    <span class="za-link" onclick="cerrarZonaAlert()">Continuar de todas formas</span>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+//  POLÍGONOS DE COBERTURA — Marvel Food Rosario
+//  Definidos como arrays de [lat, lng] en sentido horario
+//  Basados en los mapas de Google My Maps de cada sucursal
+// ════════════════════════════════════════════════════════════
+
+const ZONA_POLIGONOS = {
+    // ── CENTRO (Pellegrini 1149) ──────────────────────────────
+    // Cubre: rosario centro-sur, desde bv oroño al eje sur
+    Centro: [
+        [-32.9200, -60.6900],
+        [-32.9200, -60.6200],
+        [-32.9600, -60.6200],
+        [-32.9700, -60.6400],
+        [-32.9800, -60.6400],
+        [-32.9800, -60.6700],
+        [-32.9650, -60.6900],
+        [-32.9500, -60.7000],
+        [-32.9350, -60.7000],
+        [-32.9200, -60.6900]
+    ],
+
+    // ── NORTE (Rondeau 2430) ──────────────────────────────────
+    // Cubre: rosario norte, baigorria
+    Norte: [
+        [-32.8600, -60.7200],
+        [-32.8600, -60.6300],
+        [-32.9050, -60.6300],
+        [-32.9200, -60.6500],
+        [-32.9200, -60.6900],
+        [-32.9300, -60.7200],
+        [-32.9100, -60.7300],
+        [-32.8800, -60.7300],
+        [-32.8600, -60.7200]
+    ],
+
+    // ── SUR (San Martin 1808) ─────────────────────────────────
+    // Cubre: rosario sur, villa gobernador gálvez
+    Sur: [
+        [-32.9600, -60.6900],
+        [-32.9600, -60.6200],
+        [-32.9800, -60.6200],
+        [-33.0400, -60.6200],
+        [-33.0400, -60.6600],
+        [-33.0200, -60.7000],
+        [-33.0000, -60.7000],
+        [-32.9800, -60.7000],
+        [-32.9600, -60.6900]
+    ],
+
+    // ── FUNES-FISHERTON (RN9 972) ─────────────────────────────
+    // Cubre: funes, fisherton, barrios privados zona oeste
+    Funes: [
+        [-32.8700, -60.8900],
+        [-32.8700, -60.8000],
+        [-32.9200, -60.7800],
+        [-32.9500, -60.7800],
+        [-32.9500, -60.8400],
+        [-32.9300, -60.9200],
+        [-32.9000, -60.9300],
+        [-32.8700, -60.8900]
+    ]
+};
+
+// Nombre + dirección legible para la UI
+const ZONA_INFO_UI = {
+    Centro: { label: "Centro", direccion: "Pellegrini 1149, Rosario Centro" },
+    Norte:  { label: "Norte — Baigorria", direccion: "Rondeau 2430, Rosario Norte" },
+    Sur:    { label: "Sur / V.G.Gálvez", direccion: "San Martin 1808, Rosario Sur" },
+    Funes:  { label: "Funes — Fisherton", direccion: "RN9 972, Funes" }
+};
+
+// ── Ray-casting para punto en polígono ────────────────────
+function puntoDentroDePoligono(lat, lng, poly) {
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+        const xi = poly[i][0], yi = poly[i][1];
+        const xj = poly[j][0], yj = poly[j][1];
+        const intersect = ((yi > lng) !== (yj > lng)) &&
+            (lat < (xj - xi) * (lng - yi) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
+    }
+    return inside;
+}
+
+// ── Encontrar sucursal que cubre un punto ─────────────────
+function sucursalParaPunto(lat, lng) {
+    for (const key of Object.keys(ZONA_POLIGONOS)) {
+        if (puntoDentroDePoligono(lat, lng, ZONA_POLIGONOS[key])) return key;
+    }
+    return null;
+}
+
+// ── Distancia al centroide del polígono (para el fallback) ─
+function distanciaAlCentro(lat, lng, poly) {
+    const cLat = poly.reduce((s, p) => s + p[0], 0) / poly.length;
+    const cLng = poly.reduce((s, p) => s + p[1], 0) / poly.length;
+    return Math.sqrt((lat - cLat) ** 2 + (lng - cLng) ** 2);
+}
+
+function sucursalMasCercana(lat, lng) {
+    let mejor = null, menorDist = Infinity;
+    for (const key of Object.keys(ZONA_POLIGONOS)) {
+        const d = distanciaAlCentro(lat, lng, ZONA_POLIGONOS[key]);
+        if (d < menorDist) { menorDist = d; mejor = key; }
+    }
+    return mejor;
+}
+
+// ── Estado interno ────────────────────────────────────────
+let _zonaVerifTimeout = null;
+let _sucursalSugerida = null;
+let _coordsVerificadas = null; // { lat, lng }
+
+window.cerrarZonaAlert = () => {
+    const el = document.getElementById('zona-alert');
+    if (el) el.style.display = 'none';
+};
+
+window.aplicarSucursalSugerida = () => {
+    if (!_sucursalSugerida) return;
+    const sel = document.getElementById('main-sucursal');
+    if (sel) {
+        sel.value = _sucursalSugerida;
+        window.cambiarSucursalPrincipal();
+        // Si hay localidad sugerida también la pre-seleccionamos
+        const locSel = document.getElementById('c-loc');
+        if (locSel && SUC_MAP[_sucursalSugerida]) {
+            const locs = Object.keys(SUC_MAP[_sucursalSugerida].locs);
+            if (locs.length > 0) {
+                // Seleccionar la primera opción disponible (heurística)
+                setTimeout(() => {
+                    if (locSel.options.length > 1) locSel.selectedIndex = 1;
+                    renderCartItems();
+                }, 100);
+            }
+        }
+    }
+    cerrarZonaAlert();
+    // Scroll suave al formulario
+    const cartView = document.getElementById('cart-view');
+    if (cartView && cartView.classList.contains('open')) {
+        const sucBlock = document.getElementById('checkout-form');
+        if (sucBlock) sucBlock.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+};
+
+// ── Geocodificación + verificación ────────────────────────
+// ── Geocodificación con múltiples proveedores (CORS abierto) ──
+async function _geocodificar(direccion) {
+    const q = encodeURIComponent(direccion + ' Rosario Santa Fe Argentina');
+
+    // Proveedor 1: Photon (Komoot) — GeoJSON, CORS abierto
+    try {
+        const r = await fetch(`https://photon.komoot.io/api/?q=${q}&limit=1&bbox=-61.2,-33.2,-60.2,-32.7`, { signal: AbortSignal.timeout(5000) });
+        if (r.ok) {
+            const d = await r.json();
+            if (d.features && d.features.length) {
+                const [lng, lat] = d.features[0].geometry.coordinates;
+                return { lat, lng };
+            }
+        }
+    } catch(e) { /* intentar siguiente */ }
+
+    // Proveedor 2: geocode.maps.co — CORS abierto, sin key para uso básico
+    try {
+        const r = await fetch(`https://geocode.maps.co/search?q=${q}&countrycodes=ar&limit=1`, { signal: AbortSignal.timeout(5000) });
+        if (r.ok) {
+            const d = await r.json();
+            if (d && d.length) return { lat: parseFloat(d[0].lat), lng: parseFloat(d[0].lon) };
+        }
+    } catch(e) { /* ningún proveedor respondió */ }
+
+    return null;
+}
+
+async function verificarDireccion(direccion) {
+    const sucId = document.getElementById('main-sucursal')?.value;
+    if (!sucId || !direccion || direccion.length < 6) return;
+
+    try {
+        const coords = await _geocodificar(direccion);
+        if (!coords) return; // sin resultados, no molestar
+
+        const lat = coords.lat;
+        const lng = coords.lng;
+        _coordsVerificadas = { lat, lng };
+
+        const sucubrePunto = puntoDentroDePoligono(lat, lng, ZONA_POLIGONOS[sucId]);
+
+        if (sucubrePunto) {
+            // ✅ Está en zona — ocultar cualquier alerta anterior
+            cerrarZonaAlert();
+            return;
+        }
+
+        // ❌ Fuera de zona — buscar cuál sucursal lo cubre
+        const sucCubre = sucursalParaPunto(lat, lng);
+        const sucSugerida = sucCubre || sucursalMasCercana(lat, lng);
+        _sucursalSugerida = sucSugerida;
+
+        // Armar el mensaje de la alerta
+        const zaTitle  = document.getElementById('za-title');
+        const zaBody   = document.getElementById('za-body');
+        const zaSucInfo= document.getElementById('za-suc-info');
+        const zaSucName= document.getElementById('za-suc-name');
+        const zaSucAddr= document.getElementById('za-suc-addr');
+        const zaBtn    = document.getElementById('za-btn-cambiar');
+        const alert    = document.getElementById('zona-alert');
+
+        const sucActualInfo = ZONA_INFO_UI[sucId];
+        const sucSugInfo    = ZONA_INFO_UI[sucSugerida];
+
+        zaTitle.textContent = '⚠️ Dirección fuera de cobertura';
+
+        if (sucCubre) {
+            zaBody.innerHTML = `<strong style="color:#fff;">${direccion}</strong> está fuera del rango de entrega de <em>${sucActualInfo.label}</em>.<br>Pero la sucursal <strong style="color:#f59e0b;">${sucSugInfo.label}</strong> sí llega ahí:`;
+        } else {
+            zaBody.innerHTML = `<strong style="color:#fff;">${direccion}</strong> queda fuera del área de entrega de <em>${sucActualInfo.label}</em>.<br>La sucursal más cercana que podría llegar es <strong style="color:#f59e0b;">${sucSugInfo.label}</strong>:`;
+        }
+
+        zaSucName.textContent = '📍 ' + sucSugInfo.label;
+        zaSucAddr.textContent = sucSugInfo.direccion;
+        zaSucInfo.style.display = 'block';
+        zaBtn.style.display = 'block';
+        zaBtn.textContent = `🔄 Cambiar a sucursal ${sucSugInfo.label}`;
+
+        alert.style.display = 'block';
+
+    } catch(e) {
+        // Si falla la geocodificación simplemente no mostramos nada
+        console.warn('[ZonaCheck] Error geocodificando:', e.message);
+    }
+}
+
+// ── Hook en el campo de dirección ─────────────────────────
+(function hookDireccionInput() {
+    const MAX_WAIT = 1200; // ms de debounce
+
+    function attachHook() {
+        const cDir = document.getElementById('c-dir');
+        if (!cDir) return setTimeout(attachHook, 500);
+
+        cDir.addEventListener('input', () => {
+            clearTimeout(_zonaVerifTimeout);
+            _zonaVerifTimeout = setTimeout(() => {
+                verificarDireccion(cDir.value.trim());
+            }, MAX_WAIT);
+        });
+
+        cDir.addEventListener('blur', () => {
+            clearTimeout(_zonaVerifTimeout);
+            const val = cDir.value.trim();
+            if (val.length >= 6) verificarDireccion(val);
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', attachHook);
+    } else {
+        attachHook();
+    }
+})();
+
+// ── También re-verificar cuando cambia la sucursal ────────
+(function hookSucursalChange() {
+    function attach() {
+        const sel = document.getElementById('main-sucursal');
+        if (!sel) return setTimeout(attach, 500);
+        sel.addEventListener('change', () => {
+            const dir = document.getElementById('c-dir')?.value?.trim();
+            if (dir && dir.length >= 6) {
+                cerrarZonaAlert();
+                setTimeout(() => verificarDireccion(dir), 300);
+            }
+        });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', attach);
+    } else {
+        attach();
+    }
+})();
+</script>
+<!-- ════════════════ FIN VERIFICACIÓN DE ZONA ════════════════ -->
+
+<script>
+// ════════════════════════════════════════════════════════════
+//  PANTALLA DE BIENVENIDA — lógica
+// ════════════════════════════════════════════════════════════
+
+let _wsGPS = null;            // { lat, lng } si se obtuvo GPS
+let _wsSucursalDetectada = null;
+let _wsDirTimeout = null;
+
+// Ver si ya se visitó antes (no mostrar de nuevo en la misma sesión)
+(function checkWelcome() {
+    const ya = sessionStorage.getItem('mf_welcome_done');
+    if (ya === '1') {
+        document.getElementById('welcome-screen').style.display = 'none';
+    }
+})();
+
+function welcomeSkip() {
+    sessionStorage.setItem('mf_welcome_done', '1');
+    const ws = document.getElementById('welcome-screen');
+    ws.style.opacity = '0';
+    ws.style.transition = 'opacity .35s';
+    setTimeout(() => { ws.style.display = 'none'; }, 360);
+}
+
+function welcomeUsarGPS() {
+    const btn = document.getElementById('ws-btn-gps');
+    const txt = document.getElementById('ws-gps-txt');
+    txt.textContent = 'Obteniendo ubicación...';
+    btn.disabled = true;
+
+    if (!navigator.geolocation) {
+        txt.textContent = 'GPS no disponible en este navegador';
+        btn.style.borderColor = '#ef4444';
+        btn.style.color = '#ef4444';
+        btn.disabled = false;
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        (pos) => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            _wsGPS = { lat, lng };
+
+            // Guardar coords en coordenadasGPS global para el checkout
+            window.coordenadasGPS = lat + ',' + lng;
+
+            txt.textContent = '✓ Ubicación obtenida';
+            btn.style.borderColor = '#10b981';
+            btn.style.background = 'rgba(16,185,129,0.2)';
+
+            const sucCubre = sucursalParaPunto(lat, lng);
+            const sucSug = sucCubre || sucursalMasCercana(lat, lng);
+            _wsSucursalDetectada = sucSug;
+
+            welcomeMostrarResultado(sucSug, null, sucCubre !== null);
+        },
+        () => {
+            txt.textContent = 'No se pudo obtener la ubicación';
+            btn.style.borderColor = '#ef4444';
+            btn.style.color = '#ef4444';
+            btn.disabled = false;
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+    );
+}
+
+let _wsDirVerifyTimeout = null;
+function welcomeDirInput() {
+    clearTimeout(_wsDirVerifyTimeout);
+    const val = document.getElementById('ws-dir-input').value.trim();
+    const result = document.getElementById('ws-zona-result');
+    const btn = document.getElementById('ws-btn-continuar');
+
+    // Limpiar resultado si borra
+    if (val.length < 5) {
+        result.style.display = 'none';
+        btn.disabled = true;
+        btn.style.background = '#444';
+        btn.style.color = '#888';
+        btn.style.cursor = 'not-allowed';
+        _wsSucursalDetectada = null;
+        return;
+    }
+
+    // Mostrar spinner
+    result.style.display = 'block';
+    result.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:8px 0;">🔍 Buscando zona...</div>';
+    result.style.background = 'rgba(255,255,255,0.04)';
+    result.style.border = '1px solid #333';
+
+    _wsDirVerifyTimeout = setTimeout(async () => {
+        try {
+            const coords = await _geocodificar(val);
+            if (!coords) {
+                result.innerHTML = '<div style="color:#f59e0b;font-size:13px;text-align:center;padding:6px 0;">⚠️ No encontramos esa dirección en Rosario</div>';
+                return;
+            }
+
+            const sucCubre = sucursalParaPunto(coords.lat, coords.lng);
+            const sucSug = sucCubre || sucursalMasCercana(coords.lat, coords.lng);
+            _wsSucursalDetectada = sucSug;
+            _wsGPS = coords;
+
+            welcomeMostrarResultado(sucSug, val, sucCubre !== null);
+        } catch(e) {
+            result.innerHTML = '<div style="color:#6b7280;font-size:13px;text-align:center;padding:6px 0;">No se pudo verificar — podés continuar igual</div>';
+            _wsSucursalDetectada = null;
+            // Habilitar continuar de todas formas
+            btn.disabled = false;
+            btn.style.background = 'var(--primary)';
+            btn.style.color = '#000';
+            btn.style.cursor = 'pointer';
+        }
+    }, 900);
+}
+
+function welcomeMostrarResultado(sucId, dir, exacta) {
+    const result = document.getElementById('ws-zona-result');
+    const btn = document.getElementById('ws-btn-continuar');
+    const info = ZONA_INFO_UI[sucId];
+
+    if (exacta) {
+        result.style.background = 'rgba(16,185,129,0.08)';
+        result.style.border = '1px solid rgba(16,185,129,0.35)';
+        result.innerHTML = `
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-size:24px;">✅</span>
+                <div>
+                    <div style="font-weight:800;color:#10b981;font-size:14px;">¡Llegamos a tu zona!</div>
+                    <div style="color:#d1d5db;font-size:12px;margin-top:2px;">Sucursal asignada: <strong style="color:#fff;">${info.label}</strong></div>
+                    <div style="color:#9ca3af;font-size:11px;">📍 ${info.direccion}</div>
+                </div>
+            </div>`;
+    } else {
+        result.style.background = 'rgba(245,158,11,0.06)';
+        result.style.border = '1px solid rgba(245,158,11,0.3)';
+        result.innerHTML = `
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-size:24px;">🏪</span>
+                <div>
+                    <div style="font-weight:800;color:#f59e0b;font-size:14px;">Sucursal más cercana</div>
+                    <div style="color:#d1d5db;font-size:12px;margin-top:2px;"><strong style="color:#fff;">${info.label}</strong></div>
+                    <div style="color:#9ca3af;font-size:11px;">📍 ${info.direccion}</div>
+                </div>
+            </div>`;
+    }
+
+    result.style.display = 'block';
+    btn.disabled = false;
+    btn.style.background = 'var(--primary)';
+    btn.style.color = '#000';
+    btn.style.cursor = 'pointer';
+}
+
+function welcomeContinuar() {
+    // Si detectamos sucursal, pre-seleccionarla
+    if (_wsSucursalDetectada) {
+        const sel = document.getElementById('main-sucursal');
+        if (sel) {
+            sel.value = _wsSucursalDetectada;
+            if (typeof window.cambiarSucursalPrincipal === 'function') {
+                window.cambiarSucursalPrincipal();
+            }
+        }
+        // Si escribió una dirección, pre-cargarla en el checkout
+        const wsDir = document.getElementById('ws-dir-input').value.trim();
+        if (wsDir) {
+            const cDir = document.getElementById('c-dir');
+            if (cDir) cDir.value = wsDir;
+        }
+        // GPS al checkout
+        if (_wsGPS) {
+            window.coordenadasGPS = _wsGPS.lat + ',' + _wsGPS.lng;
+            const locStat = document.getElementById('loc-status');
+            if (locStat) {
+                locStat.textContent = '✓ Ubicación guardada con éxito';
+                locStat.parentElement.style.background = 'rgba(16,185,129,0.2)';
+                locStat.parentElement.style.border = '1px solid #10b981';
+                locStat.style.color = '#10b981';
+            }
+        }
+    }
+    welcomeSkip();
+}
+</script>
 
 </body>
 </html>

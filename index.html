@@ -326,14 +326,26 @@
         .adm-suc-header:first-child { margin-top:0; }
         /* Print */
         @media print {
-            body > *:not(#adm-print-area){display:none!important;}
-            #adm-print-area{display:block!important;}
+            body > *:not(#adm-print-area){ display:none !important; }
+            #adm-print-area { display:block !important; }
+            @page { margin: 4mm; size: 80mm auto; }
         }
-        #adm-print-area{display:none;font-family:'Courier New',monospace;font-size:12px;color:#000;background:#fff;}
-        .adm-ticket{width:300px;padding:18px;page-break-after:always;}
-        .adm-ticket:last-child{page-break-after:avoid;}
-        .adm-ticket hr{border:none;border-top:1px dashed #000;margin:5px 0;}
-        .adm-tbl th,.adm-tbl td{text-align:left;padding:1px 4px;}
+        #adm-print-area {
+            display:none;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 11px;
+            color: #000;
+            background: #fff;
+            line-height: 1.4;
+        }
+        .adm-ticket {
+            width: 72mm;
+            max-width: 300px;
+            padding: 6px 4px;
+            page-break-after: always;
+        }
+        .adm-ticket:last-child { page-break-after: avoid; }
+        .adm-ticket hr { border: none; border-top: 1px dashed #000; margin: 4px 0; }
 
         /* ════════════════════════════ */
 
@@ -1824,7 +1836,8 @@ function obtenerCuponDelDia() {
             }
 
             const promosVisibles = PROMOS_DATA.filter(item => {
-                return item.diaVenta === null || item.diaVenta === hoy;
+                if (item._oculta) return false;
+                return item.diaVenta === null || item.diaVenta === undefined || item.diaVenta === hoy;
             });
 
             if (promosVisibles.length === 0) {
@@ -2042,11 +2055,22 @@ async function cargarMenuOverrides() {
         const snapPromos = await db.collection('config_menu').doc('promos_override').get();
         if (snapPromos.exists) {
             const ov = snapPromos.data();
+            // Actualizar promos base
             PROMOS_DATA.forEach(p => {
                 if (ov[p.id]) {
                     if (ov[p.id].p !== undefined)         p.p         = ov[p.id].p;
                     if (ov[p.id].pOriginal !== undefined) p.pOriginal = ov[p.id].pOriginal;
-                    if (ov[p.id].diaVenta !== undefined)  p.diaVenta  = ov[p.id].diaVenta;
+                    if (ov[p.id].diaVenta  !== undefined) p.diaVenta  = ov[p.id].diaVenta;
+                    if (ov[p.id].n         !== undefined) p.n         = ov[p.id].n;
+                    if (ov[p.id].d         !== undefined) p.d         = ov[p.id].d;
+                    if (ov[p.id].img       !== undefined) p.img       = ov[p.id].img;
+                    if (ov[p.id].activo    === false)     p._oculta   = true;
+                }
+            });
+            // Agregar promos custom (creadas desde admin)
+            Object.keys(ov).forEach(key => {
+                if (!PROMOS_DATA.find(p => p.id === key) && ov[key]._custom && ov[key].activo !== false) {
+                    PROMOS_DATA.push({ ...ov[key], id: key });
                 }
             });
         }
@@ -2796,171 +2820,137 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ─── IMPRIMIR ─────────────────────────────────────────
+// ─── IMPRIMIR ─────────────────────────────────────────
 function admImprimir(id) {
     const p = admPedidos.find(x => x.id === id);
     if (!p) return;
-    const num  = admNumero(p.id);
-    const fd   = p.fecha ? (p.fecha.toDate ? p.fecha.toDate() : new Date(p.fecha)) : new Date();
-    const fstr = fd.toLocaleDateString('es-AR') + ' ' +
-                 fd.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+
+    const num   = admNumero(p.id);
+    const fd    = p.fecha ? (p.fecha.toDate ? p.fecha.toDate() : new Date(p.fecha)) : new Date();
+    const fecha = fd.toLocaleDateString('es-AR', { day:'2-digit', month:'2-digit', year:'numeric' });
     const esDel = p.tipo === 'Delivery';
+    const SEP   = '_________________________________________________________';
 
-    const filas = (p.items || []).map(i => `
-        <tr>
-            <td style="padding:1px 4px">${String(i.cant).padStart(2, '0')}</td>
-            <td style="padding:1px 4px">${i.n.toUpperCase()}${i.sin && i.sin.length ? ' (Sin: ' + i.sin.join(', ') + ')' : ''}${i.con && i.con.length ? ' (+' + i.con.map(x => x.n).join(', ') + ')' : ''}</td>
-            <td style="padding:1px 4px;text-align:right">${(i.totalItem || 0).toLocaleString('es-AR')}</td>
-        </tr>`).join('');
+    // Código de ítem: índice 00001, 00002...
+    const items = (p.items || []);
 
-    const filasCocina = (p.items || []).map(i => `
-        <tr>
-            <td style="padding:1px 4px">${String(i.cant).padStart(2, '0')}</td>
-            <td style="padding:1px 4px"><b>${i.n.toUpperCase()}</b>${i.sin && i.sin.length ? ' <b>(Sin: ' + i.sin.join(', ') + ')</b>' : ''}${i.con && i.con.length ? ' <b>(+' + i.con.map(x => x.n).join(', ') + ')</b>' : ''}</td>
-        </tr>`).join('');
+    /* ── TICKET CLIENTE ── */
+    const filasCliente = items.map((i, idx) => {
+        const cod  = String((idx + 1) * 10).padStart(5, '0');
+        const desc = i.n.toUpperCase()
+            + (i.sin && i.sin.length  ? ' (Sin: '    + i.sin.join(', ') + ')' : '')
+            + (i.con && i.con.length  ? ' (+'        + i.con.map(x => x.n).join(', ') + ')' : '')
+            + (i.obs                  ? ' [' + i.obs + ']' : '');
+        const cant  = String(i.cant).padStart(2, '0');
+        const precio = (i.totalItem || 0).toFixed(2);
+        return `<tr>
+            <td style="padding:1px 3px;white-space:nowrap">${cod}</td>
+            <td style="padding:1px 6px">${desc}</td>
+            <td style="padding:1px 3px;white-space:nowrap;text-align:center">${cant}</td>
+            <td style="padding:1px 3px;white-space:nowrap;text-align:right">${precio}</td>
+        </tr>`;
+    }).join('');
 
-    const totalBurgers = (p.items || [])
-        .filter(i => !['PAPAS', 'BEBIDA', 'GASEOSA', 'AGUA', 'JUGO', 'DIP', 'AROS', 'NUGGETS']
+    /* ── TICKET COCINA ── */
+    const filasCocina = items.map((i, idx) => {
+        const cod  = String((idx + 1) * 10).padStart(5, '0');
+        const desc = '<b>' + i.n.toUpperCase() + '</b>'
+            + (i.sin && i.sin.length ? ' <b>(Sin: ' + i.sin.join(', ') + ')</b>' : '')
+            + (i.con && i.con.length ? ' <b>(+' + i.con.map(x => x.n).join(', ') + ')</b>' : '')
+            + (i.obs                 ? ' [' + i.obs + ']' : '');
+        const cant = String(i.cant).padStart(2, '0');
+        return `<tr>
+            <td style="padding:1px 3px;white-space:nowrap">${cod}</td>
+            <td style="padding:1px 6px">${desc}</td>
+            <td style="padding:1px 3px;text-align:center">${cant}</td>
+        </tr>`;
+    }).join('');
+
+    const totalBurgers = items
+        .filter(i => !['PAPAS','BEBIDA','GASEOSA','AGUA','JUGO','DIP','AROS','NUGGETS','SANDWICH','ENSALADA']
             .some(k => i.n.toUpperCase().includes(k)))
         .reduce((a, i) => a + i.cant, 0);
 
+    const dirLine = esDel
+        ? `<div>Domicilio : ${(p.dir || '') + (p.piso && p.piso.trim() ? ' ' + p.piso.trim() : '')}</div>
+           <div>CP - Zona: ${p.loc || ''}</div>`
+        : `<div>Modalidad : RETIRO EN LOCAL</div>`;
+
+    /* ═══ TICKET CLIENTE ═══ */
     const tCliente = `
     <div class="adm-ticket">
-        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-            <b style="font-size:14px;">Ticket Cliente</b><b style="font-size:17px;">MARVEL Food</b>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+            <b style="font-size:13px;">Ticket Cliente</b>
+            <div style="text-align:right;font-family:sans-serif;line-height:1;">
+                <div style="font-size:15px;font-weight:900;letter-spacing:1px;">MARVEL</div>
+                <div style="font-size:11px;font-weight:700;font-style:italic;">Food</div>
+            </div>
         </div>
-        <hr>
-        <div><b>Fecha :</b> ${fstr} &nbsp; <b>Número :</b> ${num}</div>
-        <div><b>Pedido para :</b> ${p.cliente || '—'}</div>
-        <div><b>Teléfono :</b> ${p.tel || '—'}</div>
-        ${esDel ? `<div><b>Domicilio:</b> ${p.dir || ''} ${p.piso || ''}</div><div><b>CP - Zona:</b> ${p.loc || ''}</div>` : `<div><b>Modalidad:</b> RETIRO EN LOCAL</div>`}
-        <div><b>Horario:</b> ${p.horarioEstimado || '—'}</div>
-        <hr>
-        <table style="width:100%;border-collapse:collapse;font-size:12px;">
-            <thead><tr><th style="text-align:left;padding:1px 4px">Cant.</th><th style="text-align:left;padding:1px 4px">Descripción</th><th style="text-align:right;padding:1px 4px">Precio</th></tr></thead>
-            <tr><td colspan="3"><hr></td></tr>
-            <tbody>${filas}</tbody>
+        <div style="font-size:10px;">${SEP}</div>
+        <div><b>Fecha :</b> ${fecha} &nbsp;&nbsp; <b>Número :</b> ${num}</div>
+        <div>Pedido para : ${p.cliente || '—'}</div>
+        <div>Teléfono : ${p.tel || '—'}</div>
+        ${dirLine}
+        ${p.horarioEstimado ? `<div>Horario estimado : ${p.horarioEstimado}</div>` : ''}
+        <div style="font-size:10px;">${SEP}</div>
+        <table style="width:100%;border-collapse:collapse;font-size:11px;">
+            <thead>
+                <tr>
+                    <th style="text-align:left;padding:1px 3px">Código</th>
+                    <th style="text-align:left;padding:1px 6px">Descripción</th>
+                    <th style="text-align:center;padding:1px 3px">Cant.</th>
+                    <th style="text-align:right;padding:1px 3px">Precio</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="4" style="font-size:10px;">${SEP}</td></tr>
+                ${filasCliente}
+            </tbody>
         </table>
-        <hr>
-        <div style="text-align:right;">
-            <div>Sub total : ${(p.subtotal || 0).toLocaleString('es-AR')}</div>
-            ${esDel ? `<div>Envío : ${(p.envio || 0).toLocaleString('es-AR')}</div>` : ''}
-            ${p.descuento ? `<div>Descuento : -${p.descuento.toLocaleString('es-AR')}</div>` : ''}
-            <div><b>Total : ${(p.total || 0).toLocaleString('es-AR')}</b></div>
+        <div style="font-size:10px;">${SEP}</div>
+        <div style="text-align:right;padding-right:4px;">
+            <div>Sub total :${(p.subtotal || 0).toFixed(2)}</div>
+            ${esDel ? `<div>Envío     : ${(p.envio || 0).toFixed(2)}</div>` : ''}
+            ${p.descuento ? `<div>Descuento : -${p.descuento.toFixed(2)}${p.cuponUsado ? ' (' + p.cuponUsado + ')' : ''}</div>` : ''}
+            <div><b>Total     :${(p.total || 0).toFixed(2)}</b></div>
         </div>
-        <hr>
-        <div style="font-size:10px;text-align:center;margin-top:5px;">¡Gracias por elegirnos! 🍔</div>
+        <div style="font-size:10px;">${SEP}</div>
+        <div style="margin-top:4px;">Pago : ${p.pago || '—'}</div>
+        <div style="font-size:10px;text-align:center;margin-top:8px;">¡Gracias por elegirnos!</div>
+        <div style="font-size:10px;">${SEP}</div>
     </div>`;
 
+    /* ═══ TICKET COCINA ═══ */
     const tCocina = `
     <div class="adm-ticket">
-        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-            <b style="font-size:14px;">Ticket Interno</b><b style="font-size:11px;">${esDel ? 'ENVÍO' : 'RETIRO'}</b>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <b style="font-size:13px;">Ticket Interno</b>
+            <b style="font-size:11px;letter-spacing:1px;">${esDel ? 'ENVÍO' : 'RETIRO'}</b>
         </div>
-        <hr>
-        <div><b>Fecha :</b> ${fstr} &nbsp; <b>Número :</b> ${num}</div>
-        <div><b>Cocción:</b> ${p.horarioEstimado || '—'}</div>
-        <div><b>Pedido para :</b> ${p.cliente || '—'}</div>
-        <div><b>Teléfono :</b> ${p.tel || '—'}</div>
-        ${esDel ? `<div><b>Domicilio :</b> ${p.dir || ''} ${p.piso || ''}</div><div><b>CP - Zona:</b> ${p.loc || ''}</div>` : `<div><b>Retira en local</b></div>`}
-        <hr>
-        <table style="width:100%;border-collapse:collapse;font-size:12px;">
-            <thead><tr><th style="text-align:left;padding:1px 4px">Cant.</th><th style="text-align:left;padding:1px 4px">Descripción</th></tr></thead>
-            <tr><td colspan="2"><hr></td></tr>
-            <tbody>${filasCocina}</tbody>
+        <div style="font-size:10px;">${SEP}</div>
+        <div><b>Fecha :</b> ${fecha} &nbsp;&nbsp; <b>Número :</b> ${num}</div>
+        <div>Cocción: ${p.horarioEstimado || '—'}</div>
+        <div>Pedido para : ${p.cliente || '—'}</div>
+        <div>Teléfono : ${p.tel || '—'}</div>
+        ${dirLine}
+        <div style="font-size:10px;">${SEP}</div>
+        <table style="width:100%;border-collapse:collapse;font-size:11px;">
+            <thead>
+                <tr>
+                    <th style="text-align:left;padding:1px 3px">Código</th>
+                    <th style="text-align:left;padding:1px 6px">Descripción</th>
+                    <th style="text-align:center;padding:1px 3px">Cantidad</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="3" style="font-size:10px;">${SEP}</td></tr>
+                ${filasCocina}
+            </tbody>
         </table>
-        <hr>
-        <div style="text-align:right;">Total hamburguesas: ${String(totalBurgers).padStart(2, '0')}</div>
-        <div style="text-align:center;font-size:15px;font-weight:bold;letter-spacing:2px;margin-top:5px;">${num}${String(totalBurgers).padStart(2, '0')}${(p.items || []).length}</div>
-        <hr>
-    </div>`;
-
-    const printArea = document.getElementById('adm-print-area');
-    if (printArea) { printArea.innerHTML = tCliente + tCocina; window.print(); }
-}
-
-// ─── IMPRIMIR ────────────────────────────────
-function admImprimir(id) {
-    const p = admPedidos.find(x => x.id === id);
-    if (!p) return;
-    const num  = admNumero(p.id);
-    const fd   = p.fecha ? (p.fecha.toDate ? p.fecha.toDate() : new Date(p.fecha)) : new Date();
-    const fstr = fd.toLocaleDateString('es-AR') + ' ' +
-                 fd.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-    const esDel = p.tipo === 'Delivery';
-
-    const filas = (p.items || []).map(i => `
-        <tr>
-            <td style="padding:1px 4px">${String(i.cant).padStart(2, '0')}</td>
-            <td style="padding:1px 4px">${i.n.toUpperCase()}${i.sin && i.sin.length ? ' (Sin: ' + i.sin.join(', ') + ')' : ''}${i.con && i.con.length ? ' (+' + i.con.map(x => x.n).join(', ') + ')' : ''}</td>
-            <td style="padding:1px 4px;text-align:right">${(i.totalItem || 0).toLocaleString('es-AR')}</td>
-        </tr>`).join('');
-
-    const filasCocina = (p.items || []).map(i => `
-        <tr>
-            <td style="padding:1px 4px">${String(i.cant).padStart(2, '0')}</td>
-            <td style="padding:1px 4px"><b>${i.n.toUpperCase()}</b>${i.sin && i.sin.length ? ' <b>(Sin: ' + i.sin.join(', ') + ')</b>' : ''}${i.con && i.con.length ? ' <b>(+' + i.con.map(x => x.n).join(', ') + ')</b>' : ''}</td>
-        </tr>`).join('');
-
-    const totalBurgers = (p.items || [])
-        .filter(i => !['PAPAS', 'BEBIDA', 'GASEOSA', 'AGUA', 'JUGO', 'DIP', 'AROS', 'NUGGETS']
-            .some(k => i.n.toUpperCase().includes(k)))
-        .reduce((a, i) => a + i.cant, 0);
-
-    const tCliente = `
-    <div class="adm-ticket">
-        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-            <b style="font-size:14px;">Ticket Cliente</b>
-            <b style="font-size:17px;">MARVEL Food</b>
-        </div>
-        <hr>
-        <div><b>Fecha :</b> ${fstr} &nbsp; <b>Número :</b> ${num}</div>
-        <div><b>Pedido para :</b> ${p.cliente || '—'}</div>
-        <div><b>Teléfono :</b> ${p.tel || '—'}</div>
-        ${esDel
-            ? `<div><b>Domicilio:</b> ${p.dir || ''} ${p.piso || ''}</div><div><b>CP - Zona:</b> ${p.loc || ''}</div>`
-            : `<div><b>Modalidad:</b> RETIRO EN LOCAL</div>`}
-        <div><b>Horario:</b> ${p.horarioEstimado || '—'}</div>
-        <hr>
-        <table style="width:100%;border-collapse:collapse;font-size:12px;">
-            <thead><tr><th style="text-align:left;padding:1px 4px">Cant.</th><th style="text-align:left;padding:1px 4px">Descripción</th><th style="text-align:right;padding:1px 4px">Precio</th></tr></thead>
-            <tr><td colspan="3"><hr></td></tr>
-            <tbody>${filas}</tbody>
-        </table>
-        <hr>
-        <div style="text-align:right;">
-            <div>Sub total : ${(p.subtotal || 0).toLocaleString('es-AR')}</div>
-            ${esDel ? `<div>Envío : ${(p.envio || 0).toLocaleString('es-AR')}</div>` : ''}
-            ${p.descuento ? `<div>Descuento : -${p.descuento.toLocaleString('es-AR')}</div>` : ''}
-            <div><b>Total : ${(p.total || 0).toLocaleString('es-AR')}</b></div>
-        </div>
-        <hr>
-        <div style="font-size:10px;text-align:center;margin-top:5px;">¡Gracias por elegirnos! 🍔</div>
-    </div>`;
-
-    const tCocina = `
-    <div class="adm-ticket">
-        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-            <b style="font-size:14px;">Ticket Interno</b>
-            <b style="font-size:11px;">${esDel ? 'ENVÍO' : 'RETIRO'}</b>
-        </div>
-        <hr>
-        <div><b>Fecha :</b> ${fstr} &nbsp; <b>Número :</b> ${num}</div>
-        <div><b>Cocción:</b> ${p.horarioEstimado || '—'}</div>
-        <div><b>Pedido para :</b> ${p.cliente || '—'}</div>
-        <div><b>Teléfono :</b> ${p.tel || '—'}</div>
-        ${esDel
-            ? `<div><b>Domicilio :</b> ${p.dir || ''} ${p.piso || ''}</div><div><b>CP - Zona:</b> ${p.loc || ''}</div>`
-            : `<div><b>Retira en local</b></div>`}
-        <hr>
-        <table style="width:100%;border-collapse:collapse;font-size:12px;">
-            <thead><tr><th style="text-align:left;padding:1px 4px">Cant.</th><th style="text-align:left;padding:1px 4px">Descripción</th></tr></thead>
-            <tr><td colspan="2"><hr></td></tr>
-            <tbody>${filasCocina}</tbody>
-        </table>
-        <hr>
-        <div style="text-align:right;">Total hamburguesas: ${String(totalBurgers).padStart(2, '0')}</div>
-        <div style="text-align:center;font-size:15px;font-weight:bold;letter-spacing:2px;margin-top:5px;">${num}${String(totalBurgers).padStart(2, '0')}${(p.items || []).length}</div>
-        <hr>
+        <div style="font-size:10px;">${SEP}</div>
+        <div style="text-align:right;padding-right:4px;">Total hamburguesas: ${String(totalBurgers).padStart(2, '0')}</div>
+        <div style="text-align:center;font-size:14px;font-weight:bold;letter-spacing:3px;margin:6px 0;">${num}${String(totalBurgers).padStart(2,'0')}${String(items.length).padStart(2,'0')}</div>
+        <div style="font-size:10px;">${SEP}</div>
     </div>`;
 
     const printArea = document.getElementById('adm-print-area');
@@ -2988,92 +2978,287 @@ function admSwitchTab(tab, btn) {
     if (tab === 'cupones')   setTimeout(admCargarCupones, 50);
 }
 
-// ─── GESTIÓN DE PROMOS ────────────────────────────────
+// ─── GESTIÓN DE PROMOS (CRUD COMPLETO) ────────────────
 let admPromosData = [];
+let admPromoEditando = null; // null = nueva promo
 
 async function admCargarPromos() {
     const cont = document.getElementById('adm-promos-lista');
     if (!cont) return;
-    cont.innerHTML = '<p style="color:#9ca3af;padding:20px;text-align:center;">Cargando...</p>';
-    // Cargar overrides de Firestore
+    cont.innerHTML = '<p style="color:#9ca3af;padding:20px;text-align:center;">Cargando promos...</p>';
+
+    // Cargar overrides desde Firestore
     let ovPromos = {};
     try {
         const snap = await db.collection('config_menu').doc('promos_override').get();
         if (snap.exists) ovPromos = snap.data();
-    } catch(e) {}
-    admPromosData = PROMOS_DATA.map(p => ({ ...p, ...(ovPromos[p.id] || {}) }));
-    admRenderPromos(ovPromos);
+    } catch(e) { console.warn('promos_override:', e); }
+
+    // Construir lista: base + extras creadas en Firestore
+    admPromosData = PROMOS_DATA.map(p => ({
+        ...p,
+        ...(ovPromos[p.id] || {}),
+        _base: true
+    }));
+
+    // Promos extra creadas solo en Firestore (no están en PROMOS_DATA)
+    Object.keys(ovPromos).forEach(key => {
+        if (!admPromosData.find(p => p.id === key) && ovPromos[key]._custom) {
+            admPromosData.push({ ...ovPromos[key], id: key, _base: false });
+        }
+    });
+
+    admRenderPromos();
 }
 
-function admRenderPromos(ovPromos) {
+function admRenderPromos() {
     const cont = document.getElementById('adm-promos-lista');
     if (!cont) return;
     const DIAS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-    cont.innerHTML = admPromosData.map((p, idx) => `
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-                <img src="${p.img}" style="width:52px;height:52px;object-fit:cover;border-radius:8px;flex-shrink:0;">
-                <div style="flex:1;min-width:0;">
-                    <div style="font-size:13px;font-weight:800;color:var(--white);margin-bottom:2px;">${p.n}</div>
-                    <div style="font-size:11px;color:#9ca3af;">${p.d}</div>
-                </div>
+
+    let html = `
+    <!-- Botón nueva promo -->
+    <button onclick="admAbrirFormPromo(null)"
+        style="width:100%;margin-bottom:16px;padding:12px;background:rgba(245,158,11,.12);border:2px dashed var(--primary);color:var(--primary);border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+        ＋ AGREGAR NUEVA PROMO
+    </button>
+
+    <!-- Formulario inline (oculto por defecto) -->
+    <div id="adm-promo-form" style="display:none;background:#111;border:1px solid var(--primary);border-radius:14px;padding:16px;margin-bottom:18px;">
+        <div style="font-size:13px;font-weight:800;color:var(--primary);margin-bottom:12px;" id="adm-promo-form-title">➕ NUEVA PROMO</div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+            <div style="grid-column:1/-1;">
+                <div style="font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:4px;">NOMBRE DE LA PROMO *</div>
+                <input id="pf-nombre" type="text" placeholder="Ej: Compartir Hulk"
+                    style="width:100%;padding:9px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;outline:none;">
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-                <div>
-                    <div style="font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:4px;">PRECIO ORIGINAL</div>
-                    <input type="number" id="promo-orig-${p.id}" value="${p.pOriginal}"
-                        style="width:100%;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;outline:none;">
-                </div>
-                <div>
-                    <div style="font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:4px;">PRECIO PROMO</div>
-                    <input type="number" id="promo-precio-${p.id}" value="${p.p}"
-                        style="width:100%;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;outline:none;">
-                </div>
+            <div style="grid-column:1/-1;">
+                <div style="font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:4px;">DESCRIPCIÓN</div>
+                <input id="pf-desc" type="text" placeholder="Descripción breve para el cliente"
+                    style="width:100%;padding:9px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;outline:none;">
             </div>
-            <div style="margin-bottom:8px;">
+            <div>
+                <div style="font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:4px;">PRECIO ORIGINAL $</div>
+                <input id="pf-porig" type="number" placeholder="15500"
+                    style="width:100%;padding:9px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;outline:none;">
+            </div>
+            <div>
+                <div style="font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:4px;">PRECIO PROMO $</div>
+                <input id="pf-precio" type="number" placeholder="12000"
+                    style="width:100%;padding:9px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;outline:none;">
+            </div>
+            <div style="grid-column:1/-1;">
+                <div style="font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:4px;">URL DE IMAGEN</div>
+                <input id="pf-img" type="url" placeholder="https://i.ibb.co/..."
+                    oninput="admPreviewPromoImg()" 
+                    style="width:100%;padding:9px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:12px;outline:none;">
+                <img id="pf-img-preview" src="" style="display:none;width:100%;height:100px;object-fit:cover;border-radius:8px;margin-top:6px;border:1px solid var(--border);">
+            </div>
+            <div style="grid-column:1/-1;">
                 <div style="font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:4px;">DÍA DE VENTA</div>
-                <select id="promo-dia-${p.id}" style="width:100%;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;outline:none;">
-                    <option value="null" ${p.diaVenta === null ? 'selected' : ''}>Todos los días</option>
-                    ${DIAS.map((d,i) => `<option value="${i}" ${p.diaVenta === i ? 'selected' : ''}>${d}</option>`).join('')}
+                <select id="pf-dia" style="width:100%;padding:9px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;outline:none;">
+                    <option value="null">Todos los días</option>
+                    ${DIAS.map((d,i) => `<option value="${i}">${d}</option>`).join('')}
                 </select>
             </div>
-            <div style="display:flex;gap:8px;">
-                <button onclick="admGuardarPromo('${p.id}')"
-                    style="flex:1;background:rgba(245,158,11,.15);border:1px solid var(--primary);color:var(--primary);padding:8px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">
-                    💾 Guardar cambios
-                </button>
-                <button onclick="admResetPromo('${p.id}')"
-                    style="background:rgba(255,255,255,.05);border:1px solid var(--border);color:#9ca3af;padding:8px 12px;border-radius:8px;font-size:12px;cursor:pointer;"
-                    title="Restaurar valores originales">↺</button>
-            </div>
-            <div id="promo-feedback-${p.id}" style="font-size:11px;color:#10b981;text-align:center;height:16px;margin-top:4px;"></div>
         </div>
-    `).join('');
+
+        <div style="display:flex;gap:8px;margin-top:4px;">
+            <button onclick="admGuardarFormPromo()"
+                style="flex:1;padding:10px;background:var(--primary);color:#000;border:none;border-radius:8px;font-weight:800;font-size:13px;cursor:pointer;">
+                💾 GUARDAR
+            </button>
+            <button onclick="admCerrarFormPromo()"
+                style="padding:10px 16px;background:rgba(255,255,255,.05);border:1px solid var(--border);color:#9ca3af;border-radius:8px;font-size:13px;cursor:pointer;">
+                Cancelar
+            </button>
+        </div>
+        <div id="pf-error" style="color:#ef4444;font-size:11px;margin-top:6px;text-align:center;"></div>
+    </div>
+
+    <!-- Lista de promos -->
+    <div id="adm-promos-cards">`;
+
+    admPromosData.forEach(p => {
+        const activo = p.activo !== false;
+        const diaLabel = p.diaVenta !== null && p.diaVenta !== undefined ? DIAS[p.diaVenta] : 'Todos los días';
+        const descuento = p.pOriginal > p.p ? Math.round((1 - p.p / p.pOriginal) * 100) : 0;
+        html += `
+        <div style="background:var(--surface);border:1px solid ${activo ? 'var(--border)' : '#ef444444'};border-radius:12px;margin-bottom:10px;overflow:hidden;">
+            <div style="display:flex;gap:10px;padding:12px;">
+                <img src="${p.img || ''}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;flex-shrink:0;background:#333;"
+                    onerror="this.style.background='#333';this.src=''">
+                <div style="flex:1;min-width:0;">
+                    <div style="font-size:13px;font-weight:800;color:${activo ? 'var(--white)' : '#666'};margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.n}</div>
+                    <div style="font-size:10px;color:#9ca3af;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.d || ''}</div>
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                        <span style="font-size:11px;color:#9ca3af;text-decoration:line-through;">$${(p.pOriginal||0).toLocaleString('es-AR')}</span>
+                        <span style="font-size:14px;font-weight:800;color:#10b981;">$${(p.p||0).toLocaleString('es-AR')}</span>
+                        ${descuento > 0 ? `<span style="background:rgba(16,185,129,.15);color:#10b981;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;">-${descuento}%</span>` : ''}
+                        <span style="background:rgba(245,158,11,.12);color:var(--primary);font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;">📅 ${diaLabel}</span>
+                    </div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+                    <label class="adm-toggle" title="${activo ? 'Desactivar' : 'Activar'}">
+                        <input type="checkbox" ${activo ? 'checked' : ''} onchange="admTogglePromo('${p.id}')">
+                        <span class="adm-toggle-slider"></span>
+                    </label>
+                    <span style="font-size:9px;color:${activo ? '#10b981' : '#ef4444'};font-weight:700;">${activo ? 'ON' : 'OFF'}</span>
+                </div>
+            </div>
+            <div style="display:flex;gap:0;border-top:1px solid var(--border);">
+                <button onclick="admAbrirFormPromo('${p.id}')"
+                    style="flex:1;padding:8px;background:transparent;border:none;border-right:1px solid var(--border);color:var(--primary);font-size:12px;font-weight:700;cursor:pointer;">
+                    ✏️ Editar
+                </button>
+                ${!p._base ? `
+                <button onclick="admEliminarPromo('${p.id}')"
+                    style="flex:1;padding:8px;background:transparent;border:none;color:#ef4444;font-size:12px;font-weight:700;cursor:pointer;">
+                    🗑️ Eliminar
+                </button>` : `
+                <button onclick="admResetPromo('${p.id}')"
+                    style="flex:1;padding:8px;background:transparent;border:none;color:#9ca3af;font-size:12px;cursor:pointer;"
+                    title="Restaurar valores originales">
+                    ↺ Restaurar
+                </button>`}
+            </div>
+        </div>`;
+    });
+
+    html += `</div>`; // /adm-promos-cards
+    cont.innerHTML = html;
 }
 
-window.admGuardarPromo = async (id) => {
-    const orig  = parseInt(document.getElementById('promo-orig-' + id)?.value);
-    const precio = parseInt(document.getElementById('promo-precio-' + id)?.value);
-    const diaRaw = document.getElementById('promo-dia-' + id)?.value;
-    const dia = diaRaw === 'null' ? null : parseInt(diaRaw);
-    if (!orig || !precio || precio < 1) return alert('Precios inválidos.');
-    const upd = {}; upd[id] = { pOriginal: orig, p: precio, diaVenta: dia };
+window.admPreviewPromoImg = () => {
+    const url = document.getElementById('pf-img')?.value || '';
+    const img = document.getElementById('pf-img-preview');
+    if (!img) return;
+    if (url.startsWith('http')) {
+        img.src = url; img.style.display = 'block';
+    } else {
+        img.style.display = 'none';
+    }
+};
+
+window.admAbrirFormPromo = (id) => {
+    admPromoEditando = id;
+    const form = document.getElementById('adm-promo-form');
+    const title = document.getElementById('adm-promo-form-title');
+    const DIAS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+    if (!form) return;
+
+    if (id) {
+        // Editar existente
+        const p = admPromosData.find(x => x.id === id);
+        if (!p) return;
+        title.innerText = '✏️ EDITANDO: ' + p.n;
+        document.getElementById('pf-nombre').value = p.n || '';
+        document.getElementById('pf-desc').value   = p.d || '';
+        document.getElementById('pf-porig').value  = p.pOriginal || '';
+        document.getElementById('pf-precio').value = p.p || '';
+        document.getElementById('pf-img').value    = p.img || '';
+        document.getElementById('pf-dia').value    = p.diaVenta !== null && p.diaVenta !== undefined ? p.diaVenta : 'null';
+        admPreviewPromoImg();
+    } else {
+        // Nueva promo
+        title.innerText = '➕ NUEVA PROMO';
+        ['pf-nombre','pf-desc','pf-porig','pf-precio','pf-img'].forEach(id => {
+            const el = document.getElementById(id); if (el) el.value = '';
+        });
+        document.getElementById('pf-dia').value = 'null';
+        const prev = document.getElementById('pf-img-preview');
+        if (prev) prev.style.display = 'none';
+    }
+    document.getElementById('pf-error').innerText = '';
+    form.style.display = 'block';
+    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
+window.admCerrarFormPromo = () => {
+    const form = document.getElementById('adm-promo-form');
+    if (form) form.style.display = 'none';
+    admPromoEditando = null;
+};
+
+window.admGuardarFormPromo = async () => {
+    const nombre  = document.getElementById('pf-nombre')?.value.trim();
+    const desc    = document.getElementById('pf-desc')?.value.trim();
+    const pOrig   = parseInt(document.getElementById('pf-porig')?.value);
+    const precio  = parseInt(document.getElementById('pf-precio')?.value);
+    const img     = document.getElementById('pf-img')?.value.trim();
+    const diaRaw  = document.getElementById('pf-dia')?.value;
+    const dia     = diaRaw === 'null' ? null : parseInt(diaRaw);
+    const errEl   = document.getElementById('pf-error');
+
+    if (!nombre)             { errEl.innerText = 'El nombre es obligatorio.'; return; }
+    if (!pOrig || !precio)   { errEl.innerText = 'Los precios son obligatorios.'; return; }
+    if (precio > pOrig)      { errEl.innerText = 'El precio promo no puede ser mayor al original.'; return; }
+    errEl.innerText = '';
+
+    let ov = {};
+    try { const s = await db.collection('config_menu').doc('promos_override').get(); if (s.exists) ov = s.data(); } catch(e) {}
+
+    const isNueva = !admPromoEditando;
+    const id = admPromoEditando || ('custom-' + Date.now());
+
+    ov[id] = {
+        n: nombre, d: desc, pOriginal: pOrig, p: precio,
+        img: img || '', diaVenta: dia, cat: 'Promos', ings: [],
+        activo: true,
+        ...(isNueva ? { _custom: true } : {})
+    };
+
     try {
-        await db.collection('config_menu').doc('promos_override').set(upd, { merge: true });
-        // Actualizar PROMOS_DATA en memoria
-        const idx = PROMOS_DATA.findIndex(p => p.id === id);
-        if (idx >= 0) { PROMOS_DATA[idx].pOriginal = orig; PROMOS_DATA[idx].p = precio; PROMOS_DATA[idx].diaVenta = dia; }
-        const fb = document.getElementById('promo-feedback-' + id);
-        if (fb) { fb.innerText = '✅ Guardado'; setTimeout(() => { fb.innerText = ''; }, 2000); }
+        await db.collection('config_menu').doc('promos_override').set(ov, { merge: false });
+
+        // Actualizar PROMOS_DATA en memoria si es edición de promo base
+        if (admPromoEditando) {
+            const idx = PROMOS_DATA.findIndex(p => p.id === admPromoEditando);
+            if (idx >= 0) {
+                PROMOS_DATA[idx] = { ...PROMOS_DATA[idx], n: nombre, d: desc, pOriginal: pOrig, p: precio, img: img || '', diaVenta: dia };
+            }
+        }
+
+        admCerrarFormPromo();
+        await admCargarPromos();
+    } catch(e) { errEl.innerText = 'Error al guardar: ' + e.message; }
+};
+
+window.admTogglePromo = async (id) => {
+    let ov = {};
+    try { const s = await db.collection('config_menu').doc('promos_override').get(); if (s.exists) ov = s.data(); } catch(e) {}
+    const cur = ov[id] || {};
+    const nuevoActivo = cur.activo === false ? true : false;
+    ov[id] = { ...cur, activo: nuevoActivo };
+    try {
+        await db.collection('config_menu').doc('promos_override').set(ov, { merge: false });
+        await admCargarPromos();
+    } catch(e) { alert('Error: ' + e.message); }
+};
+
+window.admEliminarPromo = async (id) => {
+    if (!confirm('¿Eliminar esta promo permanentemente?')) return;
+    let ov = {};
+    try { const s = await db.collection('config_menu').doc('promos_override').get(); if (s.exists) ov = s.data(); } catch(e) {}
+    delete ov[id];
+    try {
+        await db.collection('config_menu').doc('promos_override').set(ov, { merge: false });
+        await admCargarPromos();
     } catch(e) { alert('Error: ' + e.message); }
 };
 
 window.admResetPromo = async (id) => {
-    if (!confirm('¿Restaurar valores originales de esta promo?')) return;
-    const upd = {}; upd[id] = {};
+    if (!confirm('¿Restaurar esta promo a sus valores originales?')) return;
+    let ov = {};
+    try { const s = await db.collection('config_menu').doc('promos_override').get(); if (s.exists) ov = s.data(); } catch(e) {}
+    delete ov[id];
     try {
-        await db.collection('config_menu').doc('promos_override').set(upd, { merge: true });
-        admCargarPromos();
+        await db.collection('config_menu').doc('promos_override').set(ov, { merge: false });
+        // Restaurar en memoria
+        const base = PROMOS_DATA.find(p => p.id === id);
+        if (base) { /* ya está en PROMOS_DATA original */ }
+        await admCargarPromos();
     } catch(e) { alert('Error: ' + e.message); }
 };
 

@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<script>
+// ── Detección admin TEMPRANA (corre antes de cargar nada) ──
+window.__IS_ADMIN__ = (
+    window.location.hash === '#admin' ||
+    window.location.pathname.replace(/\/$/, '').endsWith('/admin')
+);
+if (window.__IS_ADMIN__) {
+    document.documentElement.classList.add('admin-mode');
+}
+</script>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
     <script type="text/javascript">
@@ -30,6 +40,20 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
     <title>Marvel Food | Tienda Online</title>
+    
+    <style>
+        /* Ocultar tienda instantáneamente en modo admin — sin flash */
+        html.admin-mode .hero-slider,
+        html.admin-mode .main-content,
+        html.admin-mode .bottom-nav,
+        html.admin-mode .cart-float,
+        html.admin-mode #cart-view,
+        html.admin-mode #m-prod,
+        html.admin-mode #m-info,
+        html.admin-mode #toast { display: none !important; }
+        html.admin-mode body { padding-bottom: 0 !important; overflow: auto !important; }
+        html.admin-mode #admin-root { display: block !important; }
+    </style>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -945,6 +969,9 @@ function inicializarHeroSlider() {
 
 // 2. BLOQUE DE INICIO ÚNICO (SOLUCIÓN AL BLOQUEO DE BOTONES)
 document.addEventListener('DOMContentLoaded', () => {
+    // Si es modo admin, no iniciar la tienda
+    if (window.__IS_ADMIN__) return;
+
     console.log("Marvel Food cargado correctamente.");
 
     // A. Iniciar Slider
@@ -1860,39 +1887,11 @@ window.obtenerHorarioEstimado = (esDelivery) => {
 //   ADMIN — detección por URL hash #admin
 //   Abrí:  https://tu-sitio.vercel.app/#admin
 // ════════════════════════════════════════════
-(function initAdmin() {
-    const isAdmin = window.location.hash === '#admin' ||
-                    window.location.pathname.replace(/\/$/, '').endsWith('/admin');
-    if (!isAdmin) return;
-
-    // Cambiar título
+// El admin-root ya se muestra via CSS si html.admin-mode está activo.
+// Este bloque solo cambia el título de la página.
+if (window.__IS_ADMIN__) {
     document.title = 'Marvel Food | Admin';
-
-    function ocultarTienda() {
-        const ocultar = [
-            'hero-slider','main-content','cart-view','toast'
-        ];
-        ocultar.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.style.display = 'none';
-        });
-        const ocultar2 = ['.bottom-nav', '.cart-float'];
-        ocultar2.forEach(sel => {
-            const el = document.querySelector(sel);
-            if (el) el.style.display = 'none';
-        });
-        document.body.style.paddingBottom = '0';
-        document.body.style.overflow = 'auto';
-        const root = document.getElementById('admin-root');
-        if (root) root.style.display = 'block';
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', ocultarTienda);
-    } else {
-        ocultarTienda();
-    }
-})();
+}
 
 // ─── PIN ─────────────────────────────────────
 const ADM_PIN = "1234"; // ← cambiá el PIN acá

@@ -2246,7 +2246,7 @@ function admRenderCard(p) {
         : '';
 
     return `
-    <div class="adm-card e-${p.estado}" id="admc-${p.id}"><div class="adm-card-hdr" onclick="admToggle('${p.id}')"><div style="flex:1;min-width:0;"><div class="adm-num">#${num} · ${admFmt(p.fecha)} · ${esDel ? 'Delivery' : 'Retiro'}</div><div class="adm-cliente">${p.cliente || '—'}</div><div class="adm-resumen">${res}</div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;"><span class="adm-badge e-${p.estado}">${p.estado}</span><span style="font-weight:800;font-size:15px;color:var(--primary)">$${(p.total || 0).toLocaleString('es-AR')}</span></div></div><div class="adm-card-body" id="admb-${p.id}"><div style="padding-top:12px;"><div class="adm-irow"><span class="l">Teléfono</span><span class="v">${p.tel || '—'}</span></div><div class="adm-irow"><span class="l">Sucursal</span><span class="v">${p.sucursal || '—'}</span></div> ${esDel ? `
+    <div class="adm-card e-${p.estado}" id="admc-${p.id}"><div class="adm-card-hdr" onclick="admToggle('${p.id}')"><div style="flex:1;min-width:0;"><div class="adm-num">#${num} · ${admFmt(p.fecha)} · ${esDel ? 'Delivery' : 'Retiro'}</div><div class="adm-cliente">${p.cliente || '—'}</div><div class="adm-resumen">${res}</div><div style="font-size:11px;color:#60a5fa;font-weight:700;margin-top:3px;letter-spacing:.3px;">${p.tel ? 'Tel: ' + p.tel : ''}</div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;"><span class="adm-badge e-${p.estado}">${p.estado}</span><span style="font-weight:800;font-size:15px;color:var(--primary)">$${(p.total || 0).toLocaleString('es-AR')}</span></div></div><div class="adm-card-body" id="admb-${p.id}"><div style="padding-top:12px;"><div class="adm-irow"><span class="l">Teléfono</span><span class="v">${p.tel || '—'}</span></div><div class="adm-irow"><span class="l">Sucursal</span><span class="v">${p.sucursal || '—'}</span></div> ${esDel ? `
                 <div class="adm-irow"><span class="l">Dirección</span><span class="v">${p.dir || '—'} ${p.piso || ''}</span></div><div class="adm-irow"><span class="l">Localidad</span><span class="v">${p.loc || '—'}</span></div><div class="adm-irow"><span class="l">Franja horaria</span><span class="v" style="color:var(--primary)"> ${p.horarioEstimado || '—'}</span></div> ` : `
                 <div class="adm-irow"><span class="l">Hora retiro</span><span class="v" style="color:var(--primary)"> ${p.horarioEstimado || '—'}</span></div> `}
                 <div class="adm-irow"><span class="l">Pago</span><span class="v">${p.pago || '—'}</span></div> ${p.cuponUsado && p.cuponUsado !== 'Ninguno' ? `<div class="adm-irow"><span class="l">Cupón</span><span class="v" style="color:#10b981">${p.cuponUsado}</span></div>` : ''}
@@ -3088,7 +3088,7 @@ async function admCargarResenas() {
                 const est = r[campoEst] || 0;
                 const stars = '★'.repeat(est) + '☆'.repeat(5-est);
                 const nombre = r.nombre || r.cliente || 'Anónimo';
-                return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;"><div><div style="font-weight:800;color:var(--white);font-size:13px;">${nombre}</div><div style="color:#f59e0b;font-size:16px;letter-spacing:1px;">${stars}</div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;"><span style="font-size:11px;color:#9ca3af;">${f}</span><button onclick="admEliminarOpinion('${r.id}','${col}')" style="background:rgba(239,68,68,.15);border:1px solid #ef4444;color:#ef4444;padding:4px 10px;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer;">Eliminar</button></div></div> ${r.comentario?`<p style="color:#d1d5db;font-size:13px;line-height:1.4;margin:0;padding-top:8px;border-top:1px solid var(--border);">"${r.comentario}"</p>`:''}
+                return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;"><div><div style="font-weight:800;color:var(--white);font-size:13px;">${nombre}</div><div style="color:#f59e0b;font-size:16px;letter-spacing:1px;">${stars}</div>${r.tel ? `<div style="font-size:11px;color:#60a5fa;font-weight:700;margin-top:3px;">Tel: ${r.tel}</div>` : ""}</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;"><span style="font-size:11px;color:#9ca3af;">${f}</span><button onclick="admEliminarOpinion('${r.id}','${col}')" style="background:rgba(239,68,68,.15);border:1px solid #ef4444;color:#ef4444;padding:4px 10px;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer;">Eliminar</button></div></div> ${r.comentario?`<p style="color:#d1d5db;font-size:13px;line-height:1.4;margin:0;padding-top:8px;border-top:1px solid var(--border);">"${r.comentario}"</p>`:''}
                 </div>`;
             }).join('');
         }
@@ -3466,8 +3466,31 @@ window.abrirModalOpinion = () => {
     opSetStar(0);
     const inp = document.getElementById('op-nombre');
     const txt = document.getElementById('op-comentario');
-    if (inp) inp.value = '';
     if (txt) txt.value = '';
+
+    // Pre-cargar nombre desde el último pedido realizado
+    if (inp) {
+        inp.value = '';
+        try {
+            // Intentar desde mf_last_pedido primero
+            const last = JSON.parse(localStorage.getItem('mf_last_pedido') || 'null');
+            if (last && last.cliente) {
+                // El nombre en Firebase viene en mayúsculas, capitalizar
+                inp.value = last.cliente.charAt(0) + last.cliente.slice(1).toLowerCase();
+            } else {
+                // Fallback: historial de pedidos
+                const hist = JSON.parse(localStorage.getItem('mf_historial') || '[]');
+                if (hist.length && hist[0].items && hist[0].items[0]) {
+                    // No guardamos nombre en historial, intentar c-nombre del formulario
+                    const cNombre = document.getElementById('c-nombre');
+                    if (cNombre && cNombre.value.trim()) {
+                        inp.value = cNombre.value.trim();
+                    }
+                }
+            }
+        } catch(e) { /* sin datos previos, dejar vacío */ }
+    }
+
     document.getElementById('opinion-modal').style.display = 'flex';
 };
 
@@ -3496,10 +3519,22 @@ window.enviarOpinion = async () => {
     if (btn) { btn.disabled = true; btn.textContent = 'Enviando...'; }
 
     try {
+        // Intentar obtener teléfono del último pedido para registrar junto a la reseña
+        let telGuardado = '';
+        try {
+            const last = JSON.parse(localStorage.getItem('mf_last_pedido') || 'null');
+            if (last && last.cliente) telGuardado = last.tel || '';
+            if (!telGuardado) {
+                const cTel = document.getElementById('c-tel');
+                if (cTel && cTel.value.trim()) telGuardado = cTel.value.trim();
+            }
+        } catch(e) {}
+
         const doc = {
             nombre,
             comentario,
             estrellas: _opPuntuacion,
+            tel: telGuardado,
             fecha: firebase.firestore.FieldValue.serverTimestamp(),
             aprobada: true
         };
@@ -3532,29 +3567,42 @@ async function cargarOpinionesPub() {
     }
     lista.innerHTML = '<p style="color:var(--text-light);text-align:center;padding:30px;">Cargando...</p>';
     try {
+        // Sin limit — cargamos TODAS las opiniones aprobadas
         const snap = await window.db.collection('opiniones')
             .where('aprobada', '==', true)
             .orderBy('fecha', 'desc')
-            .limit(50)
             .get();
 
         const docs = [];
         snap.forEach(d => docs.push({ id: d.id, ...d.data() }));
 
-        // Calcular promedio y distribución
         if (!docs.length) {
-            lista.innerHTML = '<div style="text-align:center;padding:40px 20px;"><div style="font-size:48px;margin-bottom:12px;">⭐</div><p style="color:var(--text-light);">Sé el primero en dejar tu opinión</p></div>';
+            lista.innerHTML = '<div style="text-align:center;padding:40px 20px;"><p style="color:var(--text-light);font-size:15px;font-weight:600;">Sé el primero en dejar tu opinión</p></div>';
             actualizarResumenOp([]);
             return;
         }
         actualizarResumenOp(docs);
 
         lista.innerHTML = docs.map(d => {
-            const fecha = d.fecha?.toDate ? d.fecha.toDate().toLocaleDateString('es-AR', { day:'2-digit', month:'short', year:'numeric' }) : '';
+            const fecha = d.fecha?.toDate
+                ? d.fecha.toDate().toLocaleDateString('es-AR', { day:'2-digit', month:'short', year:'numeric' })
+                : '';
             const stars = '★'.repeat(d.estrellas) + '☆'.repeat(5 - d.estrellas);
-            const color = d.estrellas >= 4 ? '#f59e0b' : d.estrellas === 3 ? '#6b7280' : '#ef4444';
-            return `
-            <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;"><div><div style="font-weight:800;color:var(--white);font-size:14px;">${d.nombre || 'Anónimo'}</div><div style="font-size:18px;color:${color};letter-spacing:2px;margin-top:2px;">${stars}</div></div><div style="font-size:11px;color:var(--text-light);">${fecha}</div></div> ${d.comentario ? `<p style="color:#d1d5db;font-size:13px;line-height:1.5;margin:0;">${d.comentario}</p>` : ''}
+            const color = d.estrellas >= 4 ? '#f59e0b' : d.estrellas === 3 ? '#9ca3af' : '#ef4444';
+            const nombre = d.nombre || 'Anónimo';
+            // Capitalizar correctamente si viene en mayúsculas de un pedido
+            const nombreDisplay = nombre === nombre.toUpperCase() && nombre.length > 1
+                ? nombre.charAt(0) + nombre.slice(1).toLowerCase()
+                : nombre;
+            return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px;">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:${d.comentario ? '10px' : '0'};">
+                    <div>
+                        <div style="font-weight:800;color:var(--white);font-size:14px;">${nombreDisplay}</div>
+                        <div style="font-size:17px;color:${color};letter-spacing:3px;margin-top:3px;">${stars}</div>
+                    </div>
+                    <div style="font-size:11px;color:var(--text-light);text-align:right;">${fecha}</div>
+                </div>
+                ${d.comentario ? `<p style="color:#d1d5db;font-size:13px;line-height:1.5;margin:0;padding-top:10px;border-top:1px solid var(--border);">${d.comentario}</p>` : ''}
             </div>`;
         }).join('');
     } catch(e) {

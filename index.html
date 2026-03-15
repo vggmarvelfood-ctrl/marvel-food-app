@@ -654,7 +654,134 @@
     </div>
 </nav><div class="modal" id="m-prod"><div class="modal-sheet"><div class="m-close" onclick="closeModal()">✕</div><div class="m-hero" id="m-img"></div><div class="m-content"><h2 id="m-title" style="font-weight: 800; font-size: 24px; color: var(--white);"></h2><p id="m-desc" style="color: var(--text-light); margin-top: 8px; font-size: 14px; line-height: 1.5;"></p><div id="m-sec-ings"><div class="m-section">QUITAR INGREDIENTES</div><div id="m-list-ings"></div></div><div id="m-sec-extras"><div class="m-section">AGREGAR EXTRAS</div><div id="m-list-extras"></div></div><div class="m-section">OBSERVACIONES</div><textarea id="m-obs" class="ui-input" style="height: 80px; resize: none;" placeholder="Ej: Sin sal en las papas..."></textarea></div><div style="padding: 15px 20px; border-top: 1px solid var(--border); background: var(--surface); position: sticky; bottom: 0; z-index: 10; display: flex; gap: 15px; align-items: center;"><div style="display: flex; align-items: center; border: 1px solid var(--border); border-radius: 12px; height: 50px; background: var(--bg);"><button onclick="updateMQty(-1)" style="width: 40px; height: 100%; border: none; background: transparent; font-size: 20px; color: var(--white); cursor: pointer;">-</button><span id="m-qty" style="width: 30px; text-align: center; font-weight: 800; color: var(--white);">1</span><button onclick="updateMQty(1)" style="width: 40px; height: 100%; border: none; background: transparent; font-size: 20px; color: var(--white); cursor: pointer;">+</button></div><button class="btn-action" id="m-btn-add" onclick="confirmAdd()">Agregar</button></div></div></div><div class="modal" id="m-info"><div class="modal-sheet" style="height: auto; max-height: 85vh;"><div class="m-close" onclick="document.getElementById('m-info').style.display='none'">✕</div><div class="m-content"><h2 id="m-info-title" style="font-weight: 800; font-size: 20px; color: var(--primary); margin-bottom: 15px; text-transform: uppercase;"></h2><div id="m-info-body" style="color: var(--white); font-size: 14px; line-height: 1.5;"></div></div></div></div><div id="cart-view"><div onclick="toggleCart()" style="padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--surface); cursor: pointer;"><h2 style="font-weight: 800; font-size: 20px; color: var(--white); margin: 0; pointer-events: none;">TU ORDEN</h2><button style="background: rgba(255,255,255,0.1); border: none; font-size: 16px; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--white); pointer-events: none;">✕</button></div><div id="cart-items-list" style="flex: 1; overflow-y: auto; padding: 20px; background: var(--bg);"></div><div style="padding: 20px; background: var(--surface); border-top: 1px solid var(--border); overflow-y:auto; max-height: 50vh;"><div id="checkout-form"><!-- SUCURSAL Y TIPO DE PEDIDO --><div class="m-section" style="margin-top: 0;">SUCURSAL Y TIPO DE PEDIDO</div><div class="address-bar" style="margin: 0 0 12px; border-radius: 10px;"><select id="main-sucursal" onchange="cambiarSucursalPrincipal()" style="padding: 14px 15px; border: none; outline: none; font-weight: 600; font-size: 14px; color: var(--white); background: transparent; cursor: pointer; width: 100%;"><option value="" disabled selected>Seleccioná tu sucursal más cercana...</option><option value="Centro">(Pellegrini 1149) Rosario, Centro - Sur</option><option value="Norte">(Rondeau 2430) Rosario, Zona Norte - Baigorria</option><option value="Sur">(San Martin 1808) Rosario, Zona Sur / VGG</option><option value="Funes">(RN9 972) Funes - Fisherton</option></select></div><div class="type-toggle" style="padding: 0 0 15px;"><button id="btn-tipo-del" class="type-btn active" onclick="setGeneralDelivery(true)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/><rect x="9" y="11" width="14" height="10" rx="1"/><circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/></svg> Delivery
                     </button><button id="btn-tipo-ret" class="type-btn" onclick="setGeneralDelivery(false)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> TakeAway
-                    </button></div><div class="m-section" style="margin-top: 0;">DATOS DEL CLIENTE</div><input type="text" id="c-nombre" class="ui-input" placeholder="Nombre completo"><input type="number" id="c-tel" class="ui-input" placeholder="WhatsApp (Ej: 3416107498)"><div id="box-envio-checkout"><div class="m-section">DATOS DE ENVÍO</div><button type="button" class="btn-gps" onclick="obtenerUbicacion()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg><span id="loc-status">Enviar mi ubicación exacta</span></button><select id="c-loc" class="ui-input" style="margin-bottom: 10px;"><option value="" disabled selected>Seleccioná localidad</option></select><input type="text" id="c-dir" class="ui-input" placeholder="Calle y Altura (Obligatorio)"><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"><input type="text" id="c-piso" class="ui-input" placeholder="Piso (Opc.)"><input type="text" id="c-depto" class="ui-input" placeholder="Depto (Opc.)"></div></div><div class="m-section">MÉTODO DE PAGO</div><select id="p-metodo" class="ui-input" onchange="toggleVuelto()"><option value="Efectivo">Efectivo</option><option value="Transferencia">Transferencia bancaria</option><option value="Mercado Pago">Mercado Pago</option></select><div id="vuelto-box"><input type="number" id="p-vuelto" class="ui-input" placeholder="¿Con cuánto abonás? (Ej: 20000)"></div><div style="border-top: 1px dashed var(--border); margin: 20px 0; padding-top: 15px;"><div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: var(--text-light);"><span>Subtotal</span><span id="res-sub">$ 0</span></div><div style="display: flex; justify-content: space-between; margin-bottom: 15px; color: var(--text-light);"><span id="txt-envio-tipo">Envío</span><span id="res-envio">$ 0</span></div><div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>Horario estimado:</span><strong id="res-horario" style="color: var(--primary);">--:--</strong></div><div style="display: flex; justify-content: space-between; font-size: 22px; font-weight: 800; color: var(--primary);"><span>Total</span><span id="res-total">$ 0</span></div></div><button class="btn-action" onclick="procesarPedido()">ENVIAR PEDIDO</button></div></div></div><script> let cuponAplicado = null; 
+                    </button></div><div class="m-section" style="margin-top: 0;">DATOS DEL CLIENTE</div><input type="text" id="c-nombre" class="ui-input" placeholder="Nombre completo"><input type="number" id="c-tel" class="ui-input" placeholder="WhatsApp (Ej: 3416107498)"><div id="box-envio-checkout"><div class="m-section">DATOS DE ENVÍO</div><button type="button" class="btn-gps" onclick="obtenerUbicacion()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg><span id="loc-status">Enviar mi ubicación exacta</span></button><select id="c-loc" class="ui-input" style="margin-bottom: 10px;"><option value="" disabled selected>Seleccioná localidad</option></select><input type="text" id="c-dir" class="ui-input" placeholder="Calle y Altura (Obligatorio)"><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"><input type="text" id="c-piso" class="ui-input" placeholder="Piso (Opc.)"><input type="text" id="c-depto" class="ui-input" placeholder="Depto (Opc.)"></div></div><div class="m-section">MÉTODO DE PAGO</div><select id="p-metodo" class="ui-input" onchange="toggleVuelto()"><option value="Efectivo">Efectivo</option><option value="Transferencia">Transferencia bancaria</option><option value="Mercado Pago">Mercado Pago</option></select><div id="vuelto-box"><input type="number" id="p-vuelto" class="ui-input" placeholder="¿Con cuánto abonás? (Ej: 20000)"></div><div style="border-top: 1px dashed var(--border); margin: 20px 0; padding-top: 15px;"><div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: var(--text-light);"><span>Subtotal</span><span id="res-sub">$ 0</span></div><div style="display: flex; justify-content: space-between; margin-bottom: 15px; color: var(--text-light);"><span id="txt-envio-tipo">Envío</span><span id="res-envio">$ 0</span></div><div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>Horario estimado:</span><strong id="res-horario" style="color: var(--primary);">--:--</strong></div><div style="display: flex; justify-content: space-between; font-size: 22px; font-weight: 800; color: var(--primary);"><span>Total</span><span id="res-total">$ 0</span></div></div><div id="box-cod-descuento" style="display:none;">
+<div class="m-section" style="margin-top:0;">CÓDIGO DE DESCUENTO</div>
+<div style="display:flex;gap:8px;margin-bottom:15px;">
+  <input type="text" id="cod-descuento-inp" class="ui-input" placeholder="Ej: EFECTV10 o código interno" style="margin-bottom:0;text-transform:uppercase;flex:1;" oninput="this.value=this.value.toUpperCase()">
+  <button onclick="aplicarCodigoDescuento()" style="background:var(--primary);border:none;color:#000;padding:0 16px;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap;">APLICAR</button>
+</div>
+<div id="cod-descuento-feedback" style="display:none;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:700;margin-bottom:12px;"></div>
+</div>
+<button class="btn-action" onclick="procesarPedido()">ENVIAR PEDIDO</button></div></div></div><script> let cuponAplicado = null;
+let codigoInternoAplicado = null; // { nombre, tipo:'interno'|'promo', descuento:100|pct|0 }
+
+// ════════════════════════════════════════════════════════════
+//  CODIGOS DE DESCUENTO — base hardcoded + override en Firebase
+// ════════════════════════════════════════════════════════════
+const CODIGOS_INTERNOS_BASE = {
+    // Uso interno personal — 100% descuento en productos (envío se mantiene)
+    "LUCAS-LEYRIA":  { nombre: "Lucas Leyria",   tipo: "interno", descPct: 100, activo: true },
+    "LUCIO-LEYRIA":  { nombre: "Lucio Leyria",   tipo: "interno", descPct: 100, activo: true },
+    "ROMAN-ANFFOSI": { nombre: "Roman Anffosi",  tipo: "interno", descPct: 100, activo: true },
+    "LUCAS-BERTON":  { nombre: "Lucas Berton",   tipo: "interno", descPct: 100, activo: true },
+    "SEIDY-LOPEZ":   { nombre: "Seidy Lopez",    tipo: "interno", descPct: 100, activo: true },
+};
+const CODIGOS_PROMO_BASE = {
+    // Codigos promocionales configurables
+    "EFECTV10": { titulo: "10% OFF en Efectivo", tipo: "promo_pct", descPct: 10, soloEfectivo: true, activo: true },
+};
+// Se mergeará con overrides de Firebase al cargar
+window._codDescOverrides = {};
+
+window._codDescMasterActivo = false; // default OFF
+
+async function cargarCodigosDescuentoOverrides() {
+    if (!window.db) return;
+    try {
+        const snap = await db.collection('config_menu').doc('codigos_descuento').get();
+        if (snap.exists) {
+            const data = snap.data() || {};
+            window._codDescOverrides = data;
+            // Apply master switch
+            const activo = data._master_activo === true;
+            window._codDescMasterActivo = activo;
+            const box = document.getElementById('box-cod-descuento');
+            if (box) box.style.display = activo ? 'block' : 'none';
+        }
+    } catch(e) {}
+}
+cargarCodigosDescuentoOverrides();
+
+window.admToggleMasterCodigos = async (nuevoEstado) => {
+    const desc = document.getElementById('adm-cod-master-desc');
+    const card = document.getElementById('adm-cod-master-card');
+    try {
+        await db.collection('config_menu').doc('codigos_descuento').set(
+            { _master_activo: nuevoEstado }, { merge: true }
+        );
+        window._codDescMasterActivo = nuevoEstado;
+        window._codDescOverrides._master_activo = nuevoEstado;
+        // Update card style
+        if (card) card.style.border = nuevoEstado ? '2px solid #10b981' : '2px solid var(--border)';
+        if (desc) desc.textContent = nuevoEstado
+            ? 'Activo — los clientes pueden ingresar un código en el checkout'
+            : 'Desactivado — el campo de código no aparece para los clientes';
+        // Reflect on storefront (no reload needed — box-cod-descuento visibility)
+        const box = document.getElementById('box-cod-descuento');
+        if (box) box.style.display = nuevoEstado ? 'block' : 'none';
+    } catch(e) { alert('Error: ' + e.message); }
+};
+
+function resolverCodigos() {
+    const ov = window._codDescOverrides || {};
+    const internos = { ...CODIGOS_INTERNOS_BASE };
+    const promos   = { ...CODIGOS_PROMO_BASE };
+    // Apply overrides
+    if (ov.internos) Object.entries(ov.internos).forEach(([k,v]) => {
+        if (internos[k]) internos[k] = { ...internos[k], ...v };
+        else internos[k] = v; // new entry added from admin
+    });
+    if (ov.promos) Object.entries(ov.promos).forEach(([k,v]) => {
+        if (promos[k]) promos[k] = { ...promos[k], ...v };
+        else promos[k] = v;
+    });
+    return { internos, promos };
+}
+
+window.aplicarCodigoDescuento = function() {
+    const input = document.getElementById('cod-descuento-inp');
+    const feedback = document.getElementById('cod-descuento-feedback');
+    const codigo = (input?.value || '').trim().toUpperCase();
+    if (!codigo) return;
+
+    const { internos, promos } = resolverCodigos();
+    const fb = (msg, ok) => {
+        feedback.style.display = 'block';
+        feedback.style.background = ok ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)';
+        feedback.style.border = ok ? '1px solid #10b981' : '1px solid #ef4444';
+        feedback.style.color  = ok ? '#10b981' : '#ef4444';
+        feedback.innerHTML = msg;
+    };
+
+    // Primero buscar en internos
+    if (internos[codigo]) {
+        const cod = internos[codigo];
+        if (!cod.activo) return fb('❌ Código deshabilitado.', false);
+        codigoInternoAplicado = { codigo, nombre: cod.nombre, tipo: 'interno', descPct: cod.descPct };
+        cuponAplicado = { id: codigo, titulo: `Uso interno — ${cod.nombre}`, tipo: 'porcentaje', valor: cod.descPct / 100 };
+        fb(`✅ Uso interno autorizado: <strong>${cod.nombre}</strong>`, true);
+        renderCartItems();
+        return;
+    }
+
+    // Luego buscar en promos
+    if (promos[codigo]) {
+        const cod = promos[codigo];
+        if (!cod.activo) return fb('❌ Código deshabilitado.', false);
+        if (cod.soloEfectivo) {
+            const metodo = document.getElementById('p-metodo')?.value;
+            if (metodo !== 'Efectivo') return fb('⚠️ Este código es válido solo pagando en <strong>Efectivo</strong>.', false);
+        }
+        codigoInternoAplicado = { codigo, nombre: cod.titulo, tipo: 'promo', descPct: cod.descPct };
+        cuponAplicado = { id: codigo, titulo: cod.titulo, tipo: 'porcentaje', valor: cod.descPct / 100 };
+        fb(`✅ Código aplicado: <strong>${cod.titulo}</strong>`, true);
+        renderCartItems();
+        return;
+    }
+
+    fb('❌ Código inválido o no reconocido.', false);
+};
+
 
 window.aplicarCuponDesdeRegalos = (cuponId) => {
     // Buscar el cupón en CUPONES_DEL_DIA por código
@@ -2863,6 +2990,7 @@ function admSwitchTab(tab, btn) {
     if (tab === 'resenas')   setTimeout(admCargarResenas, 50);
     if (tab === 'promos')    setTimeout(admCargarPromos, 50);
     if (tab === 'cupones')   setTimeout(admCargarCupones, 50);
+    if (tab === 'codigos')   setTimeout(admCargarCodigos, 50);
 }
 
 // ─── GESTIÓN DE PROMOS (CRUD COMPLETO) ────────────────
@@ -3158,6 +3286,141 @@ window.admGuardarCupon = async (dia) => {
     } catch(e) { alert('Error: ' + e.message); }
 };
 
+// ════════════════════════════════════════════════════════════
+//  ADMIN — GESTIÓN DE CÓDIGOS DE DESCUENTO
+// ════════════════════════════════════════════════════════════
+async function admCargarCodigos() {
+    const listaInt = document.getElementById('adm-codigos-internos-lista');
+    const listaPro = document.getElementById('adm-codigos-promos-lista');
+    if (!listaInt || !listaPro) return;
+    listaInt.innerHTML = '<p style="color:#9ca3af;font-size:12px;text-align:center;padding:10px;">Cargando...</p>';
+    listaPro.innerHTML = '<p style="color:#9ca3af;font-size:12px;text-align:center;padding:10px;">Cargando...</p>';
+    
+    let ov = {};
+    try {
+        const snap = await db.collection('config_menu').doc('codigos_descuento').get();
+        if (snap.exists) ov = snap.data() || {};
+        window._codDescOverrides = ov;
+    } catch(e) {}
+
+    // Sync master toggle UI
+    const masterActivo = ov._master_activo === true;
+    window._codDescMasterActivo = masterActivo;
+    const toggle = document.getElementById('adm-cod-master-toggle');
+    const desc   = document.getElementById('adm-cod-master-desc');
+    const card   = document.getElementById('adm-cod-master-card');
+    if (toggle) toggle.checked = masterActivo;
+    if (card)   card.style.border = masterActivo ? '2px solid #10b981' : '2px solid var(--border)';
+    if (desc)   desc.textContent  = masterActivo
+        ? 'Activo — los clientes pueden ingresar un código en el checkout'
+        : 'Desactivado — el campo de código no aparece para los clientes';
+
+    const internos = { ...CODIGOS_INTERNOS_BASE };
+    const promos   = { ...CODIGOS_PROMO_BASE };
+    if (ov.internos) Object.entries(ov.internos).forEach(([k,v]) => { internos[k] = internos[k] ? {...internos[k],...v} : v; });
+    if (ov.promos)   Object.entries(ov.promos).forEach(([k,v])   => { promos[k]   = promos[k]   ? {...promos[k],...v}   : v; });
+
+    // Render internos + totales consumidos
+    const pedHoy = admPedidos || [];
+    listaInt.innerHTML = Object.entries(internos).map(([cod, dat]) => {
+        const activo = dat.activo !== false;
+        const usos = pedHoy.filter(p => p.cuponUsado && p.cuponUsado.includes(dat.nombre)).length;
+        const totalConsumido = pedHoy.filter(p => p.cuponUsado && p.cuponUsado.includes(dat.nombre)).reduce((s,p) => s + (p.subtotal||0), 0);
+        return `
+        <div style="background:var(--bg);border:1px solid ${activo?'rgba(16,185,129,0.3)':'var(--border)'};border-radius:10px;padding:12px;margin-bottom:8px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <div>
+              <div style="font-size:13px;font-weight:800;color:var(--white);">${dat.nombre}</div>
+              <div style="font-size:10px;color:#9ca3af;font-weight:700;letter-spacing:1px;margin-top:1px;">CÓDIGO: <span style="color:var(--primary);">${cod}</span></div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:11px;color:${activo?'#10b981':'#ef4444'};font-weight:700;">${activo?'ACTIVO':'INACTIVO'}</div>
+              <label class="adm-toggle" style="margin-top:4px;"><input type="checkbox" ${activo?'checked':''} onchange="admToggleCodigo('interno','${cod}',this.checked)"><span class="adm-toggle-slider"></span></label>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;font-size:11px;">
+            <span style="background:rgba(16,185,129,0.15);color:#10b981;padding:3px 9px;border-radius:6px;font-weight:700;">100% OFF productos</span>
+            <span style="background:rgba(255,255,255,0.07);color:#9ca3af;padding:3px 9px;border-radius:6px;">Usos hoy: ${usos}</span>
+            ${totalConsumido > 0 ? `<span style="background:rgba(245,158,11,0.1);color:var(--primary);padding:3px 9px;border-radius:6px;font-weight:700;">Consumido: $${totalConsumido.toLocaleString('es-AR')}</span>` : ''}
+          </div>
+        </div>`;
+    }).join('') || '<p style="color:#9ca3af;text-align:center;font-size:12px;padding:10px;">Sin entradas</p>';
+
+    // Render promos
+    listaPro.innerHTML = Object.entries(promos).map(([cod, dat]) => {
+        const activo = dat.activo !== false;
+        const usos = pedHoy.filter(p => p.cuponUsado && p.cuponUsado === dat.titulo).length;
+        return `
+        <div style="background:var(--bg);border:1px solid ${activo?'rgba(245,158,11,0.3)':'var(--border)'};border-radius:10px;padding:12px;margin-bottom:8px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <div>
+              <div style="font-size:13px;font-weight:800;color:var(--white);">${dat.titulo}</div>
+              <div style="font-size:10px;color:#9ca3af;font-weight:700;letter-spacing:1px;margin-top:1px;">CÓDIGO: <span style="color:var(--primary);">${cod}</span></div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:11px;color:${activo?'#10b981':'#ef4444'};font-weight:700;">${activo?'ACTIVO':'INACTIVO'}</div>
+              <label class="adm-toggle" style="margin-top:4px;"><input type="checkbox" ${activo?'checked':''} onchange="admToggleCodigo('promo','${cod}',this.checked)"><span class="adm-toggle-slider"></span></label>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:11px;">
+            <span style="background:rgba(245,158,11,0.15);color:var(--primary);padding:3px 9px;border-radius:6px;font-weight:700;">${dat.descPct}% OFF</span>
+            ${dat.soloEfectivo ? '<span style="background:rgba(59,130,246,0.15);color:#3b82f6;padding:3px 9px;border-radius:6px;">Solo Efectivo</span>' : ''}
+            <span style="background:rgba(255,255,255,0.07);color:#9ca3af;padding:3px 9px;border-radius:6px;">Usos hoy: ${usos}</span>
+          </div>
+        </div>`;
+    }).join('') || '<p style="color:#9ca3af;text-align:center;font-size:12px;padding:10px;">Sin entradas</p>';
+}
+
+window.admToggleCodigo = async (tipo, cod, nuevoActivo) => {
+    let ov = {};
+    try { const s = await db.collection('config_menu').doc('codigos_descuento').get(); if(s.exists) ov = s.data()||{}; } catch(e) {}
+    if (!ov[tipo]) ov[tipo] = {};
+    if (!ov[tipo][cod]) ov[tipo][cod] = {};
+    ov[tipo][cod].activo = nuevoActivo;
+    try {
+        await db.collection('config_menu').doc('codigos_descuento').set(ov, { merge: true });
+        window._codDescOverrides = ov;
+        admCargarCodigos();
+    } catch(e) { alert('Error: ' + e.message); }
+};
+
+window.admAgregarCodigoInterno = async () => {
+    const nombre = prompt('Nombre de la persona:');
+    if (!nombre || !nombre.trim()) return;
+    const cod = nombre.trim().toUpperCase().replace(/\s+/g, '-').replace(/[^A-Z0-9-]/g, '');
+    if (!cod) return alert('Nombre inválido.');
+    let ov = {};
+    try { const s = await db.collection('config_menu').doc('codigos_descuento').get(); if(s.exists) ov = s.data()||{}; } catch(e) {}
+    if (!ov.internos) ov.internos = {};
+    ov.internos[cod] = { nombre: nombre.trim(), tipo: 'interno', descPct: 100, activo: true };
+    try {
+        await db.collection('config_menu').doc('codigos_descuento').set(ov, { merge: true });
+        window._codDescOverrides = ov;
+        admCargarCodigos();
+    } catch(e) { alert('Error: ' + e.message); }
+};
+
+window.admAgregarCodigoPromo = async () => {
+    const titulo = prompt('Título del código (visible al cliente):');
+    if (!titulo || !titulo.trim()) return;
+    const cod = prompt('Código (sin espacios, se convierte a mayúsculas):');
+    if (!cod || !cod.trim()) return;
+    const pct = parseInt(prompt('Porcentaje de descuento (ej: 10):') || '0');
+    if (isNaN(pct) || pct <= 0) return alert('Porcentaje inválido.');
+    const soloEfectivo = confirm('¿Válido SOLO pagando en Efectivo?');
+    const codClean = cod.trim().toUpperCase().replace(/\s+/g,'');
+    let ov = {};
+    try { const s = await db.collection('config_menu').doc('codigos_descuento').get(); if(s.exists) ov = s.data()||{}; } catch(e) {}
+    if (!ov.promos) ov.promos = {};
+    ov.promos[codClean] = { titulo: titulo.trim(), tipo: 'promo_pct', descPct: pct, soloEfectivo, activo: true };
+    try {
+        await db.collection('config_menu').doc('codigos_descuento').set(ov, { merge: true });
+        window._codDescOverrides = ov;
+        admCargarCodigos();
+    } catch(e) { alert('Error: ' + e.message); }
+};
+
+
 async function admCargarDashboard() {
     const p = admPedidos;
     const g = id => document.getElementById(id);
@@ -3302,7 +3565,48 @@ async function admEliminarOpinion(id, coleccion) {
 }
 
     </script><!-- BARRA SEGUIMIENTO PEDIDO --><div id="tracking-bar"></div><!-- MODAL SEGUIMIENTO --><div id="tracking-modal"><div class="tracking-sheet"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><h2 style="font-weight:800;font-size:18px;color:var(--primary);">TU PEDIDO</h2><button onclick="document.getElementById('tracking-modal').classList.remove('open')" style="background:rgba(255,255,255,0.1);border:none;color:var(--white);width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;">✕</button></div><div id="tracking-cliente" style="color:var(--text-light);font-size:13px;margin-bottom:4px;"></div><div id="tracking-sucursal" style="color:var(--text-light);font-size:12px;margin-bottom:16px;"></div><div class="tracking-progress" id="tracking-progress"></div><div id="tracking-items" style="background:var(--bg);border-radius:10px;padding:12px;margin-bottom:16px;"></div><div id="tracking-total" style="font-size:18px;font-weight:800;color:var(--primary);text-align:right;"></div><button onclick="cerrarTracking()" style="width:100%;padding:12px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text-light);font-weight:700;margin-top:16px;cursor:pointer;">CERRAR</button></div></div><!-- MODAL RESEÑA --><div id="resena-modal"><div class="resena-sheet"><div style="font-size:40px;margin-bottom:8px;"></div><h3 style="font-weight:800;font-size:18px;color:var(--white);margin-bottom:6px;">¿Cómo estuvo tu pedido?</h3><p style="color:var(--text-light);font-size:13px;">Tu opinión nos ayuda a mejorar</p><div class="stars-row" id="stars-row"><span class="star-btn" data-v="1" onclick="setStars(1)">⭐</span><span class="star-btn" data-v="2" onclick="setStars(2)">⭐</span><span class="star-btn" data-v="3" onclick="setStars(3)">⭐</span><span class="star-btn" data-v="4" onclick="setStars(4)">⭐</span><span class="star-btn" data-v="5" onclick="setStars(5)">⭐</span></div><textarea id="resena-comentario" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--white);font-size:13px;resize:none;height:80px;margin-bottom:16px;" placeholder="Comentario opcional..."></textarea><button onclick="enviarResena()" id="resena-btn" style="width:100%;padding:14px;border-radius:10px;border:none;background:var(--primary);color:#000;font-weight:800;font-size:15px;cursor:pointer;">ENVIAR RESEÑA</button><button onclick="document.getElementById('resena-modal').classList.remove('open')" style="width:100%;padding:10px;border-radius:10px;border:none;background:transparent;color:var(--text-light);font-size:13px;margin-top:8px;cursor:pointer;">Ahora no</button></div></div><!-- ═══════════════ ADMIN PANEL ═══════════════ --><div id="admin-root"><!-- LOGIN --><div id="adm-login-screen"><div class="adm-login-box"><div style="font-size:36px;margin-bottom:8px;"></div><h1>MARVEL FOOD</h1><p>Panel de administración</p><input class="adm-inp" type="password" id="adm-pin" placeholder="PIN de acceso"
-                onkeydown="if(event.key==='Enter') admCheckPin()"><button class="adm-btn-primary" onclick="admCheckPin()">INGRESAR</button></div></div><!-- PANEL PRINCIPAL --><div id="adm-app" style="display:none;"><!-- Header --><div class="adm-header"><h1>MARVEL <span>ADMIN</span></h1><div style="display:flex;align-items:center;gap:8px;"><span class="adm-badge-live">● EN VIVO</span><span style="color:#9ca3af;font-size:10px;" id="adm-last-update">—</span><button onclick="admLogout()" style="background:transparent;border:1px solid #333;color:#9ca3af;padding:5px 10px;border-radius:8px;font-size:10px;cursor:pointer;">SALIR</button></div></div><!-- Stats --><div class="adm-stats-bar"><div class="adm-stat"><span>Pendientes</span><span id="adm-s-pend">0</span></div><div class="adm-stat"><span>Aceptados</span><span id="adm-s-acep" style="color:#10b981">0</span></div><div class="adm-stat"><span>Listos</span><span id="adm-s-list" style="color:#3b82f6">0</span></div><div class="adm-stat"><span>Hoy</span><span id="adm-s-total" style="color:#fff">0</span></div><div class="adm-stat"><span>Recaudado</span><span id="adm-s-cash" style="color:#10b981">$0</span></div></div><!-- Barra de filtros --><!-- Tabs del admin --><div style="display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);overflow-x:auto;"><button class="adm-tab active" onclick="admSwitchTab('pedidos',this)">Pedidos</button><button class="adm-tab" onclick="admSwitchTab('dashboard',this)"> Dashboard</button><button class="adm-tab" onclick="admSwitchTab('menu',this)"> Menú</button><button class="adm-tab" onclick="admSwitchTab('promos',this)">Promos</button><button class="adm-tab" onclick="admSwitchTab('cupones',this)">Cupones</button><button class="adm-tab" onclick="admSwitchTab('resenas',this)">Reseñas</button></div><!-- TAB PEDIDOS --><div id="adm-tab-pedidos"><div class="adm-filterbar"><!-- Fila 1: Fecha + Sucursal --><div class="adm-filterrow"><div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;"><span style="color:#9ca3af;font-size:11px;font-weight:700;white-space:nowrap;"> FECHA</span><input type="date" id="adm-fecha-filtro" class="adm-date-inp" onchange="admAplicarFiltros()"><button onclick="admFechaHoy()" class="adm-filter-btn" style="white-space:nowrap;padding:5px 10px;">Hoy</button></div><div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;"><span style="color:#9ca3af;font-size:11px;font-weight:700;white-space:nowrap;">SUCURSAL</span><select id="adm-suc-filtro" class="adm-date-inp" onchange="admAplicarFiltros()" style="flex:1;"><option value="">Todas</option><option value="PELLEGRINI">Centro</option><option value="Rondeau">Norte</option><option value="San Martin">Sur</option><option value="Funes">Funes</option></select></div></div><!-- Fila 2: Estado + Tipo + Limpiar --><div class="adm-filterrow" style="margin-top:8px;"><button class="adm-filter-btn active" data-f="Todos"    onclick="admFiltroEstado('Todos',this)">Todos</button><button class="adm-filter-btn"        data-f="Pendiente" onclick="admFiltroEstado('Pendiente',this)">⏳ Pendientes</button><button class="adm-filter-btn f-acep" data-f="Aceptado" onclick="admFiltroEstado('Aceptado',this)">✓ Aceptados</button><button class="adm-filter-btn f-list" data-f="Listo"    onclick="admFiltroEstado('Listo',this)">Listos</button><button class="adm-filter-btn f-ent"  data-f="Entregado" onclick="admFiltroEstado('Entregado',this)">Entregados</button><button class="adm-filter-btn"        data-f="Delivery" onclick="admFiltroEstado('Delivery',this)">Delivery</button><button class="adm-filter-btn"        data-f="Retiro"   onclick="admFiltroEstado('Retiro',this)">Retiro</button><button onclick="admLimpiarDia()" style="margin-left:auto;background:rgba(239,68,68,.15);border:1px solid #ef4444;color:#ef4444;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">Limpiar día</button></div></div><!-- Lista pedidos --><div class="adm-orders" id="adm-orders"></div></div><!-- /adm-tab-pedidos --><!-- TAB DASHBOARD --><div id="adm-tab-dashboard" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:16px;">MÉTRICAS DEL DÍA</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;"><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Pedidos hoy</div><div id="dash-total" style="font-size:28px;font-weight:800;color:var(--primary);">0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Recaudado</div><div id="dash-cash" style="font-size:22px;font-weight:800;color:#10b981;">$0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Ticket promedio</div><div id="dash-ticket" style="font-size:22px;font-weight:800;color:#3b82f6;">$0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Delivery / Retiro</div><div id="dash-tipos" style="font-size:16px;font-weight:800;color:var(--white);">0 / 0</div></div></div><!-- Ventas por hora --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Ventas por hora</div><div id="dash-chart-horas" style="display:flex;align-items:flex-end;gap:4px;height:80px;"></div><div id="dash-chart-labels" style="display:flex;gap:4px;margin-top:4px;"></div></div><!-- Productos más pedidos --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Productos más pedidos hoy</div><div id="dash-top-prods"></div></div><!-- Mapa de calor de zonas --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Pedidos por zona</div><div id="dash-zonas"></div></div></div><!-- TAB MENÚ --><div id="adm-tab-menu" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:6px;"> GESTIÓN DE MENÚ</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Pausá productos o editá precios. Los cambios son inmediatos en la tienda.</p><div id="adm-menu-lista" style="display:flex;flex-direction:column;gap:8px;"></div></div><!-- TAB RESEÑAS / OPINIONES --><div id="adm-tab-resenas" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">OPINIONES DE CLIENTES</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Podés eliminar cualquier opinión que no corresponda. Los cambios son inmediatos.</p><div style="display:flex;gap:12px;margin-bottom:20px;"><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);flex:1;text-align:center;"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Promedio</div><div id="res-promedio" style="font-size:32px;font-weight:800;color:var(--primary);">—</div><div style="color:#9ca3af;font-size:11px;" id="res-count">0 reseñas</div></div><div id="res-dist" style="flex:2;background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);display:flex;flex-direction:column;gap:5px;justify-content:center;"></div></div><!-- Tabs internas: Pedido / Públicas --><div style="display:flex;gap:8px;margin-bottom:16px;"><button id="adm-res-tab-ped" onclick="admResTab('pedidos')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--primary);background:rgba(245,158,11,.15);color:var(--primary);font-weight:800;font-size:12px;cursor:pointer;">Desde pedido</button><button id="adm-res-tab-pub" onclick="admResTab('publicas')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--border);background:transparent;color:#9ca3af;font-weight:800;font-size:12px;cursor:pointer;">Opiniones públicas</button></div><div id="adm-resenas-lista" style="display:flex;flex-direction:column;gap:10px;"></div></div><!-- TAB PROMOS --><div id="adm-tab-promos" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">GESTIÓN DE PROMOS</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Editá precios y el día de venta de cada promo. Los cambios se aplican en tiempo real en la tienda.</p><div id="adm-promos-lista"></div></div><!-- TAB CUPONES --><div id="adm-tab-cupones" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">GESTIÓN DE CUPONES</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Editá el cupón de cada día de la semana. Podés cambiar título, descripción, tipo de beneficio, valor y horario activo.</p><div id="adm-cupones-lista"></div></div><!-- Modal edición --><div id="adm-modal-edit"><div class="adm-modal-sheet"><div class="adm-modal-title">EDITAR PEDIDO</div><div class="adm-mlabel">CLIENTE</div><input class="adm-minp" id="adm-e-cliente" type="text" placeholder="Nombre cliente"><div class="adm-mlabel">TELÉFONO</div><input class="adm-minp" id="adm-e-tel" type="text" placeholder="Teléfono"><div id="adm-e-dir-block"><div class="adm-mlabel">DIRECCIÓN</div><input class="adm-minp" id="adm-e-dir" type="text" placeholder="Dirección"></div><div class="adm-mlabel">SUCURSAL</div><select class="adm-minp" id="adm-e-sucursal"><option value="PELLEGRINI 1149, Rosario Centro">Centro — Pellegrini 1149</option><option value="Rondeau 2430, Rosario Norte">Norte — Rondeau 2430</option><option value="San Martin 1808, Rosario Sur">Sur — San Martin 1808</option><option value="RN9 972,Funes ">Funes — RN9 972</option></select><div class="adm-mlabel">ITEMS DEL PEDIDO</div><div id="adm-e-items"></div><div class="adm-mlabel" style="margin-top:4px;">COSTO ENVÍO</div><input class="adm-minp" id="adm-e-envio" type="number" placeholder="0" oninput="admRecalc()"><div class="adm-mlabel">DESCUENTO</div><input class="adm-minp" id="adm-e-desc" type="number" placeholder="0" oninput="admRecalc()"><div class="adm-mlabel">OBSERVACIONES</div><input class="adm-minp" id="adm-e-obs" type="text" placeholder="Notas adicionales"><div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:#111;border-radius:10px;margin-top:4px;"><span style="color:#9ca3af;font-size:13px;">TOTAL CALCULADO</span><span id="adm-e-total" style="color:var(--primary);font-size:20px;font-weight:800;">$0</span></div><div class="adm-mactions"><button class="adm-mcancel" onclick="admCloseModal()">Cancelar</button><button class="adm-msave"   onclick="admGuardar()">GUARDAR CAMBIOS</button></div></div></div></div><!-- /adm-app --><!-- Área impresión --><div id="adm-print-area"></div></div><!-- ════════════════ FIN ADMIN ════════════════ --><!-- ════════════════ SISTEMA DE VERIFICACIÓN DE ZONA ════════════════ --><div id="zona-alert" style="
+                onkeydown="if(event.key==='Enter') admCheckPin()"><button class="adm-btn-primary" onclick="admCheckPin()">INGRESAR</button></div></div><!-- PANEL PRINCIPAL --><div id="adm-app" style="display:none;"><!-- Header --><div class="adm-header"><h1>MARVEL <span>ADMIN</span></h1><div style="display:flex;align-items:center;gap:8px;"><span class="adm-badge-live">● EN VIVO</span><span style="color:#9ca3af;font-size:10px;" id="adm-last-update">—</span><button onclick="admLogout()" style="background:transparent;border:1px solid #333;color:#9ca3af;padding:5px 10px;border-radius:8px;font-size:10px;cursor:pointer;">SALIR</button></div></div><!-- Stats --><div class="adm-stats-bar"><div class="adm-stat"><span>Pendientes</span><span id="adm-s-pend">0</span></div><div class="adm-stat"><span>Aceptados</span><span id="adm-s-acep" style="color:#10b981">0</span></div><div class="adm-stat"><span>Listos</span><span id="adm-s-list" style="color:#3b82f6">0</span></div><div class="adm-stat"><span>Hoy</span><span id="adm-s-total" style="color:#fff">0</span></div><div class="adm-stat"><span>Recaudado</span><span id="adm-s-cash" style="color:#10b981">$0</span></div></div><!-- Barra de filtros --><!-- Tabs del admin --><div style="display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);overflow-x:auto;"><button class="adm-tab active" onclick="admSwitchTab('pedidos',this)">Pedidos</button><button class="adm-tab" onclick="admSwitchTab('dashboard',this)"> Dashboard</button><button class="adm-tab" onclick="admSwitchTab('menu',this)"> Menú</button><button class="adm-tab" onclick="admSwitchTab('promos',this)">Promos</button><button class="adm-tab" onclick="admSwitchTab('cupones',this)">Cupones</button><button class="adm-tab" onclick="admSwitchTab('codigos',this)">🔑 Códigos</button><button class="adm-tab" onclick="admSwitchTab('resenas',this)">Reseñas</button></div><!-- TAB PEDIDOS --><div id="adm-tab-pedidos"><div class="adm-filterbar"><!-- Fila 1: Fecha + Sucursal --><div class="adm-filterrow"><div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;"><span style="color:#9ca3af;font-size:11px;font-weight:700;white-space:nowrap;"> FECHA</span><input type="date" id="adm-fecha-filtro" class="adm-date-inp" onchange="admAplicarFiltros()"><button onclick="admFechaHoy()" class="adm-filter-btn" style="white-space:nowrap;padding:5px 10px;">Hoy</button></div><div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;"><span style="color:#9ca3af;font-size:11px;font-weight:700;white-space:nowrap;">SUCURSAL</span><select id="adm-suc-filtro" class="adm-date-inp" onchange="admAplicarFiltros()" style="flex:1;"><option value="">Todas</option><option value="PELLEGRINI">Centro</option><option value="Rondeau">Norte</option><option value="San Martin">Sur</option><option value="Funes">Funes</option></select></div></div><!-- Fila 2: Estado + Tipo + Limpiar --><div class="adm-filterrow" style="margin-top:8px;"><button class="adm-filter-btn active" data-f="Todos"    onclick="admFiltroEstado('Todos',this)">Todos</button><button class="adm-filter-btn"        data-f="Pendiente" onclick="admFiltroEstado('Pendiente',this)">⏳ Pendientes</button><button class="adm-filter-btn f-acep" data-f="Aceptado" onclick="admFiltroEstado('Aceptado',this)">✓ Aceptados</button><button class="adm-filter-btn f-list" data-f="Listo"    onclick="admFiltroEstado('Listo',this)">Listos</button><button class="adm-filter-btn f-ent"  data-f="Entregado" onclick="admFiltroEstado('Entregado',this)">Entregados</button><button class="adm-filter-btn"        data-f="Delivery" onclick="admFiltroEstado('Delivery',this)">Delivery</button><button class="adm-filter-btn"        data-f="Retiro"   onclick="admFiltroEstado('Retiro',this)">Retiro</button><button onclick="admLimpiarDia()" style="margin-left:auto;background:rgba(239,68,68,.15);border:1px solid #ef4444;color:#ef4444;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">Limpiar día</button></div></div><!-- Lista pedidos --><div class="adm-orders" id="adm-orders"></div></div><!-- /adm-tab-pedidos --><!-- TAB DASHBOARD --><div id="adm-tab-dashboard" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:16px;">MÉTRICAS DEL DÍA</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;"><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Pedidos hoy</div><div id="dash-total" style="font-size:28px;font-weight:800;color:var(--primary);">0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Recaudado</div><div id="dash-cash" style="font-size:22px;font-weight:800;color:#10b981;">$0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Ticket promedio</div><div id="dash-ticket" style="font-size:22px;font-weight:800;color:#3b82f6;">$0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Delivery / Retiro</div><div id="dash-tipos" style="font-size:16px;font-weight:800;color:var(--white);">0 / 0</div></div></div><!-- Ventas por hora --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Ventas por hora</div><div id="dash-chart-horas" style="display:flex;align-items:flex-end;gap:4px;height:80px;"></div><div id="dash-chart-labels" style="display:flex;gap:4px;margin-top:4px;"></div></div><!-- Productos más pedidos --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Productos más pedidos hoy</div><div id="dash-top-prods"></div></div><!-- Mapa de calor de zonas --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Pedidos por zona</div><div id="dash-zonas"></div></div></div><!-- TAB MENÚ --><div id="adm-tab-menu" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:6px;"> GESTIÓN DE MENÚ</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Pausá productos o editá precios. Los cambios son inmediatos en la tienda.</p><div id="adm-menu-lista" style="display:flex;flex-direction:column;gap:8px;"></div></div><!-- TAB RESEÑAS / OPINIONES --><div id="adm-tab-resenas" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">OPINIONES DE CLIENTES</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Podés eliminar cualquier opinión que no corresponda. Los cambios son inmediatos.</p><div style="display:flex;gap:12px;margin-bottom:20px;"><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);flex:1;text-align:center;"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Promedio</div><div id="res-promedio" style="font-size:32px;font-weight:800;color:var(--primary);">—</div><div style="color:#9ca3af;font-size:11px;" id="res-count">0 reseñas</div></div><div id="res-dist" style="flex:2;background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);display:flex;flex-direction:column;gap:5px;justify-content:center;"></div></div><!-- Tabs internas: Pedido / Públicas --><div style="display:flex;gap:8px;margin-bottom:16px;"><button id="adm-res-tab-ped" onclick="admResTab('pedidos')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--primary);background:rgba(245,158,11,.15);color:var(--primary);font-weight:800;font-size:12px;cursor:pointer;">Desde pedido</button><button id="adm-res-tab-pub" onclick="admResTab('publicas')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--border);background:transparent;color:#9ca3af;font-weight:800;font-size:12px;cursor:pointer;">Opiniones públicas</button></div><div id="adm-resenas-lista" style="display:flex;flex-direction:column;gap:10px;"></div></div><!-- TAB PROMOS --><div id="adm-tab-promos" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">GESTIÓN DE PROMOS</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Editá precios y el día de venta de cada promo. Los cambios se aplican en tiempo real en la tienda.</p><div id="adm-promos-lista"></div></div><!-- TAB CÓDIGOS DE DESCUENTO --><div id="adm-tab-codigos" style="display:none;padding:20px;">
+<h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">🔑 CÓDIGOS DE DESCUENTO</h3>
+<p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Gestioná los códigos de uso interno del personal y los códigos promocionales. Podés activar, desactivar o agregar nuevos.</p>
+
+<!-- MASTER SWITCH -->
+<div id="adm-cod-master-card" style="background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+  <div>
+    <div style="font-size:14px;font-weight:800;color:var(--white);">Sección visible en el checkout</div>
+    <div style="font-size:11px;color:#9ca3af;margin-top:3px;" id="adm-cod-master-desc">Desactivado — el campo de código no aparece para los clientes</div>
+  </div>
+  <label class="adm-toggle" style="flex-shrink:0;width:44px;height:24px;">
+    <input type="checkbox" id="adm-cod-master-toggle" onchange="admToggleMasterCodigos(this.checked)">
+    <span class="adm-toggle-slider"></span>
+  </label>
+</div>
+
+<!-- USO INTERNO -->
+<div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);border-radius:14px;padding:16px;margin-bottom:20px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+    <div>
+      <div style="font-size:13px;font-weight:800;color:#10b981;text-transform:uppercase;letter-spacing:1px;">👤 Personal Autorizado</div>
+      <div style="font-size:11px;color:#9ca3af;margin-top:2px;">100% descuento en productos. El envío se cobra igual.</div>
+    </div>
+    <div id="cod-interno-total-box" style="text-align:right;"></div>
+  </div>
+  <div id="adm-codigos-internos-lista"></div>
+  <button onclick="admAgregarCodigoInterno()" style="width:100%;background:rgba(16,185,129,0.15);border:1px dashed #10b981;color:#10b981;padding:10px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;margin-top:10px;">+ AGREGAR PERSONA</button>
+</div>
+
+<!-- PROMO CODIGOS -->
+<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:14px;padding:16px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+    <div>
+      <div style="font-size:13px;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:1px;">🎟️ Códigos Promocionales</div>
+      <div style="font-size:11px;color:#9ca3af;margin-top:2px;">Descuentos por porcentaje, condiciones especiales.</div>
+    </div>
+  </div>
+  <div id="adm-codigos-promos-lista"></div>
+  <button onclick="admAgregarCodigoPromo()" style="width:100%;background:rgba(245,158,11,0.15);border:1px dashed var(--primary);color:var(--primary);padding:10px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;margin-top:10px;">+ AGREGAR CÓDIGO PROMO</button>
+</div>
+</div>
+<!-- TAB CUPONES --><div id="adm-tab-cupones" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">GESTIÓN DE CUPONES</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Editá el cupón de cada día de la semana. Podés cambiar título, descripción, tipo de beneficio, valor y horario activo.</p><div id="adm-cupones-lista"></div></div><!-- Modal edición --><div id="adm-modal-edit"><div class="adm-modal-sheet"><div class="adm-modal-title">EDITAR PEDIDO</div><div class="adm-mlabel">CLIENTE</div><input class="adm-minp" id="adm-e-cliente" type="text" placeholder="Nombre cliente"><div class="adm-mlabel">TELÉFONO</div><input class="adm-minp" id="adm-e-tel" type="text" placeholder="Teléfono"><div id="adm-e-dir-block"><div class="adm-mlabel">DIRECCIÓN</div><input class="adm-minp" id="adm-e-dir" type="text" placeholder="Dirección"></div><div class="adm-mlabel">SUCURSAL</div><select class="adm-minp" id="adm-e-sucursal"><option value="PELLEGRINI 1149, Rosario Centro">Centro — Pellegrini 1149</option><option value="Rondeau 2430, Rosario Norte">Norte — Rondeau 2430</option><option value="San Martin 1808, Rosario Sur">Sur — San Martin 1808</option><option value="RN9 972,Funes ">Funes — RN9 972</option></select><div class="adm-mlabel">ITEMS DEL PEDIDO</div><div id="adm-e-items"></div><div class="adm-mlabel" style="margin-top:4px;">COSTO ENVÍO</div><input class="adm-minp" id="adm-e-envio" type="number" placeholder="0" oninput="admRecalc()"><div class="adm-mlabel">DESCUENTO</div><input class="adm-minp" id="adm-e-desc" type="number" placeholder="0" oninput="admRecalc()"><div class="adm-mlabel">OBSERVACIONES</div><input class="adm-minp" id="adm-e-obs" type="text" placeholder="Notas adicionales"><div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:#111;border-radius:10px;margin-top:4px;"><span style="color:#9ca3af;font-size:13px;">TOTAL CALCULADO</span><span id="adm-e-total" style="color:var(--primary);font-size:20px;font-weight:800;">$0</span></div><div class="adm-mactions"><button class="adm-mcancel" onclick="admCloseModal()">Cancelar</button><button class="adm-msave"   onclick="admGuardar()">GUARDAR CAMBIOS</button></div></div></div></div><!-- /adm-app --><!-- Área impresión --><div id="adm-print-area"></div></div><!-- ════════════════ FIN ADMIN ════════════════ --><!-- ════════════════ SISTEMA DE VERIFICACIÓN DE ZONA ════════════════ --><div id="zona-alert" style="
     display:none; position:fixed; bottom:90px; left:12px; right:12px;
     background:#1e1e1e; border:2px solid #f59e0b; border-radius:16px;
     padding:16px; z-index:4500; box-shadow:0 8px 32px rgba(0,0,0,0.7);

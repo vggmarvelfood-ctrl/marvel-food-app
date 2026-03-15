@@ -490,7 +490,100 @@
             width:100%;padding:10px;background:transparent;border:none;
             color:#6b7280;font-size:13px;cursor:pointer;margin-top:8px;
         ">Saltar por ahora</button></div></div><!-- ════ FIN PANTALLA DE BIENVENIDA ════ --><div class="hero-slider" id="hero-slider"><!-- SLIDE 1: Hulk --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/CsY32Zpc/Hulk-6.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> DESTACADO DEL MENÚ</div><h1 class="hero-title">LA MEJOR<br>DE LA CARTA<br><span>Nuestra Hulk</span></h1><p class="hero-subtitle">Doble carne, cheddar, panceta, cebolla caramelizada y bbq.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Pedir Ahora</button><button class="hero-btn-secondary" onclick="scrollToMenu()">Ver Menú</button></div></div></div><!-- SLIDE 2: Compartir --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/sp9f92tD/DSC04607.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> ESPECIAL</div><h1 class="hero-title">COMPARTIR<br><span>Una Marvel</span></h1><p class="hero-subtitle">¡No hay 1 sin 2! Invitá a alguien y disfrutá juntos.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Aprovechar</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);})()">Ver Promos</button></div></div></div><!-- SLIDE 3: Combo --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/gLZH7hJW/DSC04609.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> COMBOS</div><h1 class="hero-title">ARMÁ TU<br><span>Combo Perfecto</span></h1><p class="hero-subtitle">¿Papas, Nuggets o Aros de cebolla? Elegí lo tuyo.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Pedir Combo</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);})()">Ver Promos</button></div></div></div><!-- SLIDE 4: Promos --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/wNQdcXh6/Dr-Strange-8.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> OFERTAS ACTIVAS</div><h1 class="hero-title">PROMOS<br><span>Para Vos</span></h1><p class="hero-subtitle">Las mejores promos del momento. ¡No te las pierdas!</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);scrollToMenu&&scrollToMenu();})()">Ver Promos</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-perfil]');if(n)switchTab('tab-perfil',n);})()">Cupones</button></div></div></div><!-- SLIDE 5: Smash --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/hRgTKHLs/DSC-4850.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> LÍNEA SMASH</div><h1 class="hero-title">¿NOCHE<br>DE SMASH?<br><span>Línea Flama</span></h1><p class="hero-subtitle">Probá nuestra línea smashed y dejanos tu opinión.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Ver Smash</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('#nav-pedidos');if(n)switchTab('tab-pedidos',n);})()">Mis Pedidos</button></div></div></div><!-- SLIDE 6: Brand --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/4B4ZCwF/DSC-4842.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> GRACIAS POR ELEGIRNOS</div><h1 class="hero-title">MARVEL<br>FOOD<br><span>Más que una Burger</span></h1><p class="hero-subtitle">Dejanos tu opinión y ayudá a otros a elegir mejor.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Pedir Ahora</button><button class="hero-btn-secondary" onclick="abrirModalOpinion()">Dejar Opinión</button></div></div></div><!-- Dots indicadores --><div class="hero-dots" id="hero-dots"></div><div class="scroll-indicator" onclick="scrollToMenu()"><span style="font-size: 12px; font-weight: 700; letter-spacing: 2px; margin-bottom: 5px;">MENÚ</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></div></div><div class="main-content"><div id="tab-inicio" class="tab-page"><div id="store-status-banner"></div><div id="cart-restore-banner"></div><div class="nav-cats" id="cat-list"></div><div id="section-cena-hoy" style="margin-bottom: 30px; padding: 0 20px;"><div class="m-section" style="display: flex; align-items: center; gap: 10px;"><span style="background: var(--primary); color: black; padding: 2px 8px; border-radius: 4px; font-size: 12px;">Marvel del día</span> ¿QUÉ ALMORZAMOS/CENAMOS HOY?
-            </div><div id="cena-hoy-container"></div></div><div id="menu-container"></div></div><div id="tab-promos" class="tab-page hidden" style="padding: 20px;"><div id="martes-banner" class="promo-banner hidden"><h3 style="color: var(--primary);">MARTES DE MARZO </h3><p>Promociones exclusivas disponibles solo hoy.</p></div><div class="m-section">CATÁLOGO DE PROMOS</div><div id="promos-container" class="menu-grid"></div></div><div id="tab-zonas" class="tab-page hidden" style="padding: 20px;"><div class="m-section" style="margin-top: 0;">ZONAS DE ENVÍO</div><p style="color: var(--text-light); font-size: 13px; margin-bottom: 20px;">Seleccioná una sucursal para ver el mapa y costos:</p><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 25px;"><button class="type-btn" onclick="verZona('Centro', this)">Rosario, Zona Centro</button><button class="type-btn" onclick="verZona('Norte', this)">Rosario, Zona Norte</button><button class="type-btn" onclick="verZona('Sur', this)">Rosario, Zona Sur / VGG</button><button class="type-btn" onclick="verZona('Funes', this)">Funes</button></div><div id="info-zona-detalle" class="hidden" style="animation: slideUp 0.4s ease;"><div id="lista-precios-zona" style="background: var(--surface); border-radius: 12px; padding: 15px; border: 1px solid var(--border); margin-bottom: 15px;"></div><img id="img-mapa-zona" src="" style="width: 100%; border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow-card);"></div></div><div id="tab-perfil" class="tab-page hidden" style="padding: 20px;"><!-- Título de sección --><div style="margin-bottom:20px;"><h2 style="font-weight:800; font-size:22px; color:var(--white); margin:0 0 4px;">CUPONES</h2><p style="color:var(--text-light); font-size:13px; margin:0;">Beneficios disponibles para vos hoy.</p></div><!-- Cupón del día (se rellena por JS) --><div id="cupon-del-dia-box" style="margin-bottom:20px;"></div><!-- Lista de todos los cupones de la semana --><div id="cupones-semana-box"></div></div><div id="tab-ayuda" class="tab-page hidden" style="padding: 20px;"><h2 style="color: var(--primary); font-weight: 800; margin-bottom: 20px; text-transform: uppercase; font-size: 20px;">¿Cómo realizar tu pedido?</h2><div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px;"><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">1. Seleccioná tu Sucursal</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">Elegí la sucursal más cercana para ver el menú y rango de envío correcto.</p></div><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">2. Consultá el Rango de Envío</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">En la pestaña <strong>"Locales"</strong> podés ver los mapas de cobertura y costos.</p></div><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">3. Armá tu Carrito</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">Agregá tus productos y revisá todo en el botón flotante del carrito.</p></div><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">4. Envia tu pedido</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">Envia tu pedido y recibiras un mensaje de confirmación una vez enviado con los datos y horarios.</p></div><h2 style="color: var(--primary); font-weight: 800; margin-top: 15px; margin-bottom: 15px; text-transform: uppercase; font-size: 20px;">¿SABIAS ESTE DATO?</h2><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">¡Podés venir a comer y disfrutar de nuestros espacios!</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">Contamos con 3 sucursales abiertas al público:</p><p style="color: var(--white); font-size: 14px; margin-top: 5px; font-weight: 600;">Rosario, Zona Centro: Pellegrini 1149<br>Funes: RN9 972<br>Cañada de gomez: LAVALLE 907</p></div></div><h3 style="color: var(--white); font-size: 16px; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">Nuestros Medios de Pagos Actuales</h3><div style="background: var(--surface); border-radius: 16px; overflow: hidden; border: 1px solid var(--border);"><table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;"><thead style="background: var(--primary);"><tr><th style="padding: 10px; color: black;">Método</th><th style="padding: 10px; color: black;">Sucursal</th><th style="padding: 10px; color: black;">Envío</th></tr></thead><tbody style="color: var(--text-light);"><tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px; color: var(--white);">Efectivo</td><td style="padding: 10px;">✓</td><td style="padding: 10px;">✓</td></tr><tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px; color: var(--white);">Débito/Crédito</td><td style="padding: 10px;">✓</td><td style="padding: 10px;">—</td></tr><tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px; color: var(--white);">QR Mercado Pago</td><td style="padding: 10px;">✓</td><td style="padding: 10px;">—</td></tr><tr><td style="padding: 10px; color: var(--white);">Link Mercado Pago</td><td style="padding: 10px;">—</td><td style="padding: 10px;">✓</td></tr></tbody></table></div></div><!-- TAB OPINIONES --><div id="tab-opiniones" class="tab-page hidden" style="padding:20px;padding-bottom:100px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;"><div><h2 style="font-weight:800;font-size:22px;color:var(--white);margin:0 0 4px;">OPINIONES</h2><p style="color:var(--text-light);font-size:13px;margin:0;">Lo que dicen nuestros clientes</p></div></div><!-- Resumen estrellas --><div id="opiniones-resumen" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:20px;display:flex;gap:20px;align-items:center;"><div style="text-align:center;flex-shrink:0;"><div id="op-prom" style="font-size:44px;font-weight:800;color:var(--primary);line-height:1;">—</div><div id="op-stars-avg" style="font-size:20px;margin:4px 0;color:#f59e0b;letter-spacing:2px;">☆☆☆☆☆</div><div id="op-count" style="font-size:11px;color:var(--text-light);font-weight:700;">0 reseñas</div></div><div id="op-bars" style="flex:1;display:flex;flex-direction:column;gap:5px;"></div></div><!-- Botón dejar opinión --><button onclick="abrirModalOpinion()" style="
+            </div><div id="cena-hoy-container"></div></div><div id="menu-container"></div></div><div id="tab-promos" class="tab-page hidden" style="padding: 20px;"><div id="martes-banner" class="promo-banner hidden"><h3 style="color: var(--primary);">MARTES DE MARZO </h3><p>Promociones exclusivas disponibles solo hoy.</p></div><div class="m-section">CATÁLOGO DE PROMOS</div><div id="promos-container" class="menu-grid"></div></div><div id="tab-zonas" class="tab-page hidden" style="padding: 20px; padding-bottom: 100px;">
+
+    <!-- ZONAS DE ENVÍO -->
+    <div style="margin-bottom:8px;">
+        <h2 style="font-weight:800;font-size:22px;color:var(--white);margin:0 0 4px;">Zonas de Envío</h2>
+        <p style="color:var(--text-light);font-size:13px;margin:0;">Seleccioná una sucursal para ver el mapa y costos:</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px 0 20px;">
+        <button class="type-btn" onclick="verZona('Centro', this)">Centro</button>
+        <button class="type-btn" onclick="verZona('Norte', this)">Norte / Baigorria</button>
+        <button class="type-btn" onclick="verZona('Sur', this)">Sur / V.G.Gálvez</button>
+        <button class="type-btn" onclick="verZona('Funes', this)">Funes — Fisherton</button>
+    </div>
+
+    <div id="info-zona-detalle" class="hidden" style="animation: slideUp 0.4s ease; margin-bottom: 28px;">
+        <div id="lista-precios-zona" style="background: var(--surface); border-radius: 12px; padding: 15px; border: 1px solid var(--border); margin-bottom: 15px;"></div>
+        <img id="img-mapa-zona" src="" style="width: 100%; border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow-card);">
+    </div>
+
+    <!-- SEPARADOR -->
+    <div style="border-top:1px solid var(--border);margin-bottom:24px;"></div>
+
+    <!-- CÓMO PEDIR -->
+    <h2 style="color:var(--primary);font-weight:800;margin-bottom:16px;text-transform:uppercase;font-size:18px;">¿Cómo realizar tu pedido?</h2>
+
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:28px;">
+        <div style="background:var(--surface);padding:15px;border-radius:12px;border-left:4px solid var(--primary);">
+            <strong style="display:block;color:var(--white);margin-bottom:5px;">1. Seleccioná tu Sucursal</strong>
+            <p style="color:var(--text-light);font-size:14px;margin:0;">Elegí la sucursal más cercana para ver el menú y rango de envío correcto.</p>
+        </div>
+        <div style="background:var(--surface);padding:15px;border-radius:12px;border-left:4px solid var(--primary);">
+            <strong style="display:block;color:var(--white);margin-bottom:5px;">2. Consultá el Rango de Envío</strong>
+            <p style="color:var(--text-light);font-size:14px;margin:0;">En esta sección podés ver los mapas de cobertura y costos por zona.</p>
+        </div>
+        <div style="background:var(--surface);padding:15px;border-radius:12px;border-left:4px solid var(--primary);">
+            <strong style="display:block;color:var(--white);margin-bottom:5px;">3. Armá tu Carrito</strong>
+            <p style="color:var(--text-light);font-size:14px;margin:0;">Agregá tus productos y revisá todo en el botón flotante del carrito.</p>
+        </div>
+        <div style="background:var(--surface);padding:15px;border-radius:12px;border-left:4px solid var(--primary);">
+            <strong style="display:block;color:var(--white);margin-bottom:5px;">4. Enviá tu pedido</strong>
+            <p style="color:var(--text-light);font-size:14px;margin:0;">Recibirás confirmación con los datos y horario estimado de entrega.</p>
+        </div>
+    </div>
+
+    <!-- SUCURSALES PRESENCIALES -->
+    <div style="background:var(--surface);padding:15px;border-radius:12px;border-left:4px solid var(--primary);margin-bottom:28px;">
+        <strong style="display:block;color:var(--white);margin-bottom:6px;">¿Querés venir a comer?</strong>
+        <p style="color:var(--text-light);font-size:14px;margin:0 0 8px;">Contamos con sucursales abiertas al público:</p>
+        <p style="color:var(--white);font-size:14px;font-weight:600;line-height:1.7;margin:0;">
+            Rosario Centro: Pellegrini 1149<br>
+            Funes: RN9 972<br>
+            Cañada de Gómez: Lavalle 907
+        </p>
+    </div>
+
+    <!-- MEDIOS DE PAGO -->
+    <h3 style="color:var(--white);font-size:16px;font-weight:800;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);">Medios de Pago</h3>
+    <div style="background:var(--surface);border-radius:14px;overflow:hidden;border:1px solid var(--border);">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;text-align:left;">
+            <thead style="background:var(--primary);">
+                <tr>
+                    <th style="padding:10px 12px;color:#000;font-weight:800;">Método</th>
+                    <th style="padding:10px 12px;color:#000;font-weight:800;text-align:center;">Local</th>
+                    <th style="padding:10px 12px;color:#000;font-weight:800;text-align:center;">Envío</th>
+                </tr>
+            </thead>
+            <tbody style="color:var(--text-light);">
+                <tr style="border-bottom:1px solid var(--border);">
+                    <td style="padding:10px 12px;color:var(--white);">Efectivo</td>
+                    <td style="padding:10px 12px;text-align:center;color:#10b981;font-weight:700;">✓</td>
+                    <td style="padding:10px 12px;text-align:center;color:#10b981;font-weight:700;">✓</td>
+                </tr>
+                <tr style="border-bottom:1px solid var(--border);">
+                    <td style="padding:10px 12px;color:var(--white);">Débito / Crédito</td>
+                    <td style="padding:10px 12px;text-align:center;color:#10b981;font-weight:700;">✓</td>
+                    <td style="padding:10px 12px;text-align:center;color:#9ca3af;">—</td>
+                </tr>
+                <tr style="border-bottom:1px solid var(--border);">
+                    <td style="padding:10px 12px;color:var(--white);">QR Mercado Pago</td>
+                    <td style="padding:10px 12px;text-align:center;color:#10b981;font-weight:700;">✓</td>
+                    <td style="padding:10px 12px;text-align:center;color:#9ca3af;">—</td>
+                </tr>
+                <tr>
+                    <td style="padding:10px 12px;color:var(--white);">Link Mercado Pago</td>
+                    <td style="padding:10px 12px;text-align:center;color:#9ca3af;">—</td>
+                    <td style="padding:10px 12px;text-align:center;color:#10b981;font-weight:700;">✓</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+<div id="tab-perfil" class="tab-page hidden" style="padding: 20px;"><!-- Título de sección --><div style="margin-bottom:20px;"><h2 style="font-weight:800; font-size:22px; color:var(--white); margin:0 0 4px;">CUPONES</h2><p style="color:var(--text-light); font-size:13px; margin:0;">Beneficios disponibles para vos hoy.</p></div><!-- Cupón del día (se rellena por JS) --><div id="cupon-del-dia-box" style="margin-bottom:20px;"></div><!-- Lista de todos los cupones de la semana --><div id="cupones-semana-box"></div></div><div id="tab-ayuda" class="tab-page hidden" style="padding: 20px;"><h2 style="color: var(--primary); font-weight: 800; margin-bottom: 20px; text-transform: uppercase; font-size: 20px;">¿Cómo realizar tu pedido?</h2><div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px;"><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">1. Seleccioná tu Sucursal</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">Elegí la sucursal más cercana para ver el menú y rango de envío correcto.</p></div><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">2. Consultá el Rango de Envío</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">En la pestaña <strong>"Locales"</strong> podés ver los mapas de cobertura y costos.</p></div><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">3. Armá tu Carrito</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">Agregá tus productos y revisá todo en el botón flotante del carrito.</p></div><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">4. Envia tu pedido</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">Envia tu pedido y recibiras un mensaje de confirmación una vez enviado con los datos y horarios.</p></div><h2 style="color: var(--primary); font-weight: 800; margin-top: 15px; margin-bottom: 15px; text-transform: uppercase; font-size: 20px;">¿SABIAS ESTE DATO?</h2><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">¡Podés venir a comer y disfrutar de nuestros espacios!</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">Contamos con 3 sucursales abiertas al público:</p><p style="color: var(--white); font-size: 14px; margin-top: 5px; font-weight: 600;">Rosario, Zona Centro: Pellegrini 1149<br>Funes: RN9 972<br>Cañada de gomez: LAVALLE 907</p></div></div><h3 style="color: var(--white); font-size: 16px; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">Nuestros Medios de Pagos Actuales</h3><div style="background: var(--surface); border-radius: 16px; overflow: hidden; border: 1px solid var(--border);"><table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;"><thead style="background: var(--primary);"><tr><th style="padding: 10px; color: black;">Método</th><th style="padding: 10px; color: black;">Sucursal</th><th style="padding: 10px; color: black;">Envío</th></tr></thead><tbody style="color: var(--text-light);"><tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px; color: var(--white);">Efectivo</td><td style="padding: 10px;">✓</td><td style="padding: 10px;">✓</td></tr><tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px; color: var(--white);">Débito/Crédito</td><td style="padding: 10px;">✓</td><td style="padding: 10px;">—</td></tr><tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px; color: var(--white);">QR Mercado Pago</td><td style="padding: 10px;">✓</td><td style="padding: 10px;">—</td></tr><tr><td style="padding: 10px; color: var(--white);">Link Mercado Pago</td><td style="padding: 10px;">—</td><td style="padding: 10px;">✓</td></tr></tbody></table></div></div><!-- TAB OPINIONES --><div id="tab-opiniones" class="tab-page hidden" style="padding:20px;padding-bottom:100px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;"><div><h2 style="font-weight:800;font-size:22px;color:var(--white);margin:0 0 4px;">OPINIONES</h2><p style="color:var(--text-light);font-size:13px;margin:0;">Lo que dicen nuestros clientes</p></div></div><!-- Resumen estrellas --><div id="opiniones-resumen" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:20px;display:flex;gap:20px;align-items:center;"><div style="text-align:center;flex-shrink:0;"><div id="op-prom" style="font-size:44px;font-weight:800;color:var(--primary);line-height:1;">—</div><div id="op-stars-avg" style="font-size:20px;margin:4px 0;color:#f59e0b;letter-spacing:2px;">☆☆☆☆☆</div><div id="op-count" style="font-size:11px;color:var(--text-light);font-weight:700;">0 reseñas</div></div><div id="op-bars" style="flex:1;display:flex;flex-direction:column;gap:5px;"></div></div><!-- Botón dejar opinión --><button onclick="abrirModalOpinion()" style="
         width:100%;padding:16px;border-radius:14px;border:2px solid var(--primary);
         background:rgba(245,158,11,0.1);color:var(--primary);
         font-weight:800;font-size:15px;cursor:pointer;margin-bottom:20px;
@@ -526,9 +619,9 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
         Opiniones
     </div>
-    <div class="nav-item" onclick="switchTab('tab-ayuda', this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-        Ayuda
+    <div class="nav-item" onclick="switchTab('tab-zonas', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+        Locales
     </div>
 </nav><div class="modal" id="m-prod"><div class="modal-sheet"><div class="m-close" onclick="closeModal()">✕</div><div class="m-hero" id="m-img"></div><div class="m-content"><h2 id="m-title" style="font-weight: 800; font-size: 24px; color: var(--white);"></h2><p id="m-desc" style="color: var(--text-light); margin-top: 8px; font-size: 14px; line-height: 1.5;"></p><div id="m-sec-ings"><div class="m-section">QUITAR INGREDIENTES</div><div id="m-list-ings"></div></div><div id="m-sec-extras"><div class="m-section">AGREGAR EXTRAS</div><div id="m-list-extras"></div></div><div class="m-section">OBSERVACIONES</div><textarea id="m-obs" class="ui-input" style="height: 80px; resize: none;" placeholder="Ej: Sin sal en las papas..."></textarea></div><div style="padding: 15px 20px; border-top: 1px solid var(--border); background: var(--surface); position: sticky; bottom: 0; z-index: 10; display: flex; gap: 15px; align-items: center;"><div style="display: flex; align-items: center; border: 1px solid var(--border); border-radius: 12px; height: 50px; background: var(--bg);"><button onclick="updateMQty(-1)" style="width: 40px; height: 100%; border: none; background: transparent; font-size: 20px; color: var(--white); cursor: pointer;">-</button><span id="m-qty" style="width: 30px; text-align: center; font-weight: 800; color: var(--white);">1</span><button onclick="updateMQty(1)" style="width: 40px; height: 100%; border: none; background: transparent; font-size: 20px; color: var(--white); cursor: pointer;">+</button></div><button class="btn-action" id="m-btn-add" onclick="confirmAdd()">Agregar</button></div></div></div><div class="modal" id="m-info"><div class="modal-sheet" style="height: auto; max-height: 85vh;"><div class="m-close" onclick="document.getElementById('m-info').style.display='none'">✕</div><div class="m-content"><h2 id="m-info-title" style="font-weight: 800; font-size: 20px; color: var(--primary); margin-bottom: 15px; text-transform: uppercase;"></h2><div id="m-info-body" style="color: var(--white); font-size: 14px; line-height: 1.5;"></div></div></div></div><div id="cart-view"><div onclick="toggleCart()" style="padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--surface); cursor: pointer;"><h2 style="font-weight: 800; font-size: 20px; color: var(--white); margin: 0; pointer-events: none;">TU ORDEN</h2><button style="background: rgba(255,255,255,0.1); border: none; font-size: 16px; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--white); pointer-events: none;">✕</button></div><div id="cart-items-list" style="flex: 1; overflow-y: auto; padding: 20px; background: var(--bg);"></div><div style="padding: 20px; background: var(--surface); border-top: 1px solid var(--border); overflow-y:auto; max-height: 50vh;"><div id="checkout-form"><!-- SUCURSAL Y TIPO DE PEDIDO --><div class="m-section" style="margin-top: 0;">SUCURSAL Y TIPO DE PEDIDO</div><div class="address-bar" style="margin: 0 0 12px; border-radius: 10px;"><select id="main-sucursal" onchange="cambiarSucursalPrincipal()" style="padding: 14px 15px; border: none; outline: none; font-weight: 600; font-size: 14px; color: var(--white); background: transparent; cursor: pointer; width: 100%;"><option value="" disabled selected>Seleccioná tu sucursal más cercana...</option><option value="Centro">(Pellegrini 1149) Rosario, Centro - Sur</option><option value="Norte">(Rondeau 2430) Rosario, Zona Norte - Baigorria</option><option value="Sur">(San Martin 1808) Rosario, Zona Sur / VGG</option><option value="Funes">(RN9 972) Funes - Fisherton</option></select></div><div class="type-toggle" style="padding: 0 0 15px;"><button id="btn-tipo-del" class="type-btn active" onclick="setGeneralDelivery(true)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/><rect x="9" y="11" width="14" height="10" rx="1"/><circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/></svg> Delivery
                     </button><button id="btn-tipo-ret" class="type-btn" onclick="setGeneralDelivery(false)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> TakeAway
@@ -1407,6 +1500,7 @@ window.procesarPedido = async () => {
             if(tabId === 'tab-promos') renderPromosCatalog();
             if(tabId === 'tab-pedidos') renderHistorialPedidos();
             if(tabId === 'tab-opiniones') cargarOpinionesPub();
+            if(tabId === 'tab-ayuda') { const n=document.querySelector('.nav-item[onclick*=tab-zonas]'); if(n){document.querySelectorAll('.tab-page').forEach(p=>p.classList.add('hidden')); document.getElementById('tab-zonas').classList.remove('hidden'); document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active')); n.classList.add('active');} return; }
 
             window.scrollTo(0,0);
         };
@@ -3491,6 +3585,26 @@ window.abrirModalOpinion = () => {
         } catch(e) { /* sin datos previos, dejar vacío */ }
     }
 
+    // Mostrar tiempo restante en el botón si aún está en cooldown
+    const _coolBtn = document.getElementById('op-btn-enviar');
+    if (_coolBtn) {
+        const _cd = 75 * 60 * 1000;
+        const _ul = parseInt(localStorage.getItem('mf_last_resena') || '0');
+        const _rest = _cd - (Date.now() - _ul);
+        if (_rest > 0) {
+            const _min = Math.ceil(_rest / 60000);
+            _coolBtn.textContent = `Disponible en ${_min} min`;
+            _coolBtn.style.background = '#2a2a2a';
+            _coolBtn.style.color = '#6b7280';
+            _coolBtn.disabled = true;
+        } else {
+            _coolBtn.textContent = 'Enviar Opinión';
+            _coolBtn.style.background = '';
+            _coolBtn.style.color = '';
+            _coolBtn.disabled = false;
+        }
+    }
+
     document.getElementById('opinion-modal').style.display = 'flex';
 };
 
@@ -3513,6 +3627,27 @@ window.opSetStar = (v) => {
 
 window.enviarOpinion = async () => {
     if (!_opPuntuacion) return alert('Seleccioná al menos 1 estrella.');
+
+    // Anti-spam: máximo 1 reseña cada 75 minutos por dispositivo
+    const COOLDOWN_MS = 75 * 60 * 1000;
+    const ultimaResena = parseInt(localStorage.getItem('mf_last_resena') || '0');
+    const ahora = Date.now();
+    const restante = COOLDOWN_MS - (ahora - ultimaResena);
+    if (restante > 0) {
+        const min = Math.ceil(restante / 60000);
+        const btn = document.getElementById('op-btn-enviar');
+        if (btn) {
+            btn.textContent = `Esperá ${min} min para volver a opinar`;
+            btn.style.background = '#333';
+            btn.style.color = '#9ca3af';
+            setTimeout(() => {
+                btn.textContent = 'Enviar Opinión';
+                btn.style.background = '';
+                btn.style.color = '';
+            }, 3000);
+        }
+        return;
+    }
     const nombre    = (document.getElementById('op-nombre')?.value || '').trim() || 'Anónimo';
     const comentario= (document.getElementById('op-comentario')?.value || '').trim();
     const btn       = document.getElementById('op-btn-enviar');
@@ -3539,6 +3674,7 @@ window.enviarOpinion = async () => {
             aprobada: true
         };
         await window.db.collection('opiniones').add(doc);
+        localStorage.setItem('mf_last_resena', Date.now().toString());
         cerrarModalOpinion();
         const t = document.getElementById('toast');
         if (t) {
@@ -3567,9 +3703,10 @@ async function cargarOpinionesPub() {
     }
     lista.innerHTML = '<p style="color:var(--text-light);text-align:center;padding:30px;">Cargando...</p>';
     try {
-        // Sin limit — cargamos TODAS las opiniones aprobadas
+        // Traemos TODAS las opiniones — sin filtro por 'aprobada'
+        // porque opiniones creadas manualmente o desde versiones anteriores
+        // pueden no tener ese campo. El admin puede eliminar las no deseadas.
         const snap = await window.db.collection('opiniones')
-            .where('aprobada', '==', true)
             .orderBy('fecha', 'desc')
             .get();
 
@@ -3812,4 +3949,3 @@ function welcomeContinuar() {
     welcomeSkip();
 }
 </script></body></html>
- 

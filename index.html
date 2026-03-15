@@ -208,7 +208,8 @@
         .nav-item svg { width: 22px; height: 22px; }
         .nav-item.active { color: var(--primary); }
 
-        .cart-float { position: fixed; bottom: 90px; right: 20px; background: var(--primary); color: var(--dark); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(245, 158, 11, 0.4); z-index: 400; cursor: pointer; transition: 0.3s; }
+        .cart-float { position: fixed; bottom: 90px; right: 20px; background: var(--primary); color: var(--dark); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(245, 158, 11, 0.4); z-index: 400; cursor: pointer; transition: transform 0.3s, opacity 0.3s, bottom 0.3s; }
+        .cart-float.input-focused { opacity: 0; pointer-events: none; transform: scale(0.7); }
         .cart-float:active { transform: scale(0.9); }
         .badge-qty { position: absolute; top: -2px; right: -2px; background: var(--white); color: var(--dark); border-radius: 50%; width: 24px; height: 24px; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; border: 2px solid var(--primary); }
 
@@ -224,7 +225,8 @@
         .modal-sheet { background: var(--surface); width: 100%; max-width: 500px; height: 90vh; border-radius: 24px 24px 0 0; overflow-y: auto; display: flex; flex-direction: column; animation: modalSlide 0.3s ease-out; position: relative; }
         .m-close { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.5); color: white; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; z-index: 10; backdrop-filter: blur(4px); }
         
-        .m-hero { height: 280px; background-size: cover; background-position: center; position: relative; }
+        .m-hero { height: 240px; background-size: cover; background-position: center; position: relative; }
+        @media (max-height: 700px) { .m-hero { height: 180px; } }
         .m-hero::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 50px; background: linear-gradient(to top, var(--surface), transparent); }
         .m-content { padding: 20px; flex: 1; }
         .custom-check { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 15px; font-weight: 500; }
@@ -236,8 +238,8 @@
         #cart-view { position: fixed; top: 0; right: 0; width: 100%; max-width: 450px; height: 100dvh; background: var(--bg); z-index: 3000; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s ease-out; box-shadow: -10px 0 30px rgba(0,0,0,0.5); }
         #cart-view.open { transform: translateX(0); }
         
-        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 12px 24px; border-radius: 50px; font-weight: 700; font-size: 14px; z-index: 5000; opacity: 0; transition: 0.3s; pointer-events: none; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
-        #toast.show { opacity: 1; transform: translateX(-50%) translateY(10px); }
+        #toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(20px); background: #10b981; color: white; padding: 13px 28px; border-radius: 50px; font-weight: 700; font-size: 14px; z-index: 5000; opacity: 0; transition: 0.3s; pointer-events: none; box-shadow: 0 6px 20px rgba(16,185,129,0.4); white-space: nowrap; }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
         
         .promo-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 15px; transition: transform 0.2s; position: relative; display: flex; flex-direction: column; justify-content: space-between; min-height: 210px; overflow: hidden; }
         .promo-card:active { transform: scale(0.98); }
@@ -489,7 +491,33 @@
         ">Continuar →</button><!-- Saltar --><button onclick="welcomeSkip()" style="
             width:100%;padding:10px;background:transparent;border:none;
             color:#6b7280;font-size:13px;cursor:pointer;margin-top:8px;
-        ">Saltar por ahora</button></div></div><!-- ════ FIN PANTALLA DE BIENVENIDA ════ --><div class="hero-slider" id="hero-slider"><!-- SLIDE 1: Hulk --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/CsY32Zpc/Hulk-6.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> DESTACADO DEL MENÚ</div><h1 class="hero-title">LA MEJOR<br>DE LA CARTA<br><span>Nuestra Hulk</span></h1><p class="hero-subtitle">Doble carne, cheddar, panceta, cebolla caramelizada y bbq.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Pedir Ahora</button><button class="hero-btn-secondary" onclick="scrollToMenu()">Ver Menú</button></div></div></div><!-- SLIDE 2: Compartir --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/sp9f92tD/DSC04607.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> ESPECIAL</div><h1 class="hero-title">COMPARTIR<br><span>Una Marvel</span></h1><p class="hero-subtitle">¡No hay 1 sin 2! Invitá a alguien y disfrutá juntos.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Aprovechar</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);})()">Ver Promos</button></div></div></div><!-- SLIDE 3: Combo --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/gLZH7hJW/DSC04609.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> COMBOS</div><h1 class="hero-title">ARMÁ TU<br><span>Combo Perfecto</span></h1><p class="hero-subtitle">¿Papas, Nuggets o Aros de cebolla? Elegí lo tuyo.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Pedir Combo</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);})()">Ver Promos</button></div></div></div><!-- SLIDE 4: Promos --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/wNQdcXh6/Dr-Strange-8.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> OFERTAS ACTIVAS</div><h1 class="hero-title">PROMOS<br><span>Para Vos</span></h1><p class="hero-subtitle">Las mejores promos del momento. ¡No te las pierdas!</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);scrollToMenu&&scrollToMenu();})()">Ver Promos</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-perfil]');if(n)switchTab('tab-perfil',n);})()">Cupones</button></div></div></div><!-- SLIDE 5: Smash --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/hRgTKHLs/DSC-4850.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> LÍNEA SMASH</div><h1 class="hero-title">¿NOCHE<br>DE SMASH?<br><span>Línea Flama</span></h1><p class="hero-subtitle">Probá nuestra línea smashed y dejanos tu opinión.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Ver Smash</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('#nav-pedidos');if(n)switchTab('tab-pedidos',n);})()">Mis Pedidos</button></div></div></div><!-- SLIDE 6: Brand --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/4B4ZCwF/DSC-4842.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> GRACIAS POR ELEGIRNOS</div><h1 class="hero-title">MARVEL<br>FOOD<br><span>Más que una Burger</span></h1><p class="hero-subtitle">Dejanos tu opinión y ayudá a otros a elegir mejor.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Pedir Ahora</button><button class="hero-btn-secondary" onclick="abrirModalOpinion()">Dejar Opinión</button></div></div></div><!-- Dots indicadores --><div class="hero-dots" id="hero-dots"></div><div class="scroll-indicator" onclick="scrollToMenu()"><span style="font-size: 12px; font-weight: 700; letter-spacing: 2px; margin-bottom: 5px;">MENÚ</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></div></div><div class="main-content"><div id="tab-inicio" class="tab-page"><div id="store-status-banner"></div><div id="cart-restore-banner"></div><div class="nav-cats" id="cat-list"></div><div id="section-cena-hoy" style="margin-bottom: 30px; padding: 0 20px;"><div class="m-section" style="display: flex; align-items: center; gap: 10px;"><span style="background: var(--primary); color: black; padding: 2px 8px; border-radius: 4px; font-size: 12px;">Marvel del día</span> ¿QUÉ ALMORZAMOS/CENAMOS HOY?
+        ">Saltar por ahora</button></div></div><!-- ════ FIN PANTALLA DE BIENVENIDA ════ --><div class="hero-slider" id="hero-slider"><!-- SLIDE 1: Hulk --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/CsY32Zpc/Hulk-6.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> DESTACADO DEL MENÚ</div><h1 class="hero-title">LA MEJOR<br>DE LA CARTA<br><span>Nuestra Hulk</span></h1><p class="hero-subtitle">Doble carne, cheddar, panceta, cebolla caramelizada y bbq.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Pedir Ahora</button><button class="hero-btn-secondary" onclick="scrollToMenu()">Ver Menú</button></div></div></div><!-- SLIDE 2: Compartir --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/sp9f92tD/DSC04607.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> ESPECIAL</div><h1 class="hero-title">COMPARTIR<br><span>Una Marvel</span></h1><p class="hero-subtitle">¡No hay 1 sin 2! Invitá a alguien y disfrutá juntos.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Aprovechar</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);})()">Ver Promos</button></div></div></div><!-- SLIDE 3: Combo --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/gLZH7hJW/DSC04609.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> COMBOS</div><h1 class="hero-title">ARMÁ TU<br><span>Combo Perfecto</span></h1><p class="hero-subtitle">¿Papas, Nuggets o Aros de cebolla? Elegí lo tuyo.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Pedir Combo</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);})()">Ver Promos</button></div></div></div><!-- SLIDE 4: Promos --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/wNQdcXh6/Dr-Strange-8.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> OFERTAS ACTIVAS</div><h1 class="hero-title">PROMOS<br><span>Para Vos</span></h1><p class="hero-subtitle">Las mejores promos del momento. ¡No te las pierdas!</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);scrollToMenu&&scrollToMenu();})()">Ver Promos</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-perfil]');if(n)switchTab('tab-perfil',n);})()">Cupones</button></div></div></div><!-- SLIDE 5: Smash --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/hRgTKHLs/DSC-4850.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> LÍNEA SMASH</div><h1 class="hero-title">¿NOCHE<br>DE SMASH?<br><span>Línea Flama</span></h1><p class="hero-subtitle">Probá nuestra línea smashed y dejanos tu opinión.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Ver Smash</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('#nav-pedidos');if(n)switchTab('tab-pedidos',n);})()">Mis Pedidos</button></div></div></div><!-- SLIDE 6: Brand --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/4B4ZCwF/DSC-4842.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> GRACIAS POR ELEGIRNOS</div><h1 class="hero-title">MARVEL<br>FOOD<br><span>Más que una Burger</span></h1><p class="hero-subtitle">Dejanos tu opinión y ayudá a otros a elegir mejor.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Pedir Ahora</button><button class="hero-btn-secondary" onclick="abrirModalOpinion()">Dejar Opinión</button></div></div></div><!-- Dots indicadores --><div class="hero-dots" id="hero-dots"></div><div class="scroll-indicator" onclick="scrollToMenu()"><span style="font-size: 12px; font-weight: 700; letter-spacing: 2px; margin-bottom: 5px;">MENÚ</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></div></div><div class="main-content"><div id="tab-inicio" class="tab-page"><div id="store-status-banner"></div><div id="cart-restore-banner"></div><div class="nav-cats" id="cat-list"></div><!-- TOP PRODUCTOS — alimentado por Firebase -->
+<div id="section-top-prods" style="margin-bottom:24px;padding:0 20px;display:none;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div>
+            <div style="font-size:11px;color:var(--primary);font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Basado en pedidos reales</div>
+            <div style="font-size:18px;font-weight:800;color:var(--white);">Lo más pedido</div>
+        </div>
+    </div>
+    <div id="top-prods-lista" style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;"></div>
+</div>
+
+<!-- RESUMEN DE OPINIONES en inicio -->
+<div id="section-resumen-opiniones" style="margin:0 20px 24px;display:none;">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-opiniones]');if(n)switchTab('tab-opiniones',n);})()">
+        <div style="text-align:center;flex-shrink:0;">
+            <div id="inicio-op-prom" style="font-size:28px;font-weight:800;color:var(--primary);line-height:1;">—</div>
+            <div id="inicio-op-stars" style="font-size:14px;color:#f59e0b;letter-spacing:2px;margin-top:2px;">☆☆☆☆☆</div>
+        </div>
+        <div style="flex:1;min-width:0;">
+            <div style="font-weight:800;color:var(--white);font-size:13px;margin-bottom:2px;">Opiniones de clientes</div>
+            <div id="inicio-op-preview" style="font-size:12px;color:var(--text-light);line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;"></div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+</div>
+
+<div id="section-cena-hoy" style="margin-bottom: 30px; padding: 0 20px;"><div class="m-section" style="display: flex; align-items: center; gap: 10px;"><span style="background: var(--primary); color: black; padding: 2px 8px; border-radius: 4px; font-size: 12px;">Marvel del día</span> ¿QUÉ ALMORZAMOS/CENAMOS HOY?
             </div><div id="cena-hoy-container"></div></div><div id="menu-container"></div></div><div id="tab-promos" class="tab-page hidden" style="padding: 20px;"><div id="martes-banner" class="promo-banner hidden"><h3 style="color: var(--primary);">MARTES DE MARZO </h3><p>Promociones exclusivas disponibles solo hoy.</p></div><div class="m-section">CATÁLOGO DE PROMOS</div><div id="promos-container" class="menu-grid"></div></div><div id="tab-zonas" class="tab-page hidden" style="padding: 20px; padding-bottom: 100px;">
 
     <!-- ZONAS DE ENVÍO -->
@@ -603,9 +631,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
         Inicio
     </div>
-    <div class="nav-item" onclick="switchTab('tab-promos', this)">
+    <div class="nav-item" onclick="switchTab('tab-promos', this)" style="position:relative;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
         Promos
+        <span id="badge-promos" style="display:none;position:absolute;top:2px;right:8px;width:8px;height:8px;border-radius:50%;background:#ef4444;border:1.5px solid var(--bg);"></span>
     </div>
     <div class="nav-item" id="nav-pedidos" onclick="switchTab('tab-pedidos', this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
@@ -1016,10 +1045,23 @@ window.cambiarSucursalPrincipal = () => {
         const locs = SUC_MAP[suc].locs;
         for(let l in locs) { locSelect.innerHTML += `<option value="${l}">${l} (+$${locs[l]})</option>`; }
     }
+
+    // Pre-cargar dirección guardada si coincide la sucursal
+    try {
+        const saved = JSON.parse(localStorage.getItem('mf_saved_addr') || 'null');
+        if (saved && saved.sucId === suc) {
+            setTimeout(() => {
+                if (saved.loc)   { locSelect.value = saved.loc; }
+                if (saved.dir)   { const el = document.getElementById('c-dir');   if(el) el.value = saved.dir; }
+                if (saved.piso)  { const el = document.getElementById('c-piso');  if(el) el.value = saved.piso; }
+                if (saved.depto) { const el = document.getElementById('c-depto'); if(el) el.value = saved.depto; }
+                renderCartItems();
+            }, 50);
+        }
+    } catch(e) {}
+
     renderCartItems();
-    
-    // NUEVO: Recalcular estado abierto/cerrado al cambiar de sucursal
-    actualizarEstadoLocal(); 
+    actualizarEstadoLocal();
 };
 
 function renderMenu() {
@@ -1342,9 +1384,24 @@ function renderCartItems() {
 
 window.procesarPedido = async () => {
     if (carrito.length === 0) return alert("Agregá productos a tu pedido primero.");
-    
+
     const sucId = document.getElementById('main-sucursal').value;
     if(!sucId) return alert("Seleccioná tu sucursal en el menú principal.");
+
+    // Bloquear si el local está cerrado
+    if (sucId && typeof HORARIOS_SUCURSALES !== 'undefined') {
+        const hh = HORARIOS_SUCURSALES[sucId];
+        if (hh) {
+            const _now = new Date();
+            const _cur = _now.getHours() * 60 + _now.getMinutes();
+            const _pt  = t => { const p = t.split(':'); return parseInt(p[0])*60+parseInt(p[1]); };
+            const _open = (_cur >= _pt(hh.m_start) && _cur <= _pt(hh.m_end)) ||
+                          (_cur >= _pt(hh.n_start) && _cur <= _pt(hh.n_end));
+            if (!_open) {
+                return alert(`El local está cerrado en este momento.\nHorarios: ${hh.m_start} a ${hh.m_end} hs / ${hh.n_start} a ${hh.n_end} hs`);
+            }
+        }
+    }
 
     const nombre = document.getElementById('c-nombre').value;
     const tel = document.getElementById('c-tel').value;
@@ -1408,6 +1465,20 @@ window.procesarPedido = async () => {
         const pedidoId = docRef.id;
 
         // Guardar pedidoId para seguimiento en tiempo real
+        // Guardar dirección para pre-cargar la próxima vez
+        if (isDelivery) {
+            try {
+                const _savedAddr = {
+                    loc: document.getElementById('c-loc').value,
+                    dir: document.getElementById('c-dir').value,
+                    piso: document.getElementById('c-piso').value,
+                    depto: document.getElementById('c-depto').value,
+                    sucId: sucId
+                };
+                localStorage.setItem('mf_saved_addr', JSON.stringify(_savedAddr));
+            } catch(e) {}
+        }
+
         localStorage.setItem('mf_last_pedido', JSON.stringify({
             id: pedidoId,
             cliente: nombre.toUpperCase(),
@@ -1873,8 +1944,18 @@ function restaurarCarrito() {
         const banner = document.getElementById('cart-restore-banner');
         if (banner) {
             banner.style.display = 'block';
+            const _subTotal = items.reduce((s,i) => s + (i.totalItem||0), 0);
             banner.innerHTML = `
-                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;"><span style="font-size:13px;color:var(--white);">Tenés <strong>${items.length} producto${items.length!==1?'s':''}</strong> en tu carrito anterior</span><div style="display:flex;gap:8px;"><button onclick="limpiarCarritoBanner()" style="background:transparent;border:1px solid var(--border);color:var(--text-light);padding:5px 10px;border-radius:8px;font-size:11px;cursor:pointer;">Limpiar</button><button onclick="toggleCart();document.getElementById('cart-restore-banner').style.display='none'" style="background:var(--primary);border:none;color:#000;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;">Ver carrito</button></div></div>`;
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+                    <div>
+                        <div style="font-size:12px;color:var(--text-light);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;">Carrito sin confirmar</div>
+                        <div style="font-size:14px;color:var(--white);font-weight:600;">${items.length} producto${items.length!==1?'s':''} · <span style="color:var(--primary);font-weight:800;">$${_subTotal.toLocaleString('es-AR')}</span></div>
+                    </div>
+                    <div style="display:flex;gap:8px;flex-shrink:0;">
+                        <button onclick="limpiarCarritoBanner()" style="background:transparent;border:1px solid var(--border);color:var(--text-light);padding:7px 12px;border-radius:8px;font-size:11px;cursor:pointer;">Limpiar</button>
+                        <button onclick="toggleCart();document.getElementById('cart-restore-banner').style.display='none'" style="background:var(--primary);border:none;color:#000;padding:7px 12px;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;">Retomar</button>
+                    </div>
+                </div>`;
         }
     } catch(e) { localStorage.removeItem('mf_carrito'); }
 }
@@ -3948,4 +4029,113 @@ function welcomeContinuar() {
     }
     welcomeSkip();
 }
+</script>
+<script>
+// ════════════════════════════════════════════════════════════
+//  TOP PRODUCTOS — calcula top 5 desde pedidos_v2 de Firebase
+// ════════════════════════════════════════════════════════════
+async function cargarTopProductos() {
+    if (!window.db) return;
+    try {
+        const snap = await window.db.collection('pedidos_v2')
+            .orderBy('fecha', 'desc').limit(200).get();
+        const conteo = {};
+        snap.forEach(doc => {
+            (doc.data().items || []).forEach(item => {
+                const key = item.n;
+                if (!conteo[key]) conteo[key] = { n: item.n, cant: 0, img: item.img || '' };
+                conteo[key].cant += (item.cant || 1);
+            });
+        });
+        const top5 = Object.values(conteo).sort((a,b) => b.cant - a.cant).slice(0, 5);
+        if (!top5.length) return;
+        const sec   = document.getElementById('section-top-prods');
+        const lista = document.getElementById('top-prods-lista');
+        if (!sec || !lista) return;
+        lista.innerHTML = top5.map((p, i) => `
+            <div style="flex-shrink:0;width:130px;background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;" onclick="scrollToMenu()">
+                ${p.img ? `<div style="width:100%;height:90px;background-image:url('${p.img}');background-size:cover;background-position:center;position:relative;"><div style="position:absolute;top:6px;left:6px;background:var(--primary);color:#000;font-size:9px;font-weight:800;padding:2px 7px;border-radius:10px;">#${i+1}</div></div>` : `<div style="width:100%;height:90px;background:var(--border);display:flex;align-items:center;justify-content:center;color:var(--text-light);font-weight:800;">#${i+1}</div>`}
+                <div style="padding:8px 10px;">
+                    <div style="font-size:12px;font-weight:700;color:var(--white);line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${p.n}</div>
+                    <div style="font-size:10px;color:var(--text-light);margin-top:3px;">${p.cant} pedido${p.cant!==1?'s':''}</div>
+                </div>
+            </div>`).join('');
+        sec.style.display = 'block';
+    } catch(e) {}
+}
+
+// ════════════════════════════════════════════════════════════
+//  RESUMEN OPINIONES EN INICIO
+// ════════════════════════════════════════════════════════════
+async function cargarResumenOpinionesInicio() {
+    if (!window.db) return;
+    try {
+        const snap = await window.db.collection('opiniones')
+            .orderBy('fecha', 'desc').limit(50).get();
+        const docs = [];
+        snap.forEach(d => docs.push(d.data()));
+        if (!docs.length) return;
+        const avg = docs.reduce((s,d) => s + (d.estrellas||0), 0) / docs.length;
+        const fullS = Math.round(avg);
+        const promEl  = document.getElementById('inicio-op-prom');
+        const starsEl = document.getElementById('inicio-op-stars');
+        const prevEl  = document.getElementById('inicio-op-preview');
+        const sec     = document.getElementById('section-resumen-opiniones');
+        if (promEl)  promEl.textContent  = avg.toFixed(1);
+        if (starsEl) starsEl.textContent = '★'.repeat(fullS) + '☆'.repeat(5-fullS);
+        const conCom = docs.find(d => d.comentario && d.comentario.trim());
+        if (prevEl && conCom) {
+            const n = (conCom.nombre||'Cliente');
+            const nd = n === n.toUpperCase() && n.length>1 ? n.charAt(0)+n.slice(1).toLowerCase() : n;
+            prevEl.textContent = `"${conCom.comentario}" — ${nd}`;
+        } else if (prevEl) {
+            prevEl.textContent = `${docs.length} reseña${docs.length!==1?'s':''} de nuestros clientes`;
+        }
+        if (sec) sec.style.display = 'block';
+    } catch(e) {}
+}
+
+// ════════════════════════════════════════════════════════════
+//  BADGE EN TAB PROMOS
+// ════════════════════════════════════════════════════════════
+function actualizarBadgePromos() {
+    const badge = document.getElementById('badge-promos');
+    if (!badge) return;
+    const hoy = new Date().getDay();
+    const hay = typeof PROMOS_DATA !== 'undefined' &&
+        PROMOS_DATA.some(p => !p._oculta && (p.diaVenta===null||p.diaVenta===undefined||p.diaVenta===hoy));
+    badge.style.display = hay ? 'block' : 'none';
+}
+
+// ════════════════════════════════════════════════════════════
+//  CART-FLOAT — ocultar con input enfocado dentro del carrito
+// ════════════════════════════════════════════════════════════
+(function setupCartFloatHide() {
+    function apply() {
+        const cartView = document.getElementById('cart-view');
+        const btn = document.querySelector('.cart-float');
+        if (!cartView || !btn) return setTimeout(apply, 500);
+        cartView.addEventListener('focusin', e => {
+            if (['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName)) btn.classList.add('input-focused');
+        });
+        cartView.addEventListener('focusout', () => setTimeout(() => btn.classList.remove('input-focused'), 250));
+    }
+    if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', apply);
+    else apply();
+})();
+
+// ════════════════════════════════════════════════════════════
+//  ARRANCAR TODO AL CARGAR
+// ════════════════════════════════════════════════════════════
+(function initMejoras() {
+    function run(t) {
+        t = t||0;
+        if (!window.db) { if(t<30) setTimeout(()=>run(t+1), 300); return; }
+        cargarTopProductos();
+        cargarResumenOpinionesInicio();
+        actualizarBadgePromos();
+    }
+    if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', ()=>run());
+    else run();
+})();
 </script></body></html>

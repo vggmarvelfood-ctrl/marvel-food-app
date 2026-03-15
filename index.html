@@ -84,19 +84,88 @@
             scroll-snap-type: x mandatory; scrollbar-width: none; position: relative;
         }
         .hero-slider::-webkit-scrollbar { display: none; }
+        /* ── HERO ANIMACIONES ── */
+        @keyframes heroFadeUp   { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes heroGlow     { 0%,100%{text-shadow:0 0 20px rgba(245,158,11,.6);} 50%{text-shadow:0 0 40px rgba(245,158,11,1),0 0 80px rgba(245,158,11,.4);} }
+        @keyframes heroPulseBtn { 0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.5);} 70%{box-shadow:0 0 0 12px rgba(245,158,11,0);} }
+        @keyframes heroKenBurns { 0%{transform:scale(1);} 100%{transform:scale(1.08);} }
+        @keyframes dotPulse     { 0%,100%{opacity:.4;transform:scale(1);} 50%{opacity:1;transform:scale(1.3);} }
+
         .hero-slide {
             flex: 0 0 100vw; height: 100vh; scroll-snap-align: start;
             background-size: cover; background-position: center; position: relative;
-            display: flex; flex-direction: column; justify-content: flex-end; padding: 40px 20px 100px 20px;
+            display: flex; flex-direction: column; justify-content: flex-end; padding: 40px 20px 110px 20px;
+            overflow: hidden;
+        }
+        .hero-slide .hero-bg-img {
+            position: absolute; inset: 0;
+            background-size: cover; background-position: center;
+            animation: heroKenBurns 8s ease-out forwards;
+            z-index: 0;
         }
         .hero-slide::before {
-            content: ''; position: absolute; inset: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.1) 100%); z-index: 1;
+            content: ''; position: absolute; inset: 0; z-index: 1;
+            background: linear-gradient(
+                160deg,
+                rgba(0,0,0,0.05) 0%,
+                rgba(0,0,0,0.3) 30%,
+                rgba(0,0,0,0.85) 70%,
+                rgba(0,0,0,0.97) 100%
+            );
+        }
+        .hero-slide::after {
+            content:''; position:absolute; bottom:0; left:0; right:0; height:2px; z-index:3;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            opacity: 0; transition: opacity .5s;
         }
         .hero-content { position: relative; z-index: 2; }
-        .hero-title { font-size: 42px; font-weight: 800; color: var(--white); line-height: 1.1; margin-bottom: 10px; text-transform: uppercase; }
-        .hero-title span { color: var(--primary); }
-        .hero-subtitle { font-size: 16px; color: #d1d5db; margin-bottom: 20px; max-width: 80%; }
+        .hero-eyebrow {
+            display: inline-flex; align-items: center; gap: 7px;
+            background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.35);
+            color: var(--primary); font-size: 11px; font-weight: 800;
+            padding: 5px 12px; border-radius: 20px; margin-bottom: 12px;
+            letter-spacing: 1.5px; text-transform: uppercase;
+            animation: heroFadeUp .6s ease both;
+        }
+        .hero-eyebrow span { width:6px;height:6px;border-radius:50%;background:var(--primary);display:inline-block;animation:dotPulse 1.4s infinite; }
+        .hero-title {
+            font-size: 44px; font-weight: 800; color: var(--white); line-height: 1.05;
+            margin-bottom: 10px; text-transform: uppercase; letter-spacing: -.5px;
+            animation: heroFadeUp .6s .1s ease both;
+        }
+        .hero-title span { color: var(--primary); animation: heroGlow 3s 1s infinite; display: inline-block; }
+        .hero-subtitle {
+            font-size: 15px; color: #c9d1db; margin-bottom: 24px; max-width: 85%; line-height: 1.5;
+            animation: heroFadeUp .6s .2s ease both;
+        }
+        .hero-btn-row { display: flex; gap: 10px; flex-wrap: wrap; animation: heroFadeUp .6s .3s ease both; }
+        .hero-btn-primary {
+            padding: 14px 24px; border-radius: 50px; border: none;
+            background: var(--primary); color: #000; font-weight: 800; font-size: 14px;
+            cursor: pointer; letter-spacing: .5px; text-transform: uppercase;
+            animation: heroPulseBtn 2s 1.5s infinite;
+            transition: transform .15s, opacity .15s;
+        }
+        .hero-btn-primary:active { transform: scale(.96); opacity:.85; }
+        .hero-btn-secondary {
+            padding: 14px 22px; border-radius: 50px;
+            border: 1.5px solid rgba(255,255,255,.35); background: rgba(255,255,255,.07);
+            color: #fff; font-weight: 700; font-size: 13px; cursor: pointer;
+            backdrop-filter: blur(6px); transition: background .2s, border-color .2s;
+        }
+        .hero-btn-secondary:hover, .hero-btn-secondary:active { background:rgba(245,158,11,.15); border-color:var(--primary); }
+
+        /* dots del slider */
+        .hero-dots {
+            position: absolute; bottom: 75px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 7px; z-index: 4;
+        }
+        .hero-dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: rgba(255,255,255,.35); border: none; padding: 0; cursor: pointer;
+            transition: background .3s, transform .3s;
+        }
+        .hero-dot.active { background: var(--primary); transform: scale(1.4); }
         
         .scroll-indicator {
             position: absolute; bottom: 90px; left: 50%; transform: translateX(-50%);
@@ -488,50 +557,94 @@
 
 
       
-    <div class="hero-slider">
-        <div class="hero-slide" style="background-image: url('https://i.ibb.co/CsY32Zpc/Hulk-6.jpg');">
+    <div class="hero-slider" id="hero-slider">
+
+        <!-- SLIDE 1: Hulk -->
+        <div class="hero-slide">
+            <div class="hero-bg-img" style="background-image:url('https://i.ibb.co/CsY32Zpc/Hulk-6.jpg')"></div>
             <div class="hero-content">
-                <h1 class="hero-title">LA MEJOR DE LA CARTA<br><span>Nuestra Hulk</span></h1>
-                <p class="hero-subtitle">Doble carne, cheddar, panceta, cebolla caramelizada, bbq.</p>
-                <button class="btn-action" style="width: auto; padding: 12px 24px;" onclick="scrollToMenu()">Pedir Ahora</button>
-            </div>
-        </div>
-        <div class="hero-slide" style="background-image: url('https://i.ibb.co/sp9f92tD/DSC04607.jpg');">
-            <div class="hero-content">
-                <h1 class="hero-title">ESPECIAL<br><span>COMPARTIR UNA MARVEL</span></h1>
-                <p class="hero-subtitle">No hay 1 sin 2 para que lo acompañes con alguien mas!.</p>
-                <button class="btn-action" style="width: auto; padding: 12px 24px;" onclick="scrollToMenu()">Aprovechar</button>
-            </div>
-        </div>
-        <div class="hero-slide" style="background-image: url('https://i.ibb.co/gLZH7hJW/DSC04609.jpg');">
-            <div class="hero-content">
-                <h1 class="hero-title">Arma tu combo<br><span>Corta la semana</span></h1>
-                <p class="hero-subtitle">¿Papas, Nuggets o Aros de cebolla? Tu combo perfecto asegurado.</p>
-                <button class="btn-action" style="width: auto; padding: 12px 24px;" onclick="scrollToMenu()">Aprovechar</button>
-            </div>
-        </div>
-        <div class="hero-slide" style="background-image: url('https://i.ibb.co/wNQdcXh6/Dr-Strange-8.jpg');">
-            <div class="hero-content">
-                <h1 class="hero-title">PROMOS<br><span>PARA VOS</span></h1>
-                <p class="hero-subtitle">Aprovecha las mejores promos del momento y disfruta de marvel!.</p>
-                <button class="btn-action" style="width: auto; padding: 12px 24px;" onclick="scrollToMenu()">Conocer mas</button>
+                <div class="hero-eyebrow"><span></span> DESTACADO DEL MENÚ</div>
+                <h1 class="hero-title">LA MEJOR<br>DE LA CARTA<br><span>Nuestra Hulk</span></h1>
+                <p class="hero-subtitle">Doble carne, cheddar, panceta, cebolla caramelizada y bbq.</p>
+                <div class="hero-btn-row">
+                    <button class="hero-btn-primary" onclick="scrollToMenu()">🍔 Pedir Ahora</button>
+                    <button class="hero-btn-secondary" onclick="scrollToMenu()">Ver Menú</button>
+                </div>
             </div>
         </div>
 
-        <div class="hero-slide" style="background-image: url('https://i.ibb.co/hRgTKHLs/DSC-4850.jpg');">
+        <!-- SLIDE 2: Compartir -->
+        <div class="hero-slide">
+            <div class="hero-bg-img" style="background-image:url('https://i.ibb.co/sp9f92tD/DSC04607.jpg')"></div>
             <div class="hero-content">
-                <h1 class="hero-title">¿UNA NOCHE DE SMASH?<br><span>LINEA FLAMA A LA ORDEN</span></h1>
-                <p class="hero-subtitle">Proba nuestra linea smashed y danos tu opinion!</p>
-                <button class="btn-action" style="width: auto; padding: 12px 24px;" onclick="scrollToMenu()">Menu</button>
+                <div class="hero-eyebrow"><span></span> ESPECIAL</div>
+                <h1 class="hero-title">COMPARTIR<br><span>Una Marvel</span></h1>
+                <p class="hero-subtitle">¡No hay 1 sin 2! Invitá a alguien y disfrutá juntos.</p>
+                <div class="hero-btn-row">
+                    <button class="hero-btn-primary" onclick="scrollToMenu()">🔥 Aprovechar</button>
+                    <button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);})()">Ver Promos</button>
+                </div>
             </div>
         </div>
-        <div class="hero-slide" style="background-image: url('https://i.ibb.co/4B4ZCwF/DSC-4842.jpg');">
+
+        <!-- SLIDE 3: Combo -->
+        <div class="hero-slide">
+            <div class="hero-bg-img" style="background-image:url('https://i.ibb.co/gLZH7hJW/DSC04609.jpg')"></div>
             <div class="hero-content">
-                <h1 class="hero-title">MARVEL FOOD<br><span>Somos mas que una burger!</span></h1>
-                <p class="hero-subtitle">Gracias por preferirnos!</p>
-                <button class="btn-action" style="width: auto; padding: 12px 24px;" onclick="scrollToMenu()">Menu</button>
+                <div class="hero-eyebrow"><span></span> COMBOS</div>
+                <h1 class="hero-title">ARMÁ TU<br><span>Combo Perfecto</span></h1>
+                <p class="hero-subtitle">¿Papas, Nuggets o Aros de cebolla? Elegí lo tuyo.</p>
+                <div class="hero-btn-row">
+                    <button class="hero-btn-primary" onclick="scrollToMenu()">⚡ Pedir Combo</button>
+                    <button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);})()">Ver Promos</button>
+                </div>
             </div>
         </div>
+
+        <!-- SLIDE 4: Promos -->
+        <div class="hero-slide">
+            <div class="hero-bg-img" style="background-image:url('https://i.ibb.co/wNQdcXh6/Dr-Strange-8.jpg')"></div>
+            <div class="hero-content">
+                <div class="hero-eyebrow"><span></span> OFERTAS ACTIVAS</div>
+                <h1 class="hero-title">PROMOS<br><span>Para Vos</span></h1>
+                <p class="hero-subtitle">Las mejores promos del momento. ¡No te las pierdas!</p>
+                <div class="hero-btn-row">
+                    <button class="hero-btn-primary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);scrollToMenu&&scrollToMenu();})()">🏷️ Ver Promos</button>
+                    <button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-perfil]');if(n)switchTab('tab-perfil',n);})()">🎟️ Cupones</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 5: Smash -->
+        <div class="hero-slide">
+            <div class="hero-bg-img" style="background-image:url('https://i.ibb.co/hRgTKHLs/DSC-4850.jpg')"></div>
+            <div class="hero-content">
+                <div class="hero-eyebrow"><span></span> LÍNEA SMASH</div>
+                <h1 class="hero-title">¿NOCHE<br>DE SMASH?<br><span>Línea Flama</span></h1>
+                <p class="hero-subtitle">Probá nuestra línea smashed y dejanos tu opinión.</p>
+                <div class="hero-btn-row">
+                    <button class="hero-btn-primary" onclick="scrollToMenu()">🔥 Ver Smash</button>
+                    <button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('#nav-pedidos');if(n)switchTab('tab-pedidos',n);})()">📋 Mis Pedidos</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 6: Brand -->
+        <div class="hero-slide">
+            <div class="hero-bg-img" style="background-image:url('https://i.ibb.co/4B4ZCwF/DSC-4842.jpg')"></div>
+            <div class="hero-content">
+                <div class="hero-eyebrow"><span></span> GRACIAS POR ELEGIRNOS</div>
+                <h1 class="hero-title">MARVEL<br>FOOD<br><span>Más que una Burger</span></h1>
+                <p class="hero-subtitle">Dejanos tu opinión y ayudá a otros a elegir mejor.</p>
+                <div class="hero-btn-row">
+                    <button class="hero-btn-primary" onclick="scrollToMenu()">🛒 Pedir Ahora</button>
+                    <button class="hero-btn-secondary" onclick="abrirModalOpinion()">⭐ Opinar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dots indicadores -->
+        <div class="hero-dots" id="hero-dots"></div>
 
         <div class="scroll-indicator" onclick="scrollToMenu()">
             <span style="font-size: 12px; font-weight: 700; letter-spacing: 2px; margin-bottom: 5px;">MENÚ</span>
@@ -673,6 +786,73 @@
     </div>
 </div>
 
+<!-- TAB OPINIONES -->
+<div id="tab-opiniones" class="tab-page hidden" style="padding:20px;padding-bottom:100px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <div>
+            <h2 style="font-weight:800;font-size:22px;color:var(--white);margin:0 0 4px;">⭐ OPINIONES</h2>
+            <p style="color:var(--text-light);font-size:13px;margin:0;">Lo que dicen nuestros clientes</p>
+        </div>
+    </div>
+
+    <!-- Resumen estrellas -->
+    <div id="opiniones-resumen" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:20px;display:flex;gap:20px;align-items:center;">
+        <div style="text-align:center;flex-shrink:0;">
+            <div id="op-prom" style="font-size:44px;font-weight:800;color:var(--primary);line-height:1;">—</div>
+            <div id="op-stars-avg" style="font-size:20px;margin:4px 0;color:#f59e0b;letter-spacing:2px;">☆☆☆☆☆</div>
+            <div id="op-count" style="font-size:11px;color:var(--text-light);font-weight:700;">0 reseñas</div>
+        </div>
+        <div id="op-bars" style="flex:1;display:flex;flex-direction:column;gap:5px;"></div>
+    </div>
+
+    <!-- Botón dejar opinión -->
+    <button onclick="abrirModalOpinion()" style="
+        width:100%;padding:16px;border-radius:14px;border:2px solid var(--primary);
+        background:rgba(245,158,11,0.1);color:var(--primary);
+        font-weight:800;font-size:15px;cursor:pointer;margin-bottom:20px;
+        display:flex;align-items:center;justify-content:center;gap:10px;transition:.2s;
+    " onmouseover="this.style.background='rgba(245,158,11,0.2)'" onmouseout="this.style.background='rgba(245,158,11,0.1)'">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Dejar mi Opinión
+    </button>
+
+    <!-- Lista de reseñas -->
+    <div id="opiniones-lista"></div>
+</div>
+
+<!-- MODAL DEJAR OPINIÓN -->
+<div id="opinion-modal" style="
+    display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);
+    z-index:6000;align-items:flex-end;justify-content:center;
+" onclick="if(event.target===this)cerrarModalOpinion()">
+    <div style="background:var(--surface);width:100%;max-width:500px;border-radius:24px 24px 0 0;padding:28px 24px 40px;animation:modalSlide .3s ease-out;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <h3 style="font-weight:800;font-size:18px;color:var(--white);margin:0;">⭐ Tu Opinión</h3>
+            <button onclick="cerrarModalOpinion()" style="background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;">✕</button>
+        </div>
+        <p style="color:var(--text-light);font-size:13px;margin-bottom:18px;">¿Qué te pareció tu experiencia con Marvel Food?</p>
+        <!-- Estrellas -->
+        <div style="display:flex;justify-content:center;gap:10px;margin-bottom:20px;">
+            <button class="op-star" onclick="opSetStar(1)" data-v="1" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;">★</button>
+            <button class="op-star" onclick="opSetStar(2)" data-v="2" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;">★</button>
+            <button class="op-star" onclick="opSetStar(3)" data-v="3" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;">★</button>
+            <button class="op-star" onclick="opSetStar(4)" data-v="4" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;">★</button>
+            <button class="op-star" onclick="opSetStar(5)" data-v="5" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;">★</button>
+        </div>
+        <div id="op-label" style="text-align:center;font-size:14px;font-weight:700;color:var(--primary);margin-bottom:16px;min-height:20px;"></div>
+        <!-- Nombre (opcional) -->
+        <input id="op-nombre" type="text" placeholder="Tu nombre (opcional)"
+            style="width:100%;padding:13px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:#fff;font-size:14px;margin-bottom:12px;outline:none;box-sizing:border-box;">
+        <!-- Comentario -->
+        <textarea id="op-comentario" placeholder="Contanos tu experiencia..." rows="3"
+            style="width:100%;padding:13px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:#fff;font-size:14px;resize:none;outline:none;margin-bottom:16px;box-sizing:border-box;"></textarea>
+        <button id="op-btn-enviar" onclick="enviarOpinion()" style="
+            width:100%;padding:16px;border-radius:12px;border:none;
+            background:var(--primary);color:#000;font-weight:800;font-size:15px;cursor:pointer;
+        ">Enviar Opinión</button>
+    </div>
+</div>
+
 <!-- TAB PEDIDOS -->
 <div id="tab-pedidos" class="tab-page hidden" style="padding: 20px; padding-bottom: 100px;">
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
@@ -709,9 +889,9 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
         Pedidos
     </div>
-    <div class="nav-item" onclick="switchTab('tab-perfil', this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="5" x2="5" y2="19"></line><circle cx="6.5" cy="6.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg>
-        Cupones
+    <div class="nav-item" onclick="switchTab('tab-opiniones', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Opiniones
     </div>
 </nav>
 
@@ -1069,11 +1249,8 @@ window.actualizarEstadoLocal = () => {
     
     if (!banner) return;
     
-    // Si todavía no eligió sucursal, le mostramos un mensaje sutil
-    if (!sucId) {
-        banner.innerHTML = `<div style="text-align:center; color: var(--text-light); font-size: 13px; margin: 0 20px 15px;">Seleccioná una sucursal abajo para ver los horarios de atención.</div>`;
-        return;
-    }
+    // Sin sucursal: banner vacío
+    if (!sucId) { banner.innerHTML = ''; return; }
 
     const h = HORARIOS_SUCURSALES[sucId];
     const now = new Date();
@@ -1775,6 +1952,7 @@ window.procesarPedido = async () => {
             if(tabId === 'tab-perfil') actualizarVistasPerfil();
             if(tabId === 'tab-promos') renderPromosCatalog();
             if(tabId === 'tab-pedidos') renderHistorialPedidos();
+            if(tabId === 'tab-opiniones') cargarOpinionesPub();
 
             window.scrollTo(0,0);
         };
@@ -3777,27 +3955,77 @@ window.admGuardarPrecio = async (id) => {
     } catch(e) { alert("Error: "+e.message); }
 };
 
+let _admResTabActual = 'pedidos';
+function admResTab(tab) {
+    _admResTabActual = tab;
+    const btnPed = document.getElementById('adm-res-tab-ped');
+    const btnPub = document.getElementById('adm-res-tab-pub');
+    if (btnPed) {
+        const selStyle = 'border:1px solid var(--primary);background:rgba(245,158,11,.15);color:var(--primary);';
+        const defStyle = 'border:1px solid var(--border);background:transparent;color:#9ca3af;';
+        btnPed.style.cssText += tab === 'pedidos' ? selStyle : defStyle;
+        btnPub.style.cssText += tab === 'publicas' ? selStyle : defStyle;
+    }
+    admCargarResenas();
+}
+
 async function admCargarResenas() {
     const g = id => document.getElementById(id);
+    const col = _admResTabActual === 'publicas' ? 'opiniones' : 'resenas';
+    const campoEst = _admResTabActual === 'publicas' ? 'estrellas' : 'puntuacion';
     try {
-        const snap = await db.collection("resenas").orderBy("fecha","desc").limit(50).get();
+        const snap = await db.collection(col).orderBy("fecha","desc").limit(100).get();
         const rs = []; snap.forEach(d => rs.push({id:d.id,...d.data()}));
-        const prom = rs.length?(rs.reduce((a,r)=>a+(r.puntuacion||0),0)/rs.length).toFixed(1):null;
-        if(g('res-promedio')) g('res-promedio').innerText = prom?prom+' *':'--';
-        if(g('res-count'))    g('res-count').innerText    = rs.length+' resenas';
+        const prom = rs.length?(rs.reduce((a,r)=>a+(r[campoEst]||0),0)/rs.length).toFixed(1):null;
+        if(g('res-promedio')) g('res-promedio').innerText = prom ? prom : '--';
+        if(g('res-count'))    g('res-count').innerText    = rs.length + ' reseñas';
 
         const dist={1:0,2:0,3:0,4:0,5:0};
-        rs.forEach(r=>{if(r.puntuacion)dist[r.puntuacion]++;});
+        rs.forEach(r=>{if(r[campoEst])dist[r[campoEst]]++;});
         const md=Math.max(...Object.values(dist),1);
-        if(g('res-dist')) g('res-dist').innerHTML=[5,4,3,2,1].map(s=>'<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;"><span style="font-size:10px;color:#9ca3af;width:18px;">'+s+'*</span><div style="flex:1;height:10px;background:#333;border-radius:4px;"><div style="height:100%;width:'+Math.round(dist[s]/md*100)+'%;background:var(--primary);border-radius:4px;"></div></div><span style="font-size:10px;color:#9ca3af;width:16px;">'+dist[s]+'</span></div>').join('');
+        if(g('res-dist')) g('res-dist').innerHTML=[5,4,3,2,1].map(s=>
+            '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">' +
+            '<span style="font-size:10px;color:#f59e0b;width:18px;">'+s+'★</span>' +
+            '<div style="flex:1;height:8px;background:#333;border-radius:4px;"><div style="height:100%;width:'+Math.round(dist[s]/md*100)+'%;background:var(--primary);border-radius:4px;"></div></div>' +
+            '<span style="font-size:10px;color:#9ca3af;width:16px;">'+dist[s]+'</span></div>'
+        ).join('');
 
-        if(g('adm-resenas-lista')) g('adm-resenas-lista').innerHTML=rs.length?rs.map(r=>{
-            const f=r.fecha?(r.fecha.toDate?r.fecha.toDate():new Date(r.fecha)).toLocaleDateString('es-AR'):'--';
-            return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;"><div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="color:var(--primary);font-weight:800;">'+(r.puntuacion||0)+'/5 *</span><span style="font-size:11px;color:#9ca3af;">'+f+'</span></div>'+(r.comentario?'<p style="color:var(--white);font-size:13px;">"'+r.comentario+'"</p>':'<p style="color:#9ca3af;font-size:12px;">Sin comentario</p>')+'</div>';
-        }).join(''):'<div style="text-align:center;padding:40px;color:#9ca3af;">Aun no hay resenas.</div>';
+        if(g('adm-resenas-lista')) {
+            if (!rs.length) {
+                g('adm-resenas-lista').innerHTML='<div style="text-align:center;padding:40px;color:#9ca3af;">Aún no hay reseñas.</div>';
+                return;
+            }
+            g('adm-resenas-lista').innerHTML = rs.map(r => {
+                const f = r.fecha?(r.fecha.toDate?r.fecha.toDate():new Date(r.fecha)).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}):'--';
+                const est = r[campoEst] || 0;
+                const stars = '★'.repeat(est) + '☆'.repeat(5-est);
+                const nombre = r.nombre || r.cliente || 'Anónimo';
+                return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+                        <div>
+                            <div style="font-weight:800;color:var(--white);font-size:13px;">${nombre}</div>
+                            <div style="color:#f59e0b;font-size:16px;letter-spacing:1px;">${stars}</div>
+                        </div>
+                        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+                            <span style="font-size:11px;color:#9ca3af;">${f}</span>
+                            <button onclick="admEliminarOpinion('${r.id}','${col}')" style="background:rgba(239,68,68,.15);border:1px solid #ef4444;color:#ef4444;padding:4px 10px;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer;">🗑️ Eliminar</button>
+                        </div>
+                    </div>
+                    ${r.comentario?`<p style="color:#d1d5db;font-size:13px;line-height:1.4;margin:0;padding-top:8px;border-top:1px solid var(--border);">"${r.comentario}"</p>`:''}
+                </div>`;
+            }).join('');
+        }
     } catch(e) {
-        if(g('adm-resenas-lista')) g('adm-resenas-lista').innerHTML='<p style="color:#9ca3af;padding:20px;">Error al cargar.</p>';
+        if(g('adm-resenas-lista')) g('adm-resenas-lista').innerHTML='<p style="color:#9ca3af;padding:20px;">Error: '+e.message+'</p>';
     }
+}
+
+async function admEliminarOpinion(id, coleccion) {
+    if (!confirm('¿Eliminar esta reseña? No se puede deshacer.')) return;
+    try {
+        await db.collection(coleccion).doc(id).delete();
+        admCargarResenas();
+    } catch(e) { alert('Error al eliminar: ' + e.message); }
 }
 
     </script>
@@ -3976,16 +4204,22 @@ async function admCargarResenas() {
             <div id="adm-menu-lista" style="display:flex;flex-direction:column;gap:8px;"></div>
         </div>
 
-        <!-- TAB RESEÑAS -->
+        <!-- TAB RESEÑAS / OPINIONES -->
         <div id="adm-tab-resenas" style="display:none;padding:20px;">
-            <h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:6px;">⭐ RESEÑAS DE CLIENTES</h3>
-            <div style="display:flex;gap:16px;margin-bottom:20px;">
+            <h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">⭐ OPINIONES DE CLIENTES</h3>
+            <p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Podés eliminar cualquier opinión que no corresponda. Los cambios son inmediatos.</p>
+            <div style="display:flex;gap:12px;margin-bottom:20px;">
                 <div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);flex:1;text-align:center;">
                     <div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Promedio</div>
                     <div id="res-promedio" style="font-size:32px;font-weight:800;color:var(--primary);">—</div>
                     <div style="color:#9ca3af;font-size:11px;" id="res-count">0 reseñas</div>
                 </div>
                 <div id="res-dist" style="flex:2;background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);display:flex;flex-direction:column;gap:5px;justify-content:center;"></div>
+            </div>
+            <!-- Tabs internas: Pedido / Públicas -->
+            <div style="display:flex;gap:8px;margin-bottom:16px;">
+                <button id="adm-res-tab-ped" onclick="admResTab('pedidos')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--primary);background:rgba(245,158,11,.15);color:var(--primary);font-weight:800;font-size:12px;cursor:pointer;">📦 Desde pedido</button>
+                <button id="adm-res-tab-pub" onclick="admResTab('publicas')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--border);background:transparent;color:#9ca3af;font-weight:800;font-size:12px;cursor:pointer;">🌐 Opiniones públicas</button>
             </div>
             <div id="adm-resenas-lista" style="display:flex;flex-direction:column;gap:10px;"></div>
         </div>
@@ -4370,6 +4604,204 @@ async function verificarDireccion(direccion) {
 <!-- ════════════════ FIN VERIFICACIÓN DE ZONA ════════════════ -->
 
 <script>
+// ════════════════════════════════════════════════════════════
+//  HERO SLIDER MEJORADO — dots + ken burns reinicio
+// ════════════════════════════════════════════════════════════
+(function patchSlider() {
+    function init() {
+        const slider = document.getElementById('hero-slider');
+        const dotsContainer = document.getElementById('hero-dots');
+        if (!slider || !dotsContainer) return setTimeout(init, 300);
+
+        const slides = slider.querySelectorAll('.hero-slide');
+        const total = slides.length;
+
+        // Crear dots
+        dotsContainer.innerHTML = '';
+        slides.forEach((_, i) => {
+            const d = document.createElement('button');
+            d.className = 'hero-dot' + (i === 0 ? ' active' : '');
+            d.onclick = () => {
+                slider.scrollTo({ left: slider.clientWidth * i, behavior: 'smooth' });
+            };
+            dotsContainer.appendChild(d);
+        });
+
+        function updateDots() {
+            const idx = Math.round(slider.scrollLeft / slider.clientWidth);
+            dotsContainer.querySelectorAll('.hero-dot').forEach((d, i) => {
+                d.classList.toggle('active', i === idx);
+            });
+            // Reiniciar animación ken burns del slide activo
+            slides.forEach((s, i) => {
+                const bg = s.querySelector('.hero-bg-img');
+                if (!bg) return;
+                if (i === idx) {
+                    bg.style.animation = 'none';
+                    void bg.offsetWidth; // reflow
+                    bg.style.animation = 'heroKenBurns 8s ease-out forwards';
+                }
+            });
+        }
+
+        slider.addEventListener('scroll', updateDots, { passive: true });
+        updateDots();
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+    else init();
+})();
+
+// ════════════════════════════════════════════════════════════
+//  SISTEMA DE OPINIONES PÚBLICAS
+// ════════════════════════════════════════════════════════════
+let _opPuntuacion = 0;
+const OP_LABELS = { 1:'😞 Muy malo', 2:'😕 Malo', 3:'😐 Regular', 4:'😊 Bueno', 5:'🤩 ¡Excelente!' };
+
+window.abrirModalOpinion = () => {
+    _opPuntuacion = 0;
+    opSetStar(0);
+    const inp = document.getElementById('op-nombre');
+    const txt = document.getElementById('op-comentario');
+    if (inp) inp.value = '';
+    if (txt) txt.value = '';
+    document.getElementById('opinion-modal').style.display = 'flex';
+};
+
+window.cerrarModalOpinion = () => {
+    document.getElementById('opinion-modal').style.display = 'none';
+};
+
+window.opSetStar = (v) => {
+    _opPuntuacion = v;
+    document.querySelectorAll('.op-star').forEach((s, i) => {
+        const lit = i < v;
+        s.style.filter    = lit ? 'none' : 'grayscale(1)';
+        s.style.opacity   = lit ? '1' : '0.4';
+        s.style.transform = lit ? 'scale(1.15)' : 'scale(1)';
+        s.style.color     = lit ? '#f59e0b' : '#555';
+    });
+    const lbl = document.getElementById('op-label');
+    if (lbl) lbl.textContent = v ? OP_LABELS[v] : '';
+};
+
+window.enviarOpinion = async () => {
+    if (!_opPuntuacion) return alert('Seleccioná al menos 1 estrella.');
+    const nombre    = (document.getElementById('op-nombre')?.value || '').trim() || 'Anónimo';
+    const comentario= (document.getElementById('op-comentario')?.value || '').trim();
+    const btn       = document.getElementById('op-btn-enviar');
+    if (btn) { btn.disabled = true; btn.textContent = 'Enviando...'; }
+
+    try {
+        const doc = {
+            nombre,
+            comentario,
+            estrellas: _opPuntuacion,
+            fecha: firebase.firestore.FieldValue.serverTimestamp(),
+            aprobada: true
+        };
+        await window.db.collection('opiniones').add(doc);
+        cerrarModalOpinion();
+        const t = document.getElementById('toast');
+        if (t) {
+            t.style.background = '#f59e0b'; t.style.color = '#000';
+            t.innerText = '⭐ ¡Gracias por tu opinión!';
+            t.classList.add('show');
+            setTimeout(() => { t.classList.remove('show'); t.style.background=''; t.style.color=''; t.innerText='¡Agregado al pedido!'; }, 3000);
+        }
+        cargarOpinionesPub();
+        // Ir a tab opiniones
+        const navOp = document.querySelector('.nav-item[onclick*=tab-opiniones]');
+        if (navOp) switchTab('tab-opiniones', navOp);
+    } catch(e) {
+        alert('Error al enviar: ' + e.message);
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Enviar Opinión'; }
+    }
+};
+
+async function cargarOpinionesPub() {
+    const lista = document.getElementById('opiniones-lista');
+    if (!lista) return;
+    if (!window.db) {
+        lista.innerHTML = '<p style="color:var(--text-light);text-align:center;padding:30px;">Conectando...</p>';
+        return;
+    }
+    lista.innerHTML = '<p style="color:var(--text-light);text-align:center;padding:30px;">Cargando...</p>';
+    try {
+        const snap = await window.db.collection('opiniones')
+            .where('aprobada', '==', true)
+            .orderBy('fecha', 'desc')
+            .limit(50)
+            .get();
+
+        const docs = [];
+        snap.forEach(d => docs.push({ id: d.id, ...d.data() }));
+
+        // Calcular promedio y distribución
+        if (!docs.length) {
+            lista.innerHTML = '<div style="text-align:center;padding:40px 20px;"><div style="font-size:48px;margin-bottom:12px;">⭐</div><p style="color:var(--text-light);">Sé el primero en dejar tu opinión</p></div>';
+            actualizarResumenOp([]);
+            return;
+        }
+        actualizarResumenOp(docs);
+
+        lista.innerHTML = docs.map(d => {
+            const fecha = d.fecha?.toDate ? d.fecha.toDate().toLocaleDateString('es-AR', { day:'2-digit', month:'short', year:'numeric' }) : '';
+            const stars = '★'.repeat(d.estrellas) + '☆'.repeat(5 - d.estrellas);
+            const color = d.estrellas >= 4 ? '#f59e0b' : d.estrellas === 3 ? '#6b7280' : '#ef4444';
+            return `
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+                    <div>
+                        <div style="font-weight:800;color:var(--white);font-size:14px;">${d.nombre || 'Anónimo'}</div>
+                        <div style="font-size:18px;color:${color};letter-spacing:2px;margin-top:2px;">${stars}</div>
+                    </div>
+                    <div style="font-size:11px;color:var(--text-light);">${fecha}</div>
+                </div>
+                ${d.comentario ? `<p style="color:#d1d5db;font-size:13px;line-height:1.5;margin:0;">${d.comentario}</p>` : ''}
+            </div>`;
+        }).join('');
+    } catch(e) {
+        lista.innerHTML = '<p style="color:var(--text-light);text-align:center;padding:30px;">No se pudieron cargar las opiniones.</p>';
+    }
+}
+
+function actualizarResumenOp(docs) {
+    const prom = document.getElementById('op-prom');
+    const starsAvg = document.getElementById('op-stars-avg');
+    const count = document.getElementById('op-count');
+    const bars = document.getElementById('op-bars');
+    if (!prom) return;
+
+    if (!docs.length) {
+        prom.textContent = '—'; starsAvg.textContent = '☆☆☆☆☆'; count.textContent = '0 reseñas';
+        if (bars) bars.innerHTML = '';
+        return;
+    }
+    const avg = docs.reduce((s, d) => s + (d.estrellas || 0), 0) / docs.length;
+    prom.textContent = avg.toFixed(1);
+    const fullStars = Math.round(avg);
+    starsAvg.textContent = '★'.repeat(fullStars) + '☆'.repeat(5 - fullStars);
+    count.textContent = docs.length + ' reseña' + (docs.length !== 1 ? 's' : '');
+
+    if (bars) {
+        let html = '';
+        for (let s = 5; s >= 1; s--) {
+            const n = docs.filter(d => d.estrellas === s).length;
+            const pct = docs.length ? Math.round(n / docs.length * 100) : 0;
+            html += `
+            <div style="display:flex;align-items:center;gap:7px;">
+                <span style="color:#f59e0b;font-size:12px;white-space:nowrap;">${s}★</span>
+                <div style="flex:1;height:6px;background:#333;border-radius:3px;overflow:hidden;">
+                    <div style="height:100%;width:${pct}%;background:var(--primary);border-radius:3px;transition:width .6s;"></div>
+                </div>
+                <span style="color:var(--text-light);font-size:11px;width:22px;text-align:right;">${n}</span>
+            </div>`;
+        }
+        bars.innerHTML = html;
+    }
+}
+
 // ════════════════════════════════════════════════════════════
 //  PANTALLA DE BIENVENIDA — lógica
 // ════════════════════════════════════════════════════════════

@@ -620,8 +620,9 @@
     </button><!-- Lista de reseñas --><div id="opiniones-lista"></div></div><!-- MODAL DEJAR OPINIÓN --><div id="opinion-modal" style="
     display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);
     z-index:6000;align-items:flex-end;justify-content:center;
-" onclick="if(event.target===this)cerrarModalOpinion()"><div style="background:var(--surface);width:100%;max-width:500px;border-radius:24px 24px 0 0;padding:28px 24px 40px;animation:modalSlide .3s ease-out;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;"><h3 style="font-weight:800;font-size:18px;color:var(--white);margin:0;">Tu Opinión</h3><button onclick="cerrarModalOpinion()" style="background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;">✕</button></div><p style="color:var(--text-light);font-size:13px;margin-bottom:18px;">¿Qué te pareció tu experiencia con Marvel Food?</p><!-- Estrellas --><div style="display:flex;justify-content:center;gap:10px;margin-bottom:20px;"><button class="op-star" onclick="opSetStar(1)" data-v="1" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;">★</button><button class="op-star" onclick="opSetStar(2)" data-v="2" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;">★</button><button class="op-star" onclick="opSetStar(3)" data-v="3" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;">★</button><button class="op-star" onclick="opSetStar(4)" data-v="4" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;">★</button><button class="op-star" onclick="opSetStar(5)" data-v="5" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;">★</button></div><div id="op-label" style="text-align:center;font-size:14px;font-weight:700;color:var(--primary);margin-bottom:16px;min-height:20px;"></div><!-- Nombre (opcional) --><input id="op-nombre" type="text" placeholder="Tu nombre (opcional)"
-            style="width:100%;padding:13px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:#fff;font-size:14px;margin-bottom:12px;outline:none;box-sizing:border-box;"><!-- Comentario --><textarea id="op-comentario" placeholder="Contanos tu experiencia..." rows="3"
+" onclick="if(event.target===this)cerrarModalOpinion()"><div style="background:var(--surface);width:100%;max-width:500px;border-radius:24px 24px 0 0;padding:28px 24px 40px;animation:modalSlide .3s ease-out;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;"><h3 style="font-weight:800;font-size:18px;color:var(--white);margin:0;">Tu Opinión</h3><button onclick="cerrarModalOpinion()" style="background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;">✕</button></div><p style="color:var(--text-light);font-size:13px;margin-bottom:18px;">¿Qué te pareció tu experiencia con Marvel Food?</p><!-- Estrellas --><div style="display:flex;justify-content:center;gap:10px;margin-bottom:20px;"><button class="op-star" onclick="opSetStar(1)" data-v="1" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;">★</button><button class="op-star" onclick="opSetStar(2)" data-v="2" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;">★</button><button class="op-star" onclick="opSetStar(3)" data-v="3" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;">★</button><button class="op-star" onclick="opSetStar(4)" data-v="4" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;">★</button><button class="op-star" onclick="opSetStar(5)" data-v="5" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;">★</button></div><div id="op-label" style="text-align:center;font-size:14px;font-weight:700;color:var(--primary);margin-bottom:16px;min-height:20px;"></div><!-- Nombre y Apellido (obligatorio) --><input id="op-nombre" type="text" placeholder="Nombre y apellido *" maxlength="60"
+            style="width:100%;padding:13px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:#fff;font-size:14px;margin-bottom:10px;outline:none;box-sizing:border-box;" oninput="opLimpiarError(this)"><!-- Teléfono (obligatorio) --><input id="op-tel" type="tel" placeholder="Teléfono (ej: 3412345678) *" maxlength="20"
+            style="width:100%;padding:13px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:#fff;font-size:14px;margin-bottom:10px;outline:none;box-sizing:border-box;" oninput="opLimpiarError(this)"><div id="op-error" style="display:none;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);color:#ef4444;border-radius:8px;padding:9px 13px;font-size:12px;font-weight:700;margin-bottom:10px;"></div><!-- Comentario --><textarea id="op-comentario" placeholder="Contanos tu experiencia (opcional)..." rows="3"
             style="width:100%;padding:13px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:#fff;font-size:14px;resize:none;outline:none;margin-bottom:16px;box-sizing:border-box;"></textarea><button id="op-btn-enviar" onclick="enviarOpinion()" style="
             width:100%;padding:16px;border-radius:12px;border:none;
             background:var(--primary);color:#000;font-weight:800;font-size:15px;cursor:pointer;
@@ -4183,36 +4184,42 @@ async function verificarDireccion(direccion) {
 //  SISTEMA DE OPINIONES PÚBLICAS
 // ════════════════════════════════════════════════════════════
 let _opPuntuacion = 0;
+
+window.opLimpiarError = (el) => {
+    if (el) el.style.borderColor = '';
+    const errDiv = document.getElementById('op-error');
+    if (errDiv) { errDiv.style.display = 'none'; errDiv.textContent = ''; }
+};
 const OP_LABELS = { 1:'Muy malo', 2:'Malo', 3:'Regular', 4:'Bueno', 5:'¡Excelente!' };
 
 window.abrirModalOpinion = () => {
     _opPuntuacion = 0;
     opSetStar(0);
-    const inp = document.getElementById('op-nombre');
-    const txt = document.getElementById('op-comentario');
-    if (txt) txt.value = '';
+    const inp    = document.getElementById('op-nombre');
+    const inpTel = document.getElementById('op-tel');
+    const txt    = document.getElementById('op-comentario');
+    const errDiv = document.getElementById('op-error');
+    if (txt)    txt.value = '';
+    if (errDiv) { errDiv.style.display = 'none'; errDiv.textContent = ''; }
+    if (inpTel) { inpTel.value = ''; inpTel.style.borderColor = ''; }
 
-    // Pre-cargar nombre desde el último pedido realizado
+    // Pre-cargar nombre y teléfono desde el último pedido realizado
     if (inp) {
         inp.value = '';
+        inp.style.borderColor = '';
         try {
-            // Intentar desde mf_last_pedido primero
             const last = JSON.parse(localStorage.getItem('mf_last_pedido') || 'null');
             if (last && last.cliente) {
-                // El nombre en Firebase viene en mayúsculas, capitalizar
                 inp.value = last.cliente.charAt(0) + last.cliente.slice(1).toLowerCase();
             } else {
-                // Fallback: historial de pedidos
-                const hist = JSON.parse(localStorage.getItem('mf_historial') || '[]');
-                if (hist.length && hist[0].items && hist[0].items[0]) {
-                    // No guardamos nombre en historial, intentar c-nombre del formulario
-                    const cNombre = document.getElementById('c-nombre');
-                    if (cNombre && cNombre.value.trim()) {
-                        inp.value = cNombre.value.trim();
-                    }
-                }
+                const cNombre = document.getElementById('c-nombre');
+                if (cNombre && cNombre.value.trim()) inp.value = cNombre.value.trim();
             }
-        } catch(e) { /* sin datos previos, dejar vacío */ }
+            if (inpTel) {
+                const telSrc = (last && last.tel) ? last.tel : (document.getElementById('c-tel')?.value || '');
+                if (telSrc) inpTel.value = telSrc.trim();
+            }
+        } catch(e) { /* sin datos previos */ }
     }
 
     // Mostrar tiempo restante en el botón si aún está en cooldown
@@ -4258,6 +4265,31 @@ window.opSetStar = (v) => {
 window.enviarOpinion = async () => {
     if (!_opPuntuacion) return alert('Seleccioná al menos 1 estrella.');
 
+    // ── Validar campos obligatorios ──
+    const inpNombre = document.getElementById('op-nombre');
+    const inpTel    = document.getElementById('op-tel');
+    const errDiv    = document.getElementById('op-error');
+    const nombre    = (inpNombre?.value || '').trim();
+    const telRaw    = (inpTel?.value || '').replace(/\s+/g, '');
+    const soloDigTel = telRaw.replace(/[^0-9]/g, '');
+
+    let errMsg = '';
+    if (!nombre || nombre.split(' ').filter(p => p.length > 0).length < 2) {
+        errMsg = 'Por favor ingresá tu nombre y apellido completos.';
+        if (inpNombre) inpNombre.style.borderColor = '#ef4444';
+    } else if (soloDigTel.length < 8 || soloDigTel.length > 15) {
+        errMsg = 'Ingresá un número de teléfono válido (mínimo 8 dígitos).';
+        if (inpTel) inpTel.style.borderColor = '#ef4444';
+    }
+
+    if (errMsg) {
+        if (errDiv) { errDiv.textContent = errMsg; errDiv.style.display = 'block'; }
+        return;
+    }
+    if (errDiv) { errDiv.style.display = 'none'; errDiv.textContent = ''; }
+    if (inpNombre) inpNombre.style.borderColor = '';
+    if (inpTel)    inpTel.style.borderColor    = '';
+
     // Anti-spam: máximo 1 reseña cada 75 minutos por dispositivo
     const COOLDOWN_MS = 75 * 60 * 1000;
     const ultimaResena = parseInt(localStorage.getItem('mf_last_resena') || '0');
@@ -4278,28 +4310,16 @@ window.enviarOpinion = async () => {
         }
         return;
     }
-    const nombre    = (document.getElementById('op-nombre')?.value || '').trim() || 'Anónimo';
-    const comentario= (document.getElementById('op-comentario')?.value || '').trim();
-    const btn       = document.getElementById('op-btn-enviar');
+    const comentario = (document.getElementById('op-comentario')?.value || '').trim();
+    const btn        = document.getElementById('op-btn-enviar');
     if (btn) { btn.disabled = true; btn.textContent = 'Enviando...'; }
 
     try {
-        // Intentar obtener teléfono del último pedido para registrar junto a la reseña
-        let telGuardado = '';
-        try {
-            const last = JSON.parse(localStorage.getItem('mf_last_pedido') || 'null');
-            if (last && last.cliente) telGuardado = last.tel || '';
-            if (!telGuardado) {
-                const cTel = document.getElementById('c-tel');
-                if (cTel && cTel.value.trim()) telGuardado = cTel.value.trim();
-            }
-        } catch(e) {}
-
         const doc = {
             nombre,
             comentario,
             estrellas: _opPuntuacion,
-            tel: telGuardado,
+            tel: telRaw,
             fecha: firebase.firestore.FieldValue.serverTimestamp(),
             aprobada: true
         };

@@ -40,20 +40,24 @@
 
     // Alias global — se actualiza cada vez que _initFirebase resuelve
     var db = window.db || null;
-</script><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/><title>Marvel Food | Tienda Online</title><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"><style> :root {
+</script><meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/><title>Marvel Food | Tienda Online</title><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"><style> :root {
             --primary: #f59e0b;
+            --primary-hover: #d97706;
             --dark: #000000;
-            --bg: #121212;
-            --surface: #1e1e1e;
+            --bg: #0A0A0A;
+            --surface: #1A1A1A;
+            --surface-elevated: #242424;
             --white: #ffffff;
-            --text: #f9fafb;
-            --text-light: #9ca3af;
-            --border: #333333;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
-            --shadow-card: 0 8px 16px rgba(0,0,0,0.4);
+            --text: #F5F5F5;
+            --text-light: #A0A0A0;
+            --text-muted: #6B6B6B;
+            --border: #2A2A2A;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.7);
+            --shadow-card: 0 8px 20px rgba(0, 0, 0, 0.6);
+            --shadow-hover: 0 12px 24px rgba(245, 158, 11, 0.15);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Montserrat', 'Open Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background-color: var(--bg); color: var(--text); overflow-x: hidden; padding-bottom: 80px; }
 
         @keyframes slideUp { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
@@ -122,13 +126,29 @@
         }
         .hero-btn-row { display: flex; gap: 10px; flex-wrap: wrap; animation: heroFadeUp .6s .3s ease both; }
         .hero-btn-primary {
-            padding: 14px 24px; border-radius: 50px; border: none;
-            background: var(--primary); color: #000; font-weight: 800; font-size: 14px;
-            cursor: pointer; letter-spacing: .5px; text-transform: uppercase;
+            padding: 14px 28px; 
+            border-radius: 50px; 
+            border: none;
+            background: var(--primary); 
+            color: #000; 
+            font-weight: 800; 
+            font-size: 14px;
+            cursor: pointer; 
+            letter-spacing: 1px; 
+            text-transform: uppercase;
             animation: heroPulseBtn 2s 1.5s infinite;
-            transition: transform .15s, opacity .15s;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
         }
-        .hero-btn-primary:active { transform: scale(.96); opacity:.85; }
+        .hero-btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(245, 158, 11, 0.5);
+        }
+        .hero-btn-primary:active { 
+            transform: scale(.96) translateY(0); 
+            opacity:.9; 
+        }
         .hero-btn-secondary {
             padding: 14px 22px; border-radius: 50px;
             border: 1.5px solid rgba(255,255,255,.35); background: rgba(255,255,255,.07);
@@ -174,20 +194,89 @@
 
         .nav-cats { display: flex; overflow-x: auto; padding: 0 20px 20px; gap: 12px; scrollbar-width: none; position: sticky; top: 70px; background: var(--bg); z-index: 90; }
         .nav-cats::-webkit-scrollbar { display: none; }
-        .cat-tag { padding: 10px 20px; border-radius: 25px; background: var(--surface); border: 1px solid var(--border); font-size: 14px; font-weight: 700; color: var(--text-light); white-space: nowrap; cursor: pointer; transition: 0.3s; }
-        .cat-tag.active { background: var(--primary); color: var(--dark); border-color: var(--primary); }
+        .cat-tag { 
+    padding: 11px 22px; 
+    border-radius: 25px; 
+    background: var(--surface); 
+    border: 1px solid var(--border); 
+    font-size: 13px; 
+    font-weight: 700; 
+    color: var(--text-light); 
+    white-space: nowrap; 
+    cursor: pointer; 
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+    letter-spacing: 0.3px;
+}
+.cat-tag:hover {
+    background: var(--surface-elevated);
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+.cat-tag.active { 
+    background: var(--primary); 
+    color: var(--dark); 
+    border-color: var(--primary); 
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
 
         #menu-container { padding: 0 20px; }
-        .cat-title { font-size: 24px; font-weight: 800; margin: 10px 0 20px; color: var(--white); text-transform: uppercase; letter-spacing: 1px; }
+        .cat-title { 
+    font-size: 26px; 
+    font-weight: 900; 
+    margin: 24px 0 20px; 
+    color: var(--white); 
+    text-transform: uppercase; 
+    letter-spacing: 0.5px;
+    position: relative;
+    padding-left: 12px;
+}
+.cat-title::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 70%;
+    background: var(--primary);
+    border-radius: 2px;
+}
         
-        .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .menu-grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); 
+    gap: 18px; 
+    margin-bottom: 35px; 
+}
         
-        .card-p { background: var(--surface); border-radius: 16px; border: 1px solid var(--border); overflow: hidden; cursor: pointer; transition: 0.3s; display: flex; flex-direction: column; }
-        .card-p:active { transform: scale(0.96); }
+        .card-p { 
+    background: var(--surface); 
+    border-radius: 12px; 
+    border: 1px solid var(--border); 
+    overflow: hidden; 
+    cursor: pointer; 
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+    display: flex; 
+    flex-direction: column; 
+    box-shadow: var(--shadow-card);
+}
+.card-p:hover { 
+    transform: translateY(-4px); 
+    box-shadow: var(--shadow-hover);
+    border-color: var(--primary);
+}
+        .card-p:active { transform: translateY(-2px) scale(0.98); }
         .p-img-wrapper { position: relative; padding-top: 100%; }
         .p-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
         .p-txt { padding: 15px; display: flex; flex-direction: column; flex: 1; justify-content: space-between; }
-        .p-txt h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; color: var(--white); line-height: 1.2; }
+        .p-txt h3 { 
+    font-size: 15px; 
+    font-weight: 700; 
+    margin-bottom: 8px; 
+    color: var(--white); 
+    line-height: 1.3; 
+    letter-spacing: -0.2px;
+}
         
         /* FIX LINEA 129: Formateado correctamente y con ellipsis para mayor compatibilidad */
 .p-txt p { 
@@ -200,29 +289,161 @@
 }
         
         .p-action-row { display: flex; align-items: center; justify-content: space-between; margin-top: auto; }
-        .p-price { font-weight: 800; font-size: 16px; color: var(--primary); }
-        .add-btn { width: 32px; height: 32px; border-radius: 10px; background: var(--primary); color: var(--dark); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; border: none; }
+        .p-price { 
+    font-weight: 800; 
+    font-size: 18px; 
+    color: var(--primary); 
+    letter-spacing: -0.3px;
+}
+        .add-btn { 
+    width: 34px; 
+    height: 34px; 
+    border-radius: 8px; 
+    background: var(--primary); 
+    color: var(--dark); 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    font-weight: bold; 
+    font-size: 20px; 
+    border: none; 
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+.add-btn:hover {
+    background: var(--primary-hover);
+    transform: scale(1.05);
+}
 
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(30, 30, 30, 0.95); backdrop-filter: blur(10px); border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; z-index: 500; }
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: var(--text-light); text-decoration: none; cursor: pointer; font-size: 10px; font-weight: 600; }
         .nav-item svg { width: 22px; height: 22px; }
         .nav-item.active { color: var(--primary); }
 
-        .cart-float { position: fixed; bottom: 90px; right: 20px; background: var(--primary); color: var(--dark); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(245, 158, 11, 0.4); z-index: 400; cursor: pointer; transition: transform 0.3s, opacity 0.3s, bottom 0.3s; }
+        .cart-float { 
+    position: fixed; 
+    bottom: 90px; 
+    right: 20px; 
+    background: var(--primary); 
+    color: #fff; 
+    width: 64px; 
+    height: 64px; 
+    border-radius: 50%; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    box-shadow: 0 8px 24px rgba(245, 158, 11, 0.5), 0 4px 12px rgba(0, 0, 0, 0.3); 
+    z-index: 400; 
+    cursor: pointer; 
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+}
+.cart-float:hover {
+    transform: scale(1.05);
+    box-shadow: 0 12px 28px rgba(245, 158, 11, 0.6), 0 6px 16px rgba(0, 0, 0, 0.4);
+}
         .cart-float.input-focused { opacity: 0; pointer-events: none; transform: scale(0.7); }
         .cart-float:active { transform: scale(0.9); }
-        .badge-qty { position: absolute; top: -2px; right: -2px; background: var(--white); color: var(--dark); border-radius: 50%; width: 24px; height: 24px; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; border: 2px solid var(--primary); }
+        .badge-qty { 
+    position: absolute; 
+    top: -4px; 
+    right: -4px; 
+    background: #fff; 
+    color: var(--primary); 
+    border-radius: 50%; 
+    width: 26px; 
+    height: 26px; 
+    font-size: 13px; 
+    font-weight: 900; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    border: 3px solid var(--bg); 
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    animation: badgePulse 2s infinite;
+}
+@keyframes badgePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
 
-        .ui-input { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid var(--border); font-size: 14px; outline: none; background: var(--bg); color: var(--white); margin-bottom: 15px; font-weight: 500; transition: 0.2s; }
-        .ui-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2); }
-        .btn-action { background: var(--primary); color: var(--dark); border: none; padding: 16px; border-radius: 12px; font-weight: 800; cursor: pointer; width: 100%; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; }
-        .btn-action:active { transform: scale(0.98); }
+        .ui-input { 
+    width: 100%; 
+    padding: 14px 16px; 
+    border-radius: 12px; 
+    border: 2px solid var(--border); 
+    font-size: 15px; 
+    outline: none; 
+    background: var(--bg); 
+    color: var(--white); 
+    margin-bottom: 16px; 
+    font-weight: 500; 
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: 'Montserrat', sans-serif;
+}
+.ui-input:hover {
+    border-color: var(--text-muted);
+}
+.ui-input:focus { 
+    border-color: var(--primary); 
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+    background: var(--surface);
+}
+.ui-input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.7;
+}
+        .btn-action { 
+    background: var(--primary); 
+    color: var(--dark); 
+    border: none; 
+    padding: 16px; 
+    border-radius: 12px; 
+    font-weight: 800; 
+    cursor: pointer; 
+    width: 100%; 
+    font-size: 16px; 
+    text-transform: uppercase; 
+    letter-spacing: 1.2px; 
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+.btn-action:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(245, 158, 11, 0.5);
+}
+.btn-action:active { 
+    transform: scale(0.98) translateY(0); 
+}
         .m-section { font-size: 13px; font-weight: 800; color: var(--text-light); margin: 25px 0 10px; text-transform: uppercase; letter-spacing: 1px; }
 
         .btn-gps { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px dashed #10b981; padding: 12px; border-radius: 10px; width: 100%; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px; cursor: pointer; }
         
-        .modal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px); z-index: 2000; display: none; justify-content: center; align-items: flex-end; }
-        .modal-sheet { background: var(--surface); width: 100%; max-width: 500px; height: 90vh; border-radius: 24px 24px 0 0; overflow-y: auto; display: flex; flex-direction: column; animation: modalSlide 0.3s ease-out; position: relative; }
+        .modal { 
+    position: fixed; 
+    inset: 0; 
+    background: rgba(0, 0, 0, 0.85); 
+    backdrop-filter: blur(8px); 
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 2000; 
+    display: none; 
+    justify-content: center; 
+    align-items: flex-end; 
+}
+        .modal-sheet { 
+    background: var(--surface); 
+    width: 100%; 
+    max-width: 500px; 
+    height: 90vh; 
+    border-radius: 24px 24px 0 0; 
+    overflow-y: auto; 
+    display: flex; 
+    flex-direction: column; 
+    animation: modalSlide 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+    position: relative;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+}
         .m-close { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.5); color: white; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; z-index: 10; backdrop-filter: blur(4px); }
         
         .m-hero { height: 240px; background-size: cover; background-position: center; position: relative; }
@@ -238,8 +459,29 @@
         #cart-view { position: fixed; top: 0; right: 0; width: 100%; max-width: 450px; height: 100dvh; background: var(--bg); z-index: 3000; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s ease-out; box-shadow: -10px 0 30px rgba(0,0,0,0.5); }
         #cart-view.open { transform: translateX(0); }
         
-        #toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(20px); background: #10b981; color: white; padding: 13px 28px; border-radius: 50px; font-weight: 700; font-size: 14px; z-index: 5000; opacity: 0; transition: 0.3s; pointer-events: none; box-shadow: 0 6px 20px rgba(16,185,129,0.4); white-space: nowrap; }
-        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        #toast { 
+    position: fixed; 
+    bottom: 100px; 
+    left: 50%; 
+    transform: translateX(-50%) translateY(20px); 
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white; 
+    padding: 14px 32px; 
+    border-radius: 50px; 
+    font-weight: 700; 
+    font-size: 14px; 
+    z-index: 5000; 
+    opacity: 0; 
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+    pointer-events: none; 
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.5), 0 4px 12px rgba(0, 0, 0, 0.3);
+    white-space: nowrap;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+#toast.show { 
+    opacity: 1; 
+    transform: translateX(-50%) translateY(0); 
+}
         
         .promo-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 15px; transition: transform 0.2s; position: relative; display: flex; flex-direction: column; justify-content: space-between; min-height: 210px; overflow: hidden; }
         .promo-card:active { transform: scale(0.98); }
@@ -252,19 +494,48 @@
    .bottom-nav {
     display: flex;
     justify-content: space-around;
-    padding: 8px 2px;
+    padding: 12px 8px;
+    background: rgba(26, 26, 26, 0.98);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
 }
 
 .nav-item {
-    font-size: 9px;
+    font-size: 10px;
     flex: 1;
     min-width: 0;
-    padding: 0 1px;
+    padding: 4px 2px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 12px;
+    position: relative;
+}
+
+.nav-item:active {
+    transform: scale(0.95);
+}
+
+.nav-item.active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 32px;
+    height: 3px;
+    background: var(--primary);
+    border-radius: 0 0 3px 3px;
 }
 
 .nav-item svg {
-    width: 20px !important;
-    height: 20px !important;
+    width: 22px !important;
+    height: 22px !important;
+    transition: transform 0.2s;
+}
+
+.nav-item.active svg {
+    transform: translateY(-2px);
 }
    
 
@@ -279,7 +550,7 @@
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
         }
-        #admin-root.visible { display: block; }
+        #admin-root.visible { display: block !important; }
         .adm-muted { color: #9ca3af; }
         #adm-login-screen {
             min-height: 100vh;
@@ -467,12 +738,92 @@
         .card-p.agotado { opacity:0.45; pointer-events:none; position:relative; }
         .agotado-badge { position:absolute; top:8px; left:8px; background:#ef4444; color:#fff; font-size:9px; font-weight:800; padding:3px 8px; border-radius:6px; text-transform:uppercase; z-index:2; }
 
-   </style></head><body><div id="toast">¡Agregado al pedido!</div><!-- ════ PANTALLA DE BIENVENIDA / VERIFICACIÓN DE ZONA ════ --><div id="welcome-screen" style="
+   
+        /* ═══════════════════════ SISTEMA DE ESTRELLAS ═══════════════════════ */
+        .stars-row {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin: 24px 0;
+            padding: 10px 0;
+        }
+        .star-btn {
+            font-size: 36px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+            -webkit-user-select: none;
+            position: relative;
+        }
+        .star-btn:hover {
+            color: var(--primary);
+            transform: scale(1.2);
+        }
+        .star-btn.active {
+            color: var(--primary);
+            transform: scale(1.1);
+            animation: starPop 0.3s ease;
+        }
+        @keyframes starPop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1.1); }
+        }
+
+        /* ═══════════════════════ ANIMACIONES DE TARJETAS ═══════════════════════ */
+        @keyframes cardFadeIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .card-p { animation: cardFadeIn 0.4s ease-out backwards; }
+        .card-p:nth-child(1) { animation-delay: 0.05s; }
+        .card-p:nth-child(2) { animation-delay: 0.1s; }
+        .card-p:nth-child(3) { animation-delay: 0.15s; }
+        .card-p:nth-child(4) { animation-delay: 0.2s; }
+        .card-p:nth-child(5) { animation-delay: 0.25s; }
+        .card-p:nth-child(6) { animation-delay: 0.3s; }
+        .card-p:nth-child(n+7) { animation-delay: 0.35s; }
+
+        /* ═══════════════════════ PRODUCTOS AGOTADOS ═══════════════════════ */
+        .card-p.agotado {
+            opacity: 0.6;
+            cursor: not-allowed;
+            position: relative;
+            overflow: hidden;
+        }
+        .card-p.agotado::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+        }
+        .agotado-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: var(--text-muted);
+            color: var(--white);
+            font-size: 11px;
+            font-weight: 800;
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        .card-p.agotado:hover {
+            transform: none;
+            box-shadow: var(--shadow-card);
+            border-color: var(--border);
+        }
+</style></head><body><div id="toast">¡Agregado al pedido!</div><!-- ════ PANTALLA DE BIENVENIDA / VERIFICACIÓN DE ZONA ════ --><div id="welcome-screen" style="
     position:fixed; inset:0; z-index:99000;
     background:#0f0f0f;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     padding:28px 24px;
-    font-family:'Plus Jakarta Sans',sans-serif;
+    font-family:'Montserrat','Open Sans',sans-serif;
 "><!-- Logo + marca --><div style="text-align:center;margin-bottom:32px;"><div style="width:72px;height:72px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 0 32px rgba(245,158,11,0.4);"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div><h1 style="font-size:26px;font-weight:800;color:#fff;margin:0 0 6px;">MARVEL FOOD</h1><p style="color:#9ca3af;font-size:14px;margin:0;">¿A dónde te enviamos el pedido?</p></div><!-- Card principal --><div style="width:100%;max-width:400px;background:#1e1e1e;border:1px solid #333;border-radius:20px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,0.6);"><!-- Botón GPS --><button id="ws-btn-gps" onclick="welcomeUsarGPS()" style="
             width:100%;padding:16px;border-radius:14px;border:2px solid #10b981;
             background:rgba(16,185,129,0.08);color:#10b981;
@@ -520,13 +871,38 @@
 <div id="section-cena-hoy" style="margin-bottom: 30px; padding: 0 20px;"><div class="m-section" style="display: flex; align-items: center; gap: 10px;"><span style="background: var(--primary); color: black; padding: 2px 8px; border-radius: 4px; font-size: 12px;">Marvel del día</span> ¿QUÉ ALMORZAMOS/CENAMOS HOY?
             </div><div id="cena-hoy-container"></div></div><div id="menu-container"></div></div><div id="tab-promos" class="tab-page hidden" style="padding: 20px;"><div id="martes-banner" class="promo-banner hidden"><h3 style="color: var(--primary);">MARTES DE MARZO </h3><p>Promociones exclusivas disponibles solo hoy.</p></div><div class="m-section">CATÁLOGO DE PROMOS</div><div id="promos-container" class="menu-grid"></div></div><div id="tab-zonas" class="tab-page hidden" style="padding:20px;padding-bottom:100px;">
 
-    <div style="margin-bottom:20px;">
+    <div style="margin-bottom:24px;">
         <h2 style="font-weight:800;font-size:22px;color:var(--white);margin:0 0 4px;">Locales y Zonas</h2>
         <p style="color:var(--text-light);font-size:13px;margin:0;">Costos de envío y cobertura por sucursal</p>
     </div>
 
     <div id="zonas-cards-container"></div>
 
+</div>
+
+<!-- MODAL MAPA DE ZONA -->
+<div id="zona-mapa-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.92);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);">
+    <div style="position:relative;width:100%;height:100%;display:flex;flex-direction:column;">
+        <!-- Header del modal -->
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;">
+            <div>
+                <div id="zona-modal-titulo" style="font-weight:800;font-size:16px;color:var(--primary);text-transform:uppercase;"></div>
+                <div id="zona-modal-subtitulo" style="font-size:12px;color:var(--text-light);margin-top:2px;"></div>
+            </div>
+            <button onclick="cerrarZonaMapa()" style="background:rgba(255,255,255,0.1);border:none;color:var(--white);width:36px;height:36px;border-radius:50%;font-size:22px;font-weight:300;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">×</button>
+        </div>
+        <!-- Precios -->
+        <div id="zona-modal-precios" style="padding:14px 20px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;"></div>
+        <!-- Imagen del mapa — ocupa todo el espacio restante -->
+        <div style="flex:1;overflow:hidden;position:relative;background:#000;">
+            <img id="zona-modal-img" src="" alt="Mapa de cobertura"
+                style="width:100%;height:100%;object-fit:contain;display:block;" />
+            <div id="zona-modal-no-img" style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--text-light);">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span style="font-size:13px;">Mapa no disponible</span>
+            </div>
+        </div>
+    </div>
 </div>
 <div id="tab-perfil" class="tab-page hidden" style="padding: 20px;"><!-- Título de sección --><div style="margin-bottom:20px;"><h2 style="font-weight:800; font-size:22px; color:var(--white); margin:0 0 4px;">CUPONES</h2><p style="color:var(--text-light); font-size:13px; margin:0;">Beneficios disponibles para vos hoy.</p></div><!-- Cupón del día (se rellena por JS) --><div id="cupon-del-dia-box" style="margin-bottom:20px;"></div><!-- Lista de todos los cupones de la semana --><div id="cupones-semana-box"></div></div><div id="tab-ayuda" class="tab-page hidden" style="padding: 20px;"><h2 style="color: var(--primary); font-weight: 800; margin-bottom: 20px; text-transform: uppercase; font-size: 20px;">¿Cómo realizar tu pedido?</h2><div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px;"><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">1. Seleccioná tu Sucursal</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">Elegí la sucursal más cercana para ver el menú y rango de envío correcto.</p></div><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">2. Consultá el Rango de Envío</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">En la pestaña <strong>"Locales"</strong> podés ver los mapas de cobertura y costos.</p></div><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">3. Armá tu Carrito</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">Agregá tus productos y revisá todo en el botón flotante del carrito.</p></div><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">4. Envia tu pedido</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">Envia tu pedido y recibiras un mensaje de confirmación una vez enviado con los datos y horarios.</p></div><h2 style="color: var(--primary); font-weight: 800; margin-top: 15px; margin-bottom: 15px; text-transform: uppercase; font-size: 20px;">¿SABIAS ESTE DATO?</h2><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">¡Podés venir a comer y disfrutar de nuestros espacios!</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">Contamos con 3 sucursales abiertas al público:</p><p style="color: var(--white); font-size: 14px; margin-top: 5px; font-weight: 600;">Rosario, Zona Centro: Pellegrini 1149<br>Funes: RN9 972<br>Cañada de gomez: LAVALLE 907</p></div></div><h3 style="color: var(--white); font-size: 16px; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">Nuestros Medios de Pagos Actuales</h3><div style="background: var(--surface); border-radius: 16px; overflow: hidden; border: 1px solid var(--border);"><table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;"><thead style="background: var(--primary);"><tr><th style="padding: 10px; color: black;">Método</th><th style="padding: 10px; color: black;">Sucursal</th><th style="padding: 10px; color: black;">Envío</th></tr></thead><tbody style="color: var(--text-light);"><tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px; color: var(--white);">Efectivo</td><td style="padding: 10px;">✓</td><td style="padding: 10px;">✓</td></tr><tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px; color: var(--white);">Débito/Crédito</td><td style="padding: 10px;">✓</td><td style="padding: 10px;">—</td></tr><tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px; color: var(--white);">QR Mercado Pago</td><td style="padding: 10px;">✓</td><td style="padding: 10px;">—</td></tr><tr><td style="padding: 10px; color: var(--white);">Link Mercado Pago</td><td style="padding: 10px;">—</td><td style="padding: 10px;">✓</td></tr></tbody></table></div></div><!-- TAB OPINIONES --><div id="tab-opiniones" class="tab-page hidden" style="padding:20px;padding-bottom:100px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;"><div><h2 style="font-weight:800;font-size:22px;color:var(--white);margin:0 0 4px;">OPINIONES</h2><p style="color:var(--text-light);font-size:13px;margin:0;">Lo que dicen nuestros clientes</p></div></div><!-- Resumen estrellas --><div id="opiniones-resumen" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:20px;display:flex;gap:20px;align-items:center;"><div style="text-align:center;flex-shrink:0;"><div id="op-prom" style="font-size:44px;font-weight:800;color:var(--primary);line-height:1;">—</div><div id="op-stars-avg" style="font-size:20px;margin:4px 0;color:#f59e0b;letter-spacing:2px;">☆☆☆☆☆</div><div id="op-count" style="font-size:11px;color:var(--text-light);font-weight:700;">0 reseñas</div></div><div id="op-bars" style="flex:1;display:flex;flex-direction:column;gap:5px;"></div></div><!-- Botón dejar opinión --><button onclick="abrirModalOpinion()" style="
         width:100%;padding:16px;border-radius:14px;border:2px solid var(--primary);
@@ -674,10 +1050,10 @@ window.aplicarCodigoDescuento = function() {
     // Primero buscar en internos
     if (internos[codigo]) {
         const cod = internos[codigo];
-        if (!cod.activo) return fb('❌ Código deshabilitado.', false);
+        if (!cod.activo) return fb('Código deshabilitado', false);
         codigoInternoAplicado = { codigo, nombre: cod.nombre, tipo: 'interno', descPct: cod.descPct };
         cuponAplicado = { id: codigo, titulo: `Uso interno — ${cod.nombre}`, tipo: 'porcentaje', valor: cod.descPct / 100 };
-        fb(`✅ Uso interno autorizado: <strong>${cod.nombre}</strong>`, true);
+        fb(`Uso interno autorizado: <strong>${cod.nombre}</strong>`, true);
         renderCartItems();
         return;
     }
@@ -685,19 +1061,19 @@ window.aplicarCodigoDescuento = function() {
     // Luego buscar en promos
     if (promos[codigo]) {
         const cod = promos[codigo];
-        if (!cod.activo) return fb('❌ Código deshabilitado.', false);
+        if (!cod.activo) return fb('Código deshabilitado', false);
         if (cod.soloEfectivo) {
             const metodo = document.getElementById('p-metodo')?.value;
             if (metodo !== 'Efectivo') return fb('⚠️ Este código es válido solo pagando en <strong>Efectivo</strong>.', false);
         }
         codigoInternoAplicado = { codigo, nombre: cod.titulo, tipo: 'promo', descPct: cod.descPct };
         cuponAplicado = { id: codigo, titulo: cod.titulo, tipo: 'porcentaje', valor: cod.descPct / 100 };
-        fb(`✅ Código aplicado: <strong>${cod.titulo}</strong>`, true);
+        fb(`Código aplicado: <strong>${cod.titulo}</strong>`, true);
         renderCartItems();
         return;
     }
 
-    fb('❌ Código inválido o no reconocido.', false);
+    fb('Código inválido o no reconocido', false);
 };
 
 
@@ -1820,7 +2196,7 @@ function obtenerCuponDelDia() {
                 </div> `;
         }
 
-        // Render automático del tab Locales: una card por sucursal con foto + tabla de precios
+        // Render automático del tab Locales: botones por sucursal con precios y botón ver mapa
         function renderZonasCards() {
             const container = document.getElementById('zonas-cards-container');
             if (!container || container._rendered) return;
@@ -1828,22 +2204,83 @@ function obtenerCuponDelDia() {
             let html = '';
             for (const key in SUC_MAP) {
                 const suc = SUC_MAP[key];
+                // Armar filas de precios
                 let locsHtml = '';
                 for (const loc in suc.locs) {
-                    locsHtml += `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);"><span style="color:var(--text-light);font-size:13px;">${loc}</span><strong style="color:var(--white);font-size:14px;">$${suc.locs[loc].toLocaleString('es-AR')}</strong></div>`;
+                    locsHtml += `
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+                            <span style="color:var(--text-light);font-size:13px;">${loc}</span>
+                            <strong style="color:var(--white);font-size:14px;">$${suc.locs[loc].toLocaleString('es-AR')}</strong>
+                        </div>`;
                 }
+                const mapaBtnHtml = suc.mapImg
+                    ? `<button onclick="abrirZonaMapa('${key}')"
+                        style="width:100%;margin-top:14px;padding:13px;border-radius:10px;border:none;
+                               background:var(--primary);color:var(--dark);font-weight:800;font-size:13px;
+                               text-transform:uppercase;letter-spacing:0.8px;cursor:pointer;
+                               display:flex;align-items:center;justify-content:center;gap:8px;
+                               box-shadow:0 3px 10px rgba(245,158,11,0.3);transition:all 0.2s;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                            Ver mapa de cobertura
+                        </button>`
+                    : '';
                 html += `
-                <div style="background:var(--surface);border:1px solid var(--border);border-radius:18px;overflow:hidden;margin-bottom:24px;box-shadow:var(--shadow-card);">
-                    ${suc.mapImg ? `<img src="${suc.mapImg}" style="width:100%;display:block;max-height:220px;object-fit:cover;">` : ''}
-                    <div style="padding:16px;">
-                        <div style="font-weight:800;font-size:15px;color:var(--primary);margin-bottom:12px;text-transform:uppercase;">${suc.n}</div>
+                <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;
+                            padding:18px;margin-bottom:16px;box-shadow:var(--shadow-card);">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+                        <div style="width:36px;height:36px;border-radius:8px;background:rgba(245,158,11,0.12);
+                                    display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        </div>
+                        <div>
+                            <div style="font-weight:800;font-size:14px;color:var(--white);text-transform:uppercase;">${suc.n.split(',')[0]}</div>
+                            <div style="font-size:11px;color:var(--text-light);margin-top:1px;">${suc.n.includes(',') ? suc.n.split(',').slice(1).join(',').trim() : ''}</div>
+                        </div>
+                    </div>
+                    <div style="border-top:1px solid var(--border);padding-top:12px;">
                         ${locsHtml}
                     </div>
+                    ${mapaBtnHtml}
                 </div>`;
             }
             container.innerHTML = html;
         }
         window.verZona = () => {}; // mantener compatibilidad si algo lo llama
+
+        // Abrir modal de mapa de zona
+        window.abrirZonaMapa = function(sucKey) {
+            const suc = SUC_MAP[sucKey];
+            if (!suc) return;
+            document.getElementById('zona-modal-titulo').textContent = suc.n.split(',')[0];
+            document.getElementById('zona-modal-subtitulo').textContent = suc.n;
+            // Precios en chips horizontales
+            let preciosHtml = '<div style="display:flex;flex-wrap:wrap;gap:8px;">';
+            for (const loc in suc.locs) {
+                preciosHtml += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;white-space:nowrap;">
+                    <span style="color:var(--text-light);">${loc}</span>
+                    <strong style="color:var(--primary);margin-left:6px;">$${suc.locs[loc].toLocaleString('es-AR')}</strong>
+                </div>`;
+            }
+            preciosHtml += '</div>';
+            document.getElementById('zona-modal-precios').innerHTML = preciosHtml;
+            const img = document.getElementById('zona-modal-img');
+            const noImg = document.getElementById('zona-modal-no-img');
+            if (suc.mapImg) {
+                img.src = suc.mapImg;
+                img.style.display = 'block';
+                noImg.style.display = 'none';
+            } else {
+                img.style.display = 'none';
+                noImg.style.display = 'flex';
+            }
+            document.getElementById('zona-mapa-modal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        };
+
+        window.cerrarZonaMapa = function() {
+            document.getElementById('zona-mapa-modal').style.display = 'none';
+            document.body.style.overflow = '';
+        };
 
 
 
@@ -2220,7 +2657,7 @@ function mostrarModalResena(pedidoId, pedido) {
 window.setStars = (v) => {
     resenaPuntuacion = v;
     document.querySelectorAll('.star-btn').forEach((s, i) => {
-        s.classList.toggle('lit', i < v);
+        s.classList.toggle('active', i < v);
     });
 };
 
@@ -2270,13 +2707,32 @@ async function registrarVentaStats(items, total, sucursal) {
 // ── Abrir/cerrar panel admin ──────────────────────────
 function abrirAdmin() {
     const root = document.getElementById('admin-root');
-    if (root) root.classList.add('visible');
+    if (root) {
+        root.classList.add('visible');
+        root.style.display = 'block';
+    }
+    const heroSection = document.querySelector('.hero-slider');
+    const menuSection = document.getElementById('menu-container');
+    const bottomNav = document.querySelector('.bottom-nav');
+    if (heroSection) heroSection.style.display = 'none';
+    if (menuSection) menuSection.style.display = 'none';
+    if (bottomNav) bottomNav.style.display = 'none';
     document.title = 'Marvel Food | Admin';
+    console.log('Panel de admin abierto');
 }
 
 function cerrarAdmin() {
     const root = document.getElementById('admin-root');
-    if (root) root.classList.remove('visible');
+    if (root) {
+        root.classList.remove('visible');
+        root.style.display = 'none';
+    }
+    const heroSection = document.querySelector('.hero-slider');
+    const menuSection = document.getElementById('menu-container');
+    const bottomNav = document.querySelector('.bottom-nav');
+    if (heroSection) heroSection.style.display = 'flex';
+    if (menuSection) menuSection.style.display = 'block';
+    if (bottomNav) bottomNav.style.display = 'flex';
     document.title = 'Marvel Food | Tienda Online';
     window.location.hash = '';
 }
@@ -3668,7 +4124,7 @@ setInterval(() => {
 // 5. Prevent right-click inspect on admin panel only
 document.getElementById('admin-root') && document.getElementById('admin-root').addEventListener('contextmenu', e => e.preventDefault());
 
-    </script><!-- BARRA SEGUIMIENTO PEDIDO --><div id="tracking-bar"></div><!-- MODAL SEGUIMIENTO --><div id="tracking-modal"><div class="tracking-sheet"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><h2 style="font-weight:800;font-size:18px;color:var(--primary);">TU PEDIDO</h2><button onclick="document.getElementById('tracking-modal').classList.remove('open')" style="background:rgba(255,255,255,0.1);border:none;color:var(--white);width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;">✕</button></div><div id="tracking-cliente" style="color:var(--text-light);font-size:13px;margin-bottom:4px;"></div><div id="tracking-sucursal" style="color:var(--text-light);font-size:12px;margin-bottom:16px;"></div><div class="tracking-progress" id="tracking-progress"></div><div id="tracking-items" style="background:var(--bg);border-radius:10px;padding:12px;margin-bottom:16px;"></div><div id="tracking-total" style="font-size:18px;font-weight:800;color:var(--primary);text-align:right;"></div><button onclick="cerrarTracking()" style="width:100%;padding:12px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text-light);font-weight:700;margin-top:16px;cursor:pointer;">CERRAR</button></div></div><!-- MODAL RESEÑA --><div id="resena-modal"><div class="resena-sheet"><div style="font-size:40px;margin-bottom:8px;"></div><h3 style="font-weight:800;font-size:18px;color:var(--white);margin-bottom:6px;">¿Cómo estuvo tu pedido?</h3><p style="color:var(--text-light);font-size:13px;">Tu opinión nos ayuda a mejorar</p><div class="stars-row" id="stars-row"><span class="star-btn" data-v="1" onclick="setStars(1)">⭐</span><span class="star-btn" data-v="2" onclick="setStars(2)">⭐</span><span class="star-btn" data-v="3" onclick="setStars(3)">⭐</span><span class="star-btn" data-v="4" onclick="setStars(4)">⭐</span><span class="star-btn" data-v="5" onclick="setStars(5)">⭐</span></div><textarea id="resena-comentario" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--white);font-size:13px;resize:none;height:80px;margin-bottom:16px;" placeholder="Comentario opcional..."></textarea><button onclick="enviarResena()" id="resena-btn" style="width:100%;padding:14px;border-radius:10px;border:none;background:var(--primary);color:#000;font-weight:800;font-size:15px;cursor:pointer;">ENVIAR RESEÑA</button><button onclick="document.getElementById('resena-modal').classList.remove('open')" style="width:100%;padding:10px;border-radius:10px;border:none;background:transparent;color:var(--text-light);font-size:13px;margin-top:8px;cursor:pointer;">Ahora no</button></div></div><!-- ADMIN --><div id="admin-root" style="display:none;"><!-- LOGIN --><div id="adm-login-screen"><div class="adm-login-box"><div style="font-size:36px;margin-bottom:8px;"></div><h1>MARVEL FOOD</h1><p>Panel de administración</p><input class="adm-inp" type="password" id="adm-pin" placeholder="PIN de acceso" autocomplete="off"
+    </script><!-- BARRA SEGUIMIENTO PEDIDO --><div id="tracking-bar"></div><!-- MODAL SEGUIMIENTO --><div id="tracking-modal"><div class="tracking-sheet"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><h2 style="font-weight:800;font-size:18px;color:var(--primary);">TU PEDIDO</h2><button onclick="document.getElementById('tracking-modal').classList.remove('open')" style="background:rgba(255,255,255,0.1);border:none;color:var(--white);width:32px;height:32px;border-radius:50%;font-size:20px;cursor:pointer;font-weight:300;">×</button></div><div id="tracking-cliente" style="color:var(--text-light);font-size:13px;margin-bottom:4px;"></div><div id="tracking-sucursal" style="color:var(--text-light);font-size:12px;margin-bottom:16px;"></div><div class="tracking-progress" id="tracking-progress"></div><div id="tracking-items" style="background:var(--bg);border-radius:10px;padding:12px;margin-bottom:16px;"></div><div id="tracking-total" style="font-size:18px;font-weight:800;color:var(--primary);text-align:right;"></div><button onclick="cerrarTracking()" style="width:100%;padding:12px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text-light);font-weight:700;margin-top:16px;cursor:pointer;">CERRAR</button></div></div><!-- MODAL RESEÑA --><div id="resena-modal"><div class="resena-sheet"><div style="font-size:40px;margin-bottom:8px;"></div><h3 style="font-weight:800;font-size:18px;color:var(--white);margin-bottom:6px;">¿Cómo estuvo tu pedido?</h3><p style="color:var(--text-light);font-size:13px;">Tu opinión nos ayuda a mejorar</p><div class="stars-row" id="stars-row"><span class="star-btn" data-v="1" onclick="setStars(1)">★</span><span class="star-btn" data-v="2" onclick="setStars(2)">★</span><span class="star-btn" data-v="3" onclick="setStars(3)">★</span><span class="star-btn" data-v="4" onclick="setStars(4)">★</span><span class="star-btn" data-v="5" onclick="setStars(5)">★</span></div><textarea id="resena-comentario" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--white);font-size:13px;resize:none;height:80px;margin-bottom:16px;" placeholder="Comentario opcional..."></textarea><button onclick="enviarResena()" id="resena-btn" style="width:100%;padding:14px;border-radius:10px;border:none;background:var(--primary);color:#000;font-weight:800;font-size:15px;cursor:pointer;">ENVIAR RESEÑA</button><button onclick="document.getElementById('resena-modal').classList.remove('open')" style="width:100%;padding:10px;border-radius:10px;border:none;background:transparent;color:var(--text-light);font-size:13px;margin-top:8px;cursor:pointer;">Ahora no</button></div></div><!-- ADMIN --><div id="admin-root" style="display:none;"><!-- LOGIN --><div id="adm-login-screen"><div class="adm-login-box"><div style="font-size:36px;margin-bottom:8px;"></div><h1>MARVEL FOOD</h1><p>Panel de administración</p><input class="adm-inp" type="password" id="adm-pin" placeholder="PIN de acceso" autocomplete="off"
                 onkeydown="if(event.key==='Enter') admCheckPin()">
 <div id="adm-pin-feedback" style="min-height:18px;font-size:12px;font-weight:700;margin:6px 0 2px;text-align:center;"></div>
 <button class="adm-btn-primary" onclick="admCheckPin()">INGRESAR</button></div></div><!-- PANEL PRINCIPAL --><div id="adm-app" style="display:none;"><!-- Header --><div class="adm-header"><h1>MARVEL <span>ADMIN</span></h1><div style="display:flex;align-items:center;gap:8px;"><span class="adm-badge-live">● EN VIVO</span><span style="color:#9ca3af;font-size:10px;" id="adm-last-update">—</span><button onclick="admLogout()" style="background:transparent;border:1px solid #333;color:#9ca3af;padding:5px 10px;border-radius:8px;font-size:10px;cursor:pointer;">SALIR</button></div></div><!-- Stats --><div class="adm-stats-bar"><div class="adm-stat"><span>Pendientes</span><span id="adm-s-pend">0</span></div><div class="adm-stat"><span>Aceptados</span><span id="adm-s-acep" style="color:#10b981">0</span></div><div class="adm-stat"><span>Listos</span><span id="adm-s-list" style="color:#3b82f6">0</span></div><div class="adm-stat"><span>Hoy</span><span id="adm-s-total" style="color:#fff">0</span></div><div class="adm-stat"><span>Recaudado</span><span id="adm-s-cash" style="color:#10b981">$0</span></div></div><!-- Barra de filtros --><!-- Tabs del admin --><div style="display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);overflow-x:auto;"><button class="adm-tab active" onclick="admSwitchTab('pedidos',this)">Pedidos</button><button class="adm-tab" onclick="admSwitchTab('dashboard',this)"> Dashboard</button><button class="adm-tab" onclick="admSwitchTab('menu',this)"> Menú</button><button class="adm-tab" onclick="admSwitchTab('promos',this)">Promos</button><button class="adm-tab" onclick="admSwitchTab('cupones',this)">Cupones</button><button class="adm-tab" onclick="admSwitchTab('codigos',this)">🔑 Códigos</button><button class="adm-tab" onclick="admSwitchTab('resenas',this)">Reseñas</button></div><!-- TAB PEDIDOS --><div id="adm-tab-pedidos"><div class="adm-filterbar"><!-- Fila 1: Fecha + Sucursal --><div class="adm-filterrow"><div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;"><span style="color:#9ca3af;font-size:11px;font-weight:700;white-space:nowrap;"> FECHA</span><input type="date" id="adm-fecha-filtro" class="adm-date-inp" onchange="admAplicarFiltros()"><button onclick="admFechaHoy()" class="adm-filter-btn" style="white-space:nowrap;padding:5px 10px;">Hoy</button><button onclick="admVerTodoHistorial()" id="btn-todo-historial" class="adm-filter-btn" style="white-space:nowrap;padding:5px 10px;background:rgba(99,102,241,0.15);border-color:#6366f1;color:#a5b4fc;">📋 Todo</button></div><div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;"><span style="color:#9ca3af;font-size:11px;font-weight:700;white-space:nowrap;">SUCURSAL</span><select id="adm-suc-filtro" class="adm-date-inp" onchange="admAplicarFiltros()" style="flex:1;"><option value="">Todas</option><option value="PELLEGRINI">Centro</option><option value="Rondeau">Norte</option><option value="San Martin">Sur</option><option value="Funes">Funes</option></select></div></div><!-- Fila 2: Estado + Tipo + Limpiar --><div class="adm-filterrow" style="margin-top:8px;"><button class="adm-filter-btn active" data-f="Todos"    onclick="admFiltroEstado('Todos',this)">Todos</button><button class="adm-filter-btn"        data-f="Pendiente" onclick="admFiltroEstado('Pendiente',this)">⏳ Pendientes</button><button class="adm-filter-btn f-acep" data-f="Aceptado" onclick="admFiltroEstado('Aceptado',this)">✓ Aceptados</button><button class="adm-filter-btn f-list" data-f="Listo"    onclick="admFiltroEstado('Listo',this)">Listos</button><button class="adm-filter-btn f-ent"  data-f="Entregado" onclick="admFiltroEstado('Entregado',this)">Entregados</button><button class="adm-filter-btn"        data-f="Delivery" onclick="admFiltroEstado('Delivery',this)">Delivery</button><button class="adm-filter-btn"        data-f="Retiro"   onclick="admFiltroEstado('Retiro',this)">Retiro</button><button onclick="admLimpiarDia()" style="margin-left:auto;background:rgba(239,68,68,.15);border:1px solid #ef4444;color:#ef4444;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">Limpiar día</button></div></div><!-- Lista pedidos --><div class="adm-orders" id="adm-orders"></div></div><!-- /adm-tab-pedidos --><!-- TAB DASHBOARD --><div id="adm-tab-dashboard" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:16px;">MÉTRICAS DEL DÍA</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;"><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Pedidos hoy</div><div id="dash-total" style="font-size:28px;font-weight:800;color:var(--primary);">0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Recaudado</div><div id="dash-cash" style="font-size:22px;font-weight:800;color:#10b981;">$0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Ticket promedio</div><div id="dash-ticket" style="font-size:22px;font-weight:800;color:#3b82f6;">$0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Delivery / Retiro</div><div id="dash-tipos" style="font-size:16px;font-weight:800;color:var(--white);">0 / 0</div></div></div><!-- Ventas por hora --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Ventas por hora</div><div id="dash-chart-horas" style="display:flex;align-items:flex-end;gap:4px;height:80px;"></div><div id="dash-chart-labels" style="display:flex;gap:4px;margin-top:4px;"></div></div><!-- Productos más pedidos --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Productos más pedidos hoy</div><div id="dash-top-prods"></div></div><!-- Mapa de calor de zonas --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Pedidos por zona</div><div id="dash-zonas"></div></div></div><!-- TAB MENÚ --><div id="adm-tab-menu" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:6px;"> GESTIÓN DE MENÚ</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Pausá productos o editá precios. Los cambios son inmediatos en la tienda.</p><div id="adm-menu-lista" style="display:flex;flex-direction:column;gap:8px;"></div></div><!-- TAB RESEÑAS / OPINIONES --><div id="adm-tab-resenas" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">OPINIONES DE CLIENTES</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Podés eliminar cualquier opinión que no corresponda. Los cambios son inmediatos.</p><div style="display:flex;gap:12px;margin-bottom:20px;"><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);flex:1;text-align:center;"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Promedio</div><div id="res-promedio" style="font-size:32px;font-weight:800;color:var(--primary);">—</div><div style="color:#9ca3af;font-size:11px;" id="res-count">0 reseñas</div></div><div id="res-dist" style="flex:2;background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);display:flex;flex-direction:column;gap:5px;justify-content:center;"></div></div><!-- Tabs internas: Pedido / Públicas --><div style="display:flex;gap:8px;margin-bottom:16px;"><button id="adm-res-tab-ped" onclick="admResTab('pedidos')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--primary);background:rgba(245,158,11,.15);color:var(--primary);font-weight:800;font-size:12px;cursor:pointer;">Desde pedido</button><button id="adm-res-tab-pub" onclick="admResTab('publicas')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--border);background:transparent;color:#9ca3af;font-weight:800;font-size:12px;cursor:pointer;">Opiniones públicas</button></div><div id="adm-resenas-lista" style="display:flex;flex-direction:column;gap:10px;"></div></div><!-- TAB PROMOS --><div id="adm-tab-promos" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">GESTIÓN DE PROMOS</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Editá precios y el día de venta de cada promo. Los cambios se aplican en tiempo real en la tienda.</p><div id="adm-promos-lista"></div></div><!-- TAB CÓDIGOS DE DESCUENTO --><div id="adm-tab-codigos" style="display:none;padding:20px;">

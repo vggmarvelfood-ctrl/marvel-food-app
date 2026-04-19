@@ -2740,17 +2740,26 @@ function cerrarAdmin() {
 window.addEventListener('DOMContentLoaded', function() {
     if (window.location.hash === '#admin' ||
         window.location.pathname.replace(/\/$/, '').endsWith('/admin')) {
+        // Ocultar pantalla de bienvenida si está visible
+        const ws = document.getElementById('welcome-screen');
+        if (ws) ws.style.display = 'none';
+        sessionStorage.setItem('mf_welcome_done', '1');
         abrirAdmin();
     }
 });
 
 window.addEventListener('hashchange', function() {
-    if (window.location.hash === '#admin') abrirAdmin();
+    if (window.location.hash === '#admin') {
+        const ws = document.getElementById('welcome-screen');
+        if (ws) ws.style.display = 'none';
+        sessionStorage.setItem('mf_welcome_done', '1');
+        abrirAdmin();
+    }
 });
 
 // ─── PIN ──────────────────────────────────────────────
 // ── Admin Auth — SHA-256 hash + rate-limit + lockout ─────────────
-const _ADM_HASH = "b79aa5be9adf925f8f2217c2734ceee4c25c606ab7cf3abd85d8aa3a52c479da";
+const _ADM_HASH = "1134c0a7d44fdae1afd7f1f64e2789496784095ca0a050947d659c256d331d34";
 let _admFailCount = 0;
 let _admLockUntil  = 0;
 

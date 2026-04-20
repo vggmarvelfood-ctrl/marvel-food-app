@@ -1,13 +1,20 @@
 <!DOCTYPE html><html lang="es"><head><!-- EmailJS: cargado con defer para no bloquear el parser --><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js" defer></script><!-- Firebase: cargados con defer (no bloquea parser, ejecuta en orden) --><script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" onerror="window._fbLoadErr=true;console.error('[Firebase] firebase-app no cargó')"></script><script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js" onerror="window._fbLoadErr=true;console.error('[Firebase] firebase-firestore no cargó')"></script><script> // ── EmailJS: inicializar cuando el script esté disponible ──
-    function _initEmailJS() {
-        if (window.emailjs) {
-            emailjs.init("sATMMVYtIbZLT1tMD");
-        } else {
-            // emailjs aún no cargó (defer), reintentar
-            setTimeout(_initEmailJS, 200);
+    // ── OPTIMIZACIÓN: EmailJS via evento load del script ──
+    (function() {
+        function _doInitEmailJS() {
+            if (window.emailjs) {
+                emailjs.init("sATMMVYtIbZLT1tMD");
+            }
         }
-    }
-    document.addEventListener('DOMContentLoaded', _initEmailJS);
+        const ejsScript = document.querySelector('script[src*="emailjs"]');
+        if (ejsScript) {
+            ejsScript.addEventListener('load', _doInitEmailJS);
+            // Fallback: si ya cargó (defer)
+            if (document.readyState !== 'loading') _doInitEmailJS();
+        } else {
+            document.addEventListener('DOMContentLoaded', _doInitEmailJS);
+        }
+    })();
 
     // ── Firebase: inicializar con reintentos por si el SDK tarda ──
     const _fbConfig = {
@@ -20,23 +27,53 @@
         measurementId: "G-Z7X80SVSX6"
     };
 
-    function _initFirebase(intentos) {
-        intentos = intentos || 0;
+    // ── OPTIMIZACIÓN: usar evento 'load' del script en lugar de setTimeout recursivo ──
+    function _initFirebase() {
         try {
             if (typeof firebase === 'undefined' || !firebase.firestore) {
-                if (intentos < 60) { setTimeout(function(){ _initFirebase(intentos+1); }, 200); return; }
-                throw new Error('Firebase SDK no cargó en 3 segundos');
+                // Esto solo debería ocurrir en race conditions extremas
+                console.warn('[Firebase] SDK aún no disponible al llamar _initFirebase');
+                window.db = null;
+                return;
             }
             if (!firebase.apps.length) firebase.initializeApp(_fbConfig);
             window.db = firebase.firestore();
-            // Actualizar alias global
             try { db = window.db; } catch(e) {}
+            // Disparar evento personalizado para que otros módulos sepan que DB está lista
+            document.dispatchEvent(new CustomEvent('firebase:ready', { detail: { db: window.db } }));
         } catch(e) {
             console.error("Firebase init error:", e);
             window.db = null;
+            _logError('firebase_init', e.message);
         }
     }
-    _initFirebase();
+
+    // Iniciar cuando el script de Firebase esté disponible
+    function _waitForFirebase(attempts) {
+        attempts = attempts || 0;
+        if (typeof firebase !== 'undefined' && firebase.firestore) {
+            _initFirebase();
+        } else if (attempts < 25) {
+            setTimeout(function() { _waitForFirebase(attempts + 1); }, 200);
+        } else {
+            console.error('[Firebase] SDK no cargó. Continuando sin conexión.');
+            window.db = null;
+        }
+    }
+
+    // Intentar enlazar al evento load del script; si ya cargó, ejecutar directo
+    (function() {
+        const scripts = document.querySelectorAll('script[src*="firebase-app"]');
+        const fbScript = scripts[scripts.length - 1];
+        if (fbScript && !fbScript._initHooked) {
+            fbScript._initHooked = true;
+            fbScript.addEventListener('load', function() { _waitForFirebase(0); });
+            // Por si 'load' ya disparó (defer script ejecutado)
+            setTimeout(function() { if (!window.db) _waitForFirebase(0); }, 100);
+        } else {
+            _waitForFirebase(0);
+        }
+    })();
 
     // Alias global — se actualiza cada vez que _initFirebase resuelve
     var db = window.db || null;
@@ -53,6 +90,8 @@
 <meta name="apple-mobile-web-app-title" content="Marvel Food">
 <link rel="apple-touch-icon" href="./icon-192x192.png">
 <!-- ════════════════════════════════════════════════════════ --><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<!-- Preload primera imagen del hero para mejor LCP en móvil -->
+<link rel="preload" as="image" href="https://i.ibb.co/CsY32Zpc/Hulk-6.jpg" fetchpriority="high">
 <!-- ══ Preconnect: reducir latencia en móvil ════════════ -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -513,10 +552,12 @@
     border: 1px solid var(--border); 
     overflow: hidden; 
     cursor: pointer; 
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
     display: flex; 
     flex-direction: column; 
     box-shadow: var(--shadow-card);
+    contain: layout style; /* Evitar reflow masivo en listas largas */
+    will-change: transform; /* Hint al compositor para animaciones */
 }
 .card-p:hover { 
     transform: translateY(-4px); 
@@ -1088,6 +1129,53 @@
 </style></head><body>
 <div id="offline-banner">📵 Sin conexión — algunos datos pueden estar desactualizados</div>
 <script>
+// ══ SISTEMA BÁSICO DE DIAGNÓSTICO DE ERRORES ═══════════════
+// Captura errores críticos antes del colapso del navegador
+// y los almacena en localStorage para diagnóstico
+(function _errorLogger() {
+    var LOG_KEY = 'mf_error_log';
+    var MAX_LOGS = 20;
+
+    window._logError = function(tipo, mensaje, stack) {
+        try {
+            var logs = JSON.parse(localStorage.getItem(LOG_KEY) || '[]');
+            logs.unshift({
+                tipo: tipo || 'unknown',
+                msg: (mensaje || '').slice(0, 300),
+                stack: (stack || '').slice(0, 500),
+                ua: navigator.userAgent.slice(0, 100),
+                ts: new Date().toISOString(),
+                mem: (window.performance && window.performance.memory)
+                    ? Math.round(window.performance.memory.usedJSHeapSize / 1048576) + 'MB'
+                    : 'N/A'
+            });
+            logs = logs.slice(0, MAX_LOGS);
+            localStorage.setItem(LOG_KEY, JSON.stringify(logs));
+        } catch(e) {}
+    };
+
+    // Capturar errores globales no manejados
+    window.addEventListener('error', function(e) {
+        window._logError('js_error', e.message, e.error ? e.error.stack : e.filename + ':' + e.lineno);
+    });
+
+    // Capturar promesas rechazadas
+    window.addEventListener('unhandledrejection', function(e) {
+        var msg = e.reason ? (e.reason.message || String(e.reason)) : 'Promise rejected';
+        window._logError('promise_rejection', msg, e.reason && e.reason.stack ? e.reason.stack : '');
+    });
+
+    // Exponer función para ver logs desde consola: mf_getLogs()
+    window.mf_getLogs = function() {
+        return JSON.parse(localStorage.getItem(LOG_KEY) || '[]');
+    };
+    window.mf_clearLogs = function() {
+        localStorage.removeItem(LOG_KEY);
+        console.log('Logs limpiados');
+    };
+})();
+</script>
+<script>
 // ── Detector de conexión en tiempo real ──────────────────
 (function() {
     function setBanner(isOffline) {
@@ -1124,7 +1212,7 @@
             color:#6b7280;font-size:13px;cursor:pointer;margin-top:8px;
         ">Saltar por ahora</button></div></div><!-- ════ FIN PANTALLA DE BIENVENIDA ════ --><!-- ══ SPLASH DE CARGA ══════════════════════════════════════ -->
 <div id="app-splash">
-    <img src="./icon-192x192.png" alt="Marvel Food" class="splash-logo" onerror="this.style.display='none'">
+    <img src="./icon-192x192.png" alt="Marvel Food" class="splash-logo" loading="eager" fetchpriority="high" onerror="this.style.display='none'">
     <div class="splash-title">MARVEL <span>FOOD</span></div>
     <div class="splash-bar-wrap"><div class="splash-bar"></div></div>
     <div class="splash-sub">Cargando tu menú...</div>
@@ -1669,12 +1757,21 @@ function inicializarHeroSlider() {
     heroSlider.addEventListener('touchend', () => setTimeout(startAutoSlide, 2000), { passive: true });
 }
 
-// ── Helper: esperar a que Firebase esté disponible ──────────
-function _esperarDB(fn, intentos) {
-    intentos = intentos || 0;
+// ── Helper: esperar a que Firebase esté disponible (usa evento o polling breve) ──────────
+function _esperarDB(fn) {
     if (window.db) { fn(); return; }
-    if (intentos > 20) { console.warn('Firebase no disponible, continuando sin él.'); fn(); return; }
-    setTimeout(function(){ _esperarDB(fn, intentos + 1); }, 100);
+    // Si Firebase dispara el evento personalizado, ejecutar
+    function onReady() {
+        document.removeEventListener('firebase:ready', onReady);
+        fn();
+    }
+    document.addEventListener('firebase:ready', onReady);
+    // Fallback de seguridad: si en 3s no llegó el evento, ejecutar igual
+    setTimeout(function() {
+        document.removeEventListener('firebase:ready', onReady);
+        if (window.db) fn();
+        else { console.warn('[_esperarDB] Firebase no disponible después de 3s'); fn(); }
+    }, 3000);
 }
 
 // 2. BLOQUE DE INICIO ÚNICO
@@ -1716,12 +1813,15 @@ document.addEventListener('DOMContentLoaded', () => {
 // ---------------------------------------
 
 
-        window.addEventListener('scroll', () => {
-            const header = document.getElementById('header');
-            if (!header) return;
-            if(window.scrollY > 50) header.classList.add('scrolled');
-            else header.classList.remove('scrolled');
-        });
+        // ── OPTIMIZACIÓN: header cacheado fuera del scroll ──
+        (function() {
+            const _header = document.getElementById('header');
+            if (!_header) return;
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) _header.classList.add('scrolled');
+                else _header.classList.remove('scrolled');
+            }, { passive: true });
+        })();
 
         window.scrollToMenu = () => {
             const menu = document.getElementById('menu-container');
@@ -1821,7 +1921,7 @@ function renderMenu() {
             const agotado = menuOverrides[p.id] && menuOverrides[p.id].agotado === true;
             gridHtml += `
                 <div class="card-p${agotado?' agotado':''}" onclick='${agotado?'':'openModal('+JSON.stringify({...p,p:precioFinal})+')'}'> ${agotado?'<div class=\"agotado-badge\">Agotado</div>':''}
-                    <div class="p-img-wrapper"><img class="p-img" src="${p.img}" alt="${p.n}"></div><div class="p-txt"><div><h3>${p.n}</h3><p>${p.d}</p></div><div class="p-action-row"><span class="p-price">$${precioFinal.toLocaleString()}</span><button class="add-btn">+</button></div></div></div> `;
+                    <div class="p-img-wrapper"><img class="p-img" src="${p.img}" alt="${p.n}" loading="lazy" decoding="async"></div><div class="p-txt"><div><h3>${p.n}</h3><p>${p.d}</p></div><div class="p-action-row"><span class="p-price">$${precioFinal.toLocaleString()}</span><button class="add-btn">+</button></div></div></div> `;
         });
         gridHtml += `</div>`;
         sec.innerHTML += gridHtml;
@@ -2452,7 +2552,7 @@ function obtenerCuponDelDia() {
             }
 
             container.innerHTML = promosVisibles.map(item => `
-                <div class="promo-card"><div class="badge-promo">${item.diaVenta === 2 ? 'SOLO POR HOY' : 'PROMO'}</div><img src="${item.img}" style="width:100%; height:140px; object-fit:cover; border-radius:10px; margin-bottom:10px;"><h3 style="font-size:16px; font-weight:800;">${item.n}</h3><p style="font-size:12px; color:var(--text-light); margin: 5px 0;">${item.d}</p><div class="price-container"><span class="old-price">$${item.pOriginal.toLocaleString()}</span><span class="new-price">$${item.p.toLocaleString()}</span></div><button class="btn-action" 
+                <div class="promo-card"><div class="badge-promo">${item.diaVenta === 2 ? 'SOLO POR HOY' : 'PROMO'}</div><img src="${item.img}" style="width:100%; height:140px; object-fit:cover; border-radius:10px; margin-bottom:10px;" loading="lazy" decoding="async"><h3 style="font-size:16px; font-weight:800;">${item.n}</h3><p style="font-size:12px; color:var(--text-light); margin: 5px 0;">${item.d}</p><div class="price-container"><span class="old-price">$${item.pOriginal.toLocaleString()}</span><span class="new-price">$${item.p.toLocaleString()}</span></div><button class="btn-action" 
                             onclick='openModal(${JSON.stringify(item)})' 
                             style="margin-top:12px; padding:10px; font-size:13px;"> AGREGAR PROMO
                     </button></div> `).join('');
@@ -5425,7 +5525,7 @@ async function cargarTopProductos() {
     if (!window.db) return;
     try {
         const snap = await window.db.collection('pedidos_v2')
-            .orderBy('fecha', 'desc').limit(200).get();
+            .orderBy('fecha', 'desc').limit(100).get();
         const conteo = {};
         snap.forEach(doc => {
             (doc.data().items || []).forEach(item => {
@@ -5458,7 +5558,7 @@ async function cargarResumenOpinionesInicio() {
     if (!window.db) return;
     try {
         const snap = await window.db.collection('opiniones')
-            .orderBy('fecha', 'desc').limit(50).get();
+            .orderBy('fecha', 'desc').limit(20).get(); // Limitado para no saturar memoria móvil
         const docs = [];
         snap.forEach(d => docs.push(d.data()));
         if (!docs.length) return;
@@ -5659,24 +5759,44 @@ window.pwaDismissBanner = () => {
 
 // ── Registro del Service Worker ───────────────────────────
 // ── Ocultar splash cuando la página esté lista ────────────
+// ── OPTIMIZACIÓN: Splash se oculta cuando el contenido está REALMENTE listo ──
 (function() {
+    let _splashHidden = false;
+
     function hideSplash() {
+        if (_splashHidden) return;
+        _splashHidden = true;
         const splash = document.getElementById('app-splash');
         if (!splash) return;
-        // Ocultar con fade después de que el contenido cargue
-        setTimeout(() => {
-            splash.classList.add('hide');
-            setTimeout(() => { if (splash.parentNode) splash.parentNode.removeChild(splash); }, 600);
-        }, 600);
+        splash.classList.add('hide');
+        // Remover del DOM para liberar memoria
+        setTimeout(() => { if (splash.parentNode) splash.parentNode.removeChild(splash); }, 700);
     }
-    // Si DOMContentLoaded ya pasó, ocultar de inmediato; si no, esperar
+
+    // Estrategia: ocultar cuando el menú esté renderizado O a los 4s máximo
+    let _splashTimeout = null;
+
+    function scheduleHide(delay) {
+        clearTimeout(_splashTimeout);
+        _splashTimeout = setTimeout(hideSplash, delay || 500);
+    }
+
+    // DOMContentLoaded: el HTML está parseado, podemos comenzar
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', hideSplash);
+        document.addEventListener('DOMContentLoaded', function() {
+            scheduleHide(400);
+        });
     } else {
-        hideSplash();
+        scheduleHide(400);
     }
-    // Fallback: ocultar splash a los 5s pase lo que pase (evita quedarse trabado)
-    setTimeout(hideSplash, 5000);
+
+    // Fallback absoluto: a los 4s sí o sí (reducido de 5s)
+    setTimeout(hideSplash, 4000);
+
+    // Hook: ocultar cuando Firebase esté listo + menú renderizado
+    document.addEventListener('firebase:ready', function() {
+        scheduleHide(300);
+    });
 })();
 
 if ('serviceWorker' in navigator) {
@@ -5688,33 +5808,40 @@ if ('serviceWorker' in navigator) {
 }
 
 // ── Nav-cats: ocultar al bajar, mostrar al subir ──────────
-try {
+// ── OPTIMIZACIÓN: nav-cats cacheada fuera del scroll para no consultar DOM cientos de veces/seg ──
 (function() {
+    // Cachear el elemento UNA SOLA VEZ al iniciar
+    let navCats = null;
     let lastY = 0;
     let ticking = false;
-    window.addEventListener('scroll', () => {
-        if (!ticking) {
+
+    function initNavCatsScroll() {
+        navCats = document.querySelector('.nav-cats');
+        if (!navCats) return; // Si no existe en esta página, salir limpiamente
+
+        window.addEventListener('scroll', () => {
+            if (ticking) return;
+            ticking = true;
             requestAnimationFrame(() => {
-                try {
-                    const cats = document.querySelector('.nav-cats');
-                    if (cats) {
-                        const currentY = window.scrollY;
-                        if (currentY > 200) {
-                            if (currentY > lastY + 10) cats.classList.add('hide-cats');
-                            else if (currentY < lastY - 5) cats.classList.remove('hide-cats');
-                        } else {
-                            cats.classList.remove('hide-cats');
-                        }
-                        lastY = currentY;
-                    }
-                } catch(e) {}
+                const currentY = window.scrollY;
+                if (currentY > 200) {
+                    if (currentY > lastY + 10)      navCats.classList.add('hide-cats');
+                    else if (currentY < lastY - 5)  navCats.classList.remove('hide-cats');
+                } else {
+                    navCats.classList.remove('hide-cats');
+                }
+                lastY = currentY;
                 ticking = false;
             });
-            ticking = true;
-        }
-    }, { passive: true });
+        }, { passive: true });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initNavCatsScroll);
+    } else {
+        initNavCatsScroll();
+    }
 })();
-} catch(e) {}
 </script>
 <!-- ════════════════════════════════════════════════════════ -->
 </body></html>

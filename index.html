@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="es"><head><!-- EmailJS: cargado con defer para no bloquear el parser --><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js" defer></script><!-- Firebase: cargados de forma síncrona (son pequeños y necesarios antes del DOMContentLoaded) --><script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script><script> // ── EmailJS: inicializar cuando el script esté disponible ──
+<!DOCTYPE html><html lang="es"><head><!-- EmailJS: cargado con defer para no bloquear el parser --><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js" defer></script><!-- Firebase: cargados de forma síncrona (son pequeños y necesarios antes del DOMContentLoaded) --><script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" onerror="console.error('[Firebase] firebase-app no cargó')"></script><script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js" onerror="console.error('[Firebase] firebase-firestore no cargó')"></script><script> // ── EmailJS: inicializar cuando el script esté disponible ──
     function _initEmailJS() {
         if (window.emailjs) {
             emailjs.init("sATMMVYtIbZLT1tMD");
@@ -52,7 +52,15 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Marvel Food">
 <link rel="apple-touch-icon" href="./icon-192x192.png">
-<!-- ════════════════════════════════════════════════════════ --><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/><title>Marvel Food | Tienda Online</title><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"><style> :root {
+<!-- ════════════════════════════════════════════════════════ --><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<!-- ══ Preconnect: reducir latencia en móvil ════════════ -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://www.gstatic.com">
+<link rel="preconnect" href="https://firestore.googleapis.com">
+<link rel="dns-prefetch" href="https://i.ibb.co">
+<link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+<!-- ════════════════════════════════════════════════════ --><title>Marvel Food | Tienda Online</title><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'" crossorigin><noscript><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript><style> :root {
             --primary: #f59e0b;
             --primary-hover: #d97706;
             --dark: #000000;
@@ -929,7 +937,29 @@
             box-shadow: var(--shadow-card);
             border-color: var(--border);
         }
-</style></head><body><div id="toast">¡Agregado al pedido!</div><!-- ════ PANTALLA DE BIENVENIDA / VERIFICACIÓN DE ZONA ════ --><div id="welcome-screen" style="
+
+/* ── Banner offline ─────────────────────────────────────── */
+#offline-banner {
+    display: none; position: fixed; top: 0; left: 0; right: 0;
+    background: #ef4444; color: #fff; text-align: center;
+    padding: 10px 16px; font-size: 13px; font-weight: 700;
+    z-index: 999999; letter-spacing: .3px;
+}
+#offline-banner.show { display: block; }
+</style></head><body>
+<div id="offline-banner">📵 Sin conexión — algunos datos pueden estar desactualizados</div>
+<script>
+// ── Detector de conexión en tiempo real ──────────────────
+(function() {
+    function setBanner(isOffline) {
+        const b = document.getElementById('offline-banner');
+        if (b) b.classList.toggle('show', isOffline);
+    }
+    window.addEventListener('online',  () => setBanner(false));
+    window.addEventListener('offline', () => setBanner(true));
+    if (!navigator.onLine) setBanner(true);
+})();
+</script><div id="toast">¡Agregado al pedido!</div><!-- ════ PANTALLA DE BIENVENIDA / VERIFICACIÓN DE ZONA ════ --><div id="welcome-screen" style="
     position:fixed; inset:0; z-index:99000;
     background:#0f0f0f;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -5388,7 +5418,7 @@ window.pwaDismissBanner = () => {
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js')
+        navigator.serviceWorker.register('./service-worker.js?v=4')
             .then(r => console.log('[SW] Registrado. Scope:', r.scope))
             .catch(e => console.warn('[SW] Error:', e));
     });

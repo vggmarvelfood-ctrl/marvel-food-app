@@ -1,7 +1,7 @@
 {
   "name": "Marvel Food Delivery",
   "short_name": "Marvel Food",
-  "start_url": "./tienda marvel.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#e23636",

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="es"><head><!-- EmailJS: cargado con defer para no bloquear el parser --><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js" defer></script><!-- Firebase: cargados async para no bloquear el parser en móviles con red lenta --><script async src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" onerror="console.error('[Firebase] firebase-app no cargó')"></script><script async src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js" onerror="console.error('[Firebase] firebase-firestore no cargó')"></script><script> // ── EmailJS: inicializar cuando el script esté disponible ──
+<!DOCTYPE html><html lang="es"><head><!-- EmailJS: cargado con defer para no bloquear el parser --><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js" defer></script><!-- Firebase: cargados con defer (no bloquea parser, ejecuta en orden) --><script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" onerror="window._fbLoadErr=true;console.error('[Firebase] firebase-app no cargó')"></script><script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js" onerror="window._fbLoadErr=true;console.error('[Firebase] firebase-firestore no cargó')"></script><script> // ── EmailJS: inicializar cuando el script esté disponible ──
     function _initEmailJS() {
         if (window.emailjs) {
             emailjs.init("sATMMVYtIbZLT1tMD");
@@ -265,52 +265,132 @@
         .nav-cats::-webkit-scrollbar { display: none; }
 
 /* ── Banner PWA Install ─────────────────────────────────── */
+/* ══ PWA INSTALL BANNER — estilo anuncio premium ══════════ */
+@keyframes pwaSlideDown {
+    from { opacity: 0; transform: translateY(-110%); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pwaShimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position: 200% center; }
+}
+@keyframes pwaBtnPulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.5); }
+    60%     { box-shadow: 0 0 0 8px rgba(245,158,11,0); }
+}
+
 #pwa-install-banner {
     position: fixed;
-    bottom: 70px; /* justo arriba del bottom-nav */
-    left: 12px; right: 12px;
-    background: linear-gradient(135deg, #2d1b69 0%, #1a0f40 100%);
-    border: 1px solid rgba(123,47,190,0.6);
-    border-radius: 18px;
-    padding: 14px 16px;
-    display: none; /* se muestra por JS */
-    align-items: center;
-    gap: 12px;
-    z-index: 410;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(123,47,190,0.3);
-    animation: slideUp 0.4s ease;
+    top: 0; left: 0; right: 0;        /* banner en el TOP como anuncio */
+    display: none;
+    flex-direction: column;
+    z-index: 9000;
+    animation: pwaSlideDown 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
+    /* fondo con efecto shimmer dorado */
+    background: linear-gradient(135deg,
+        #1a1a1a 0%,
+        #222 40%,
+        #1a1a1a 100%);
+    border-bottom: 2px solid var(--primary);
+    box-shadow: 0 4px 24px rgba(245,158,11,0.25), 0 2px 8px rgba(0,0,0,0.6);
 }
 #pwa-install-banner.visible { display: flex; }
+
+/* Franja dorada animada arriba del banner */
+.pwa-banner-stripe {
+    height: 3px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--primary) 30%,
+        #f97316 50%,
+        var(--primary) 70%,
+        transparent 100%);
+    background-size: 200% auto;
+    animation: pwaShimmer 2.5s linear infinite;
+}
+
+/* Cuerpo del banner */
+.pwa-banner-body {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px 14px;
+}
+
+/* Ícono de la app */
 .pwa-banner-icon {
-    width: 48px; height: 48px; border-radius: 12px;
-    object-fit: cover; flex-shrink: 0;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    width: 52px; height: 52px;
+    border-radius: 14px;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 2px solid rgba(245,158,11,0.4);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
 }
+
+/* Textos */
 .pwa-banner-text { flex: 1; min-width: 0; }
+
+.pwa-banner-tag {
+    display: inline-block;
+    background: rgba(245,158,11,0.15);
+    border: 1px solid rgba(245,158,11,0.4);
+    color: var(--primary);
+    font-size: 9px; font-weight: 800;
+    padding: 2px 8px; border-radius: 20px;
+    letter-spacing: 1.2px; text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
 .pwa-banner-title {
-    font-size: 13px; font-weight: 800; color: #fff;
-    margin-bottom: 2px; line-height: 1.2;
+    font-size: 14px; font-weight: 900;
+    color: #fff; line-height: 1.2;
+    margin-bottom: 3px;
+    letter-spacing: -0.2px;
 }
+.pwa-banner-title span { color: var(--primary); }
+
 .pwa-banner-sub {
-    font-size: 11px; color: rgba(255,255,255,0.6);
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
     font-weight: 500;
+    line-height: 1.3;
 }
+
+/* Botón instalar */
 .pwa-btn-install {
-    background: #7B2FBE;
-    border: none; color: #fff;
-    padding: 10px 16px; border-radius: 12px;
-    font-weight: 800; font-size: 12px;
+    background: var(--primary);
+    border: none; color: #000;
+    padding: 11px 16px;
+    border-radius: 12px;
+    font-weight: 900; font-size: 12px;
     cursor: pointer; white-space: nowrap;
     letter-spacing: 0.3px;
-    transition: background .2s;
     flex-shrink: 0;
+    text-transform: uppercase;
+    animation: pwaBtnPulse 2s 1s infinite;
+    transition: background .2s, transform .15s;
+    line-height: 1.3;
+    text-align: center;
 }
-.pwa-btn-install:hover { background: #9333ea; }
+.pwa-btn-install:active { transform: scale(0.95); }
+
+/* Botón cerrar */
 .pwa-btn-dismiss {
-    background: transparent; border: none;
-    color: rgba(255,255,255,0.4); font-size: 18px;
-    cursor: pointer; padding: 4px; line-height: 1;
-    flex-shrink: 0;
+    position: absolute;
+    top: 8px; right: 10px;
+    background: rgba(255,255,255,0.08);
+    border: none;
+    color: rgba(255,255,255,0.45);
+    font-size: 14px;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .2s, color .2s;
+}
+.pwa-btn-dismiss:hover {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
 }
 /* ── PWA progress toast (descargando / instalado) ── */
 #pwa-progress-toast {
@@ -325,6 +405,51 @@
     border-top-color: #000; border-radius: 50%;
     display: inline-block; animation: pwaSpinner .7s linear infinite;
     flex-shrink: 0;
+}
+
+/* ── Splash de carga inicial ── */
+#app-splash {
+    position: fixed; inset: 0; z-index: 99999;
+    background: #0A0A0A;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 20px;
+    transition: opacity .5s ease, transform .5s ease;
+}
+#app-splash.hide {
+    opacity: 0; pointer-events: none;
+}
+.splash-logo {
+    width: 90px; height: 90px; border-radius: 22px;
+    object-fit: cover;
+    box-shadow: 0 8px 32px rgba(245,158,11,0.4);
+    animation: splashPulse 1.5s ease-in-out infinite;
+}
+@keyframes splashPulse {
+    0%,100% { transform: scale(1); box-shadow: 0 8px 32px rgba(245,158,11,0.4); }
+    50% { transform: scale(1.05); box-shadow: 0 12px 40px rgba(245,158,11,0.7); }
+}
+.splash-title {
+    font-size: 28px; font-weight: 900; color: #fff;
+    text-transform: uppercase; letter-spacing: 2px;
+}
+.splash-title span { color: #f59e0b; }
+.splash-bar-wrap {
+    width: 180px; height: 4px; background: rgba(255,255,255,0.1);
+    border-radius: 4px; overflow: hidden;
+}
+.splash-bar {
+    height: 100%; background: linear-gradient(90deg, #f59e0b, #f97316);
+    border-radius: 4px;
+    animation: splashBarAnim 1.8s ease-in-out infinite;
+}
+@keyframes splashBarAnim {
+    0% { width: 0%; margin-left: 0; }
+    50% { width: 70%; margin-left: 0; }
+    100% { width: 0%; margin-left: 100%; }
+}
+.splash-sub {
+    font-size: 12px; color: rgba(255,255,255,0.4);
+    font-weight: 500; letter-spacing: 1px;
 }
         .cat-tag { 
     padding: 11px 22px; 
@@ -997,7 +1122,15 @@
         ">Continuar →</button><!-- Saltar --><button onclick="welcomeSkip()" style="
             width:100%;padding:10px;background:transparent;border:none;
             color:#6b7280;font-size:13px;cursor:pointer;margin-top:8px;
-        ">Saltar por ahora</button></div></div><!-- ════ FIN PANTALLA DE BIENVENIDA ════ --><div class="hero-slider" id="hero-slider"><!-- SLIDE 1: Hulk --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/CsY32Zpc/Hulk-6.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> DESTACADO DEL MENÚ</div><h1 class="hero-title">LA MEJOR<br>DE LA CARTA<br><span>Nuestra Hulk</span></h1><p class="hero-subtitle">Doble carne, cheddar, panceta, cebolla caramelizada y bbq.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Pedir Ahora</button><button class="hero-btn-secondary" onclick="scrollToMenu()">Ver Menú</button></div></div></div><!-- SLIDE 2: Compartir --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/sp9f92tD/DSC04607.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> ESPECIAL</div><h1 class="hero-title">COMPARTIR<br><span>Una Marvel</span></h1><p class="hero-subtitle">¡No hay 1 sin 2! Invitá a alguien y disfrutá juntos.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Aprovechar</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);})()">Ver Promos</button></div></div></div><!-- SLIDE 3: Combo --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/gLZH7hJW/DSC04609.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> COMBOS</div><h1 class="hero-title">ARMÁ TU<br><span>Combo Perfecto</span></h1><p class="hero-subtitle">¿Papas, Nuggets o Aros de cebolla? Elegí lo tuyo.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Pedir Combo</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);})()">Ver Promos</button></div></div></div><!-- SLIDE 4: Promos --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/wNQdcXh6/Dr-Strange-8.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> OFERTAS ACTIVAS</div><h1 class="hero-title">PROMOS<br><span>Para Vos</span></h1><p class="hero-subtitle">Las mejores promos del momento. ¡No te las pierdas!</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);scrollToMenu&&scrollToMenu();})()">Ver Promos</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-perfil]');if(n)switchTab('tab-perfil',n);})()">Cupones</button></div></div></div><!-- SLIDE 5: Smash --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/hRgTKHLs/DSC-4850.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> LÍNEA SMASH</div><h1 class="hero-title">¿NOCHE<br>DE SMASH?<br><span>Línea Flama</span></h1><p class="hero-subtitle">Probá nuestra línea smashed y dejanos tu opinión.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Ver Smash</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('#nav-pedidos');if(n)switchTab('tab-pedidos',n);})()">Mis Pedidos</button></div></div></div><!-- SLIDE 6: Brand --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/4B4ZCwF/DSC-4842.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> GRACIAS POR ELEGIRNOS</div><h1 class="hero-title">MARVEL<br>FOOD<br><span>Más que una Burger</span></h1><p class="hero-subtitle">Dejanos tu opinión y ayudá a otros a elegir mejor.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Pedir Ahora</button><button class="hero-btn-secondary" onclick="abrirModalOpinion()">Dejar Opinión</button></div></div></div><!-- Dots indicadores --><div class="hero-dots" id="hero-dots"></div><div class="scroll-indicator" onclick="scrollToMenu()"><span style="font-size: 12px; font-weight: 700; letter-spacing: 2px; margin-bottom: 5px;">MENÚ</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></div></div><div class="main-content"><div id="tab-inicio" class="tab-page"><div id="store-status-banner"></div><div id="cart-restore-banner"></div><div class="nav-cats" id="cat-list"></div><!-- TOP PRODUCTOS — alimentado por Firebase -->
+        ">Saltar por ahora</button></div></div><!-- ════ FIN PANTALLA DE BIENVENIDA ════ --><!-- ══ SPLASH DE CARGA ══════════════════════════════════════ -->
+<div id="app-splash">
+    <img src="./icon-192x192.png" alt="Marvel Food" class="splash-logo" onerror="this.style.display='none'">
+    <div class="splash-title">MARVEL <span>FOOD</span></div>
+    <div class="splash-bar-wrap"><div class="splash-bar"></div></div>
+    <div class="splash-sub">Cargando tu menú...</div>
+</div>
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="hero-slider" id="hero-slider"><!-- SLIDE 1: Hulk --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/CsY32Zpc/Hulk-6.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> DESTACADO DEL MENÚ</div><h1 class="hero-title">LA MEJOR<br>DE LA CARTA<br><span>Nuestra Hulk</span></h1><p class="hero-subtitle">Doble carne, cheddar, panceta, cebolla caramelizada y bbq.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Pedir Ahora</button><button class="hero-btn-secondary" onclick="scrollToMenu()">Ver Menú</button></div></div></div><!-- SLIDE 2: Compartir --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/sp9f92tD/DSC04607.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> ESPECIAL</div><h1 class="hero-title">COMPARTIR<br><span>Una Marvel</span></h1><p class="hero-subtitle">¡No hay 1 sin 2! Invitá a alguien y disfrutá juntos.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Aprovechar</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);})()">Ver Promos</button></div></div></div><!-- SLIDE 3: Combo --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/gLZH7hJW/DSC04609.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> COMBOS</div><h1 class="hero-title">ARMÁ TU<br><span>Combo Perfecto</span></h1><p class="hero-subtitle">¿Papas, Nuggets o Aros de cebolla? Elegí lo tuyo.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Pedir Combo</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);})()">Ver Promos</button></div></div></div><!-- SLIDE 4: Promos --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/wNQdcXh6/Dr-Strange-8.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> OFERTAS ACTIVAS</div><h1 class="hero-title">PROMOS<br><span>Para Vos</span></h1><p class="hero-subtitle">Las mejores promos del momento. ¡No te las pierdas!</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);scrollToMenu&&scrollToMenu();})()">Ver Promos</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-perfil]');if(n)switchTab('tab-perfil',n);})()">Cupones</button></div></div></div><!-- SLIDE 5: Smash --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/hRgTKHLs/DSC-4850.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> LÍNEA SMASH</div><h1 class="hero-title">¿NOCHE<br>DE SMASH?<br><span>Línea Flama</span></h1><p class="hero-subtitle">Probá nuestra línea smashed y dejanos tu opinión.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Ver Smash</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('#nav-pedidos');if(n)switchTab('tab-pedidos',n);})()">Mis Pedidos</button></div></div></div><!-- SLIDE 6: Brand --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/4B4ZCwF/DSC-4842.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> GRACIAS POR ELEGIRNOS</div><h1 class="hero-title">MARVEL<br>FOOD<br><span>Más que una Burger</span></h1><p class="hero-subtitle">Dejanos tu opinión y ayudá a otros a elegir mejor.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Pedir Ahora</button><button class="hero-btn-secondary" onclick="abrirModalOpinion()">Dejar Opinión</button></div></div></div><!-- Dots indicadores --><div class="hero-dots" id="hero-dots"></div><div class="scroll-indicator" onclick="scrollToMenu()"><span style="font-size: 12px; font-weight: 700; letter-spacing: 2px; margin-bottom: 5px;">MENÚ</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></div></div><div class="main-content"><div id="tab-inicio" class="tab-page"><div id="store-status-banner"></div><div id="cart-restore-banner"></div><div class="nav-cats" id="cat-list"></div><!-- TOP PRODUCTOS — alimentado por Firebase -->
 <div id="section-top-prods" style="margin-bottom:24px;padding:0 20px;display:none;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
         <div>
@@ -4420,15 +4553,23 @@ document.getElementById('admin-root') && document.getElementById('admin-root').a
     </script><!-- BARRA SEGUIMIENTO PEDIDO --><div id="tracking-bar"></div>
 <!-- ══ BANNER INSTALAR PWA ══════════════════════════════════ -->
 <div id="pwa-install-banner">
-    <img src="./icon-192x192.png" alt="Marvel Food" class="pwa-banner-icon">
-    <div class="pwa-banner-text">
-        <div class="pwa-banner-title">¡Bajá la app y pedí más fácil!</div>
-        <div class="pwa-banner-sub">Instalala en tu móvil en un toque</div>
+    <!-- franja animada arriba -->
+    <div class="pwa-banner-stripe"></div>
+    <!-- cuerpo -->
+    <div class="pwa-banner-body">
+        <img src="./icon-192x192.png" alt="Marvel Food" class="pwa-banner-icon"
+             onerror="this.style.display='none'">
+        <div class="pwa-banner-text">
+            <div class="pwa-banner-tag">⚡ Gratis · 1 click</div>
+            <div class="pwa-banner-title">Descargá la app y pedí <span>más rápido</span></div>
+            <div class="pwa-banner-sub">Guardala en tu pantalla · Sin tiendas · Sin esperas</div>
+        </div>
+        <button class="pwa-btn-install" id="pwa-btn-install" onclick="pwaTriggerInstall()">
+            ⬇️ Instalar<br>gratis
+        </button>
     </div>
-    <button class="pwa-btn-install" id="pwa-btn-install" onclick="pwaTriggerInstall()">
-        Instalar
-    </button>
-    <button class="pwa-btn-dismiss" onclick="pwaDismissBanner()" title="Cerrar">×</button>
+    <!-- botón cerrar flotante -->
+    <button class="pwa-btn-dismiss" onclick="pwaDismissBanner()" title="Cerrar">✕</button>
 </div><!-- MODAL SEGUIMIENTO --><div id="tracking-modal"><div class="tracking-sheet"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><h2 style="font-weight:800;font-size:18px;color:var(--primary);">TU PEDIDO</h2><button onclick="document.getElementById('tracking-modal').classList.remove('open')" style="background:rgba(255,255,255,0.1);border:none;color:var(--white);width:32px;height:32px;border-radius:50%;font-size:20px;cursor:pointer;font-weight:300;">×</button></div><div id="tracking-cliente" style="color:var(--text-light);font-size:13px;margin-bottom:4px;"></div><div id="tracking-sucursal" style="color:var(--text-light);font-size:12px;margin-bottom:16px;"></div><div class="tracking-progress" id="tracking-progress"></div><div id="tracking-items" style="background:var(--bg);border-radius:10px;padding:12px;margin-bottom:16px;"></div><div id="tracking-total" style="font-size:18px;font-weight:800;color:var(--primary);text-align:right;"></div><div id="tracking-cancel-container"></div>
 <button onclick="cerrarTracking()" style="width:100%;padding:12px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text-light);font-weight:700;margin-top:12px;cursor:pointer;">CERRAR</button></div></div><!-- MODAL RESEÑA --><div id="resena-modal"><div class="resena-sheet"><div style="font-size:40px;margin-bottom:8px;"></div><h3 style="font-weight:800;font-size:18px;color:var(--white);margin-bottom:6px;">¿Cómo estuvo tu pedido?</h3><p style="color:var(--text-light);font-size:13px;">Tu opinión nos ayuda a mejorar</p><div class="stars-row" id="stars-row"><span class="star-btn" data-v="1" onclick="setStars(1)">★</span><span class="star-btn" data-v="2" onclick="setStars(2)">★</span><span class="star-btn" data-v="3" onclick="setStars(3)">★</span><span class="star-btn" data-v="4" onclick="setStars(4)">★</span><span class="star-btn" data-v="5" onclick="setStars(5)">★</span></div><textarea id="resena-comentario" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--white);font-size:13px;resize:none;height:80px;margin-bottom:16px;" placeholder="Comentario opcional..."></textarea><button onclick="enviarResena()" id="resena-btn" style="width:100%;padding:14px;border-radius:10px;border:none;background:var(--primary);color:#000;font-weight:800;font-size:15px;cursor:pointer;">ENVIAR RESEÑA</button><button onclick="document.getElementById('resena-modal').classList.remove('open')" style="width:100%;padding:10px;border-radius:10px;border:none;background:transparent;color:var(--text-light);font-size:13px;margin-top:8px;cursor:pointer;">Ahora no</button></div></div><!-- ADMIN --><div id="admin-root" style="display:none;"><!-- LOGIN --><div id="adm-login-screen"><div class="adm-login-box"><div style="font-size:36px;margin-bottom:8px;"></div><h1>MARVEL FOOD</h1><p>Panel de administración</p><input class="adm-inp" type="password" id="adm-pin" placeholder="PIN de acceso" autocomplete="off"
                 onkeydown="if(event.key==='Enter') admCheckPin()">
@@ -5387,139 +5528,193 @@ function actualizarBadgePromos() {
 </script>
 <!-- ══ Registro del Service Worker (PWA) ════════════════════ -->
 <script>
-// ── PWA Install Banner ──────────────────────────────────────
+// ════════════════════════════════════════════════════════════
+//  PWA INSTALL BANNER — Sistema completo
+// ════════════════════════════════════════════════════════════
 let _pwaPrompt = null;
 
-// ── Notificación PWA descargando / completado ──────────────
+// ── Verificar si ya está corriendo como app instalada ──────
+function _pwaEsInstalada() {
+    return window.matchMedia('(display-mode: standalone)').matches
+        || window.navigator.standalone === true
+        || document.referrer.includes('android-app://');
+}
+
+// ── Mostrar / ocultar banner ───────────────────────────────
+function _pwaBannerHeight() {
+    const b = document.getElementById('pwa-install-banner');
+    return (b && b.classList.contains('visible')) ? b.offsetHeight : 0;
+}
+
+function _pwaMostrarBanner() {
+    if (_pwaEsInstalada()) return;
+    const banner = document.getElementById('pwa-install-banner');
+    if (!banner) return;
+    banner.classList.add('visible');
+    // Empujar el header y el contenido hacia abajo para no tapar nada
+    requestAnimationFrame(() => {
+        const h = banner.offsetHeight;
+        const header = document.querySelector('.top-header');
+        const splash = document.getElementById('app-splash');
+        if (header) header.style.top = h + 'px';
+        if (splash) splash.style.paddingTop = h + 'px';
+    });
+}
+
+function _pwaOcultarBanner() {
+    const banner = document.getElementById('pwa-install-banner');
+    if (!banner) return;
+    banner.classList.remove('visible');
+    // Restaurar posición del header
+    const header = document.querySelector('.top-header');
+    if (header) header.style.top = '0px';
+}
+
+// ── Toast de progreso (descargando / completado) ───────────
 function _pwaToast(msg, tipo) {
-    // tipo: 'info' (amarillo), 'success' (verde)
     let el = document.getElementById('pwa-progress-toast');
     if (!el) {
         el = document.createElement('div');
         el.id = 'pwa-progress-toast';
-        el.style.cssText = [
-            'position:fixed','bottom:160px','left:50%',
-            'transform:translateX(-50%) translateY(20px)',
-            'padding:13px 22px','border-radius:50px',
-            'font-weight:700','font-size:14px','z-index:9999',
-            'opacity:0','transition:all .35s cubic-bezier(.4,0,.2,1)',
-            'pointer-events:none','white-space:nowrap',
-            'display:flex','align-items:center','gap:9px',
-            'box-shadow:0 8px 24px rgba(0,0,0,.5)',
-            'border:1px solid rgba(255,255,255,.12)'
-        ].join(';');
+        el.style.cssText = 'position:fixed;bottom:160px;left:50%;transform:translateX(-50%) translateY(20px);padding:13px 22px;border-radius:50px;font-weight:700;font-size:14px;z-index:9999;opacity:0;transition:all .35s cubic-bezier(.4,0,.2,1);pointer-events:none;white-space:nowrap;display:flex;align-items:center;gap:9px;box-shadow:0 8px 24px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.12);max-width:calc(100vw - 40px);text-align:center;';
         document.body.appendChild(el);
     }
-    if (tipo === 'success') {
-        el.style.background = 'linear-gradient(135deg,#10b981,#059669)';
-    } else {
-        el.style.background = 'linear-gradient(135deg,#f59e0b,#d97706)';
-        el.style.color = '#000';
-    }
+    el.style.background = tipo === 'success' ? 'linear-gradient(135deg,#10b981,#059669)' : 'linear-gradient(135deg,#f59e0b,#d97706)';
     el.style.color = tipo === 'info' ? '#000' : '#fff';
     el.innerHTML = msg;
-    // mostrar
     requestAnimationFrame(() => {
         el.style.opacity = '1';
         el.style.transform = 'translateX(-50%) translateY(0)';
     });
-    // ocultar automáticamente si es success
     if (tipo === 'success') {
-        setTimeout(() => {
-            el.style.opacity = '0';
-            el.style.transform = 'translateX(-50%) translateY(20px)';
-        }, 4000);
+        setTimeout(() => { el.style.opacity='0'; el.style.transform='translateX(-50%) translateY(20px)'; }, 4500);
     }
 }
 
 function _pwaToastHide() {
     const el = document.getElementById('pwa-progress-toast');
-    if (el) { el.style.opacity = '0'; el.style.transform = 'translateX(-50%) translateY(20px)'; }
+    if (el) { el.style.opacity='0'; el.style.transform='translateX(-50%) translateY(20px)'; }
 }
 
+// ── Evento: el navegador dice que se puede instalar ────────
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     _pwaPrompt = e;
-    // Mostrar banner SIEMPRE al iniciar, sin importar si ya fue descartado antes
-    setTimeout(() => {
-        const banner = document.getElementById('pwa-install-banner');
-        if (banner) {
-            // Remover dismissed para que siempre se muestre
-            localStorage.removeItem('pwa_dismissed');
-            banner.classList.add('visible');
-        }
-    }, 2000);
+    // Mostrar banner siempre (a los 2s de cargar la página)
+    setTimeout(_pwaMostrarBanner, 2000);
 });
 
+// ── Evento: se abre el carrito → mostrar banner también ───
+// Parchamos toggleCart para mostrar el banner al abrir el carrito
+(function() {
+    function patchToggleCart() {
+        const orig = window.toggleCart;
+        if (typeof orig !== 'function') { setTimeout(patchToggleCart, 300); return; }
+        window.toggleCart = function() {
+            orig.apply(this, arguments);
+            // Si el carrito se acaba de abrir, mostrar banner de instalación
+            const cv = document.getElementById('cart-view');
+            if (cv && cv.classList.contains('open') && !_pwaEsInstalada() && _pwaPrompt) {
+                setTimeout(_pwaMostrarBanner, 800);
+            }
+        };
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', patchToggleCart);
+    else patchToggleCart();
+})();
+
+// ── Se completó la instalación ────────────────────────────
 window.addEventListener('appinstalled', () => {
     _pwaPrompt = null;
-    const banner = document.getElementById('pwa-install-banner');
-    if (banner) banner.classList.remove('visible');
+    _pwaOcultarBanner();
     _pwaToastHide();
-    // Notificación de completado exitoso
     _pwaToast('✅ ¡App instalada! Ya podés usarla desde tu pantalla de inicio', 'success');
     localStorage.setItem('pwa_installed', '1');
 });
 
+// ── Botón "Instalar" del banner ───────────────────────────
 window.pwaTriggerInstall = async () => {
-    if (!_pwaPrompt) return;
-    // Ocultar banner y mostrar notificación de descarga
-    const banner = document.getElementById('pwa-install-banner');
-    if (banner) banner.classList.remove('visible');
+    if (!_pwaPrompt) {
+        // Sin prompt nativo (iOS / ya instalada / etc), mostrar instrucciones
+        _pwaToast('📲 Tocá el menú del navegador → "Agregar a pantalla de inicio"', 'info');
+        setTimeout(() => _pwaToastHide(), 5000);
+        return;
+    }
+    _pwaOcultarBanner();
+    _pwaToast('<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(0,0,0,.2);border-top-color:#000;border-radius:50%;animation:pwaSpinner .7s linear infinite;vertical-align:middle;margin-right:4px;"></span> Descargando Marvel Food...', 'info');
     _pwaPrompt.prompt();
-    _pwaToast('<span class='pwa-spinner'></span> Descargando Marvel Food...', 'info');
     const { outcome } = await _pwaPrompt.userChoice;
     if (outcome !== 'accepted') {
-        // Usuario canceló: volver a mostrar banner
         _pwaToastHide();
-        setTimeout(() => { if (banner) banner.classList.add('visible'); }, 800);
+        setTimeout(_pwaMostrarBanner, 1000);
     }
     _pwaPrompt = null;
 };
 
+// ── Botón cerrar (X) del banner ───────────────────────────
 window.pwaDismissBanner = () => {
-    const banner = document.getElementById('pwa-install-banner');
-    if (banner) banner.classList.remove('visible');
-    // Solo lo oculta en esta sesión, no guarda dismissed permanentemente
-    // para que vuelva a aparecer la próxima vez
+    _pwaOcultarBanner();
+    // No guardamos en localStorage → reaparece en la próxima sesión
 };
+
+// ── Registro del Service Worker ───────────────────────────
+// ── Ocultar splash cuando la página esté lista ────────────
+(function() {
+    function hideSplash() {
+        const splash = document.getElementById('app-splash');
+        if (!splash) return;
+        // Ocultar con fade después de que el contenido cargue
+        setTimeout(() => {
+            splash.classList.add('hide');
+            setTimeout(() => { if (splash.parentNode) splash.parentNode.removeChild(splash); }, 600);
+        }, 600);
+    }
+    // Si DOMContentLoaded ya pasó, ocultar de inmediato; si no, esperar
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', hideSplash);
+    } else {
+        hideSplash();
+    }
+    // Fallback: ocultar splash a los 5s pase lo que pase (evita quedarse trabado)
+    setTimeout(hideSplash, 5000);
+})();
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js?v=4')
+        navigator.serviceWorker.register('./service-worker.js?v=5')
             .then(r => console.log('[SW] Registrado. Scope:', r.scope))
             .catch(e => console.warn('[SW] Error:', e));
     });
 }
 
 // ── Nav-cats: ocultar al bajar, mostrar al subir ──────────
+try {
 (function() {
     let lastY = 0;
     let ticking = false;
     window.addEventListener('scroll', () => {
         if (!ticking) {
             requestAnimationFrame(() => {
-                const cats = document.querySelector('.nav-cats');
-                if (cats) {
-                    const currentY = window.scrollY;
-                    // Solo aplica cuando el usuario ya bajó > 200px (ya pasó el hero)
-                    if (currentY > 200) {
-                        if (currentY > lastY + 10) {
-                            cats.classList.add('hide-cats');    // bajando → ocultar
-                        } else if (currentY < lastY - 5) {
-                            cats.classList.remove('hide-cats'); // subiendo → mostrar
+                try {
+                    const cats = document.querySelector('.nav-cats');
+                    if (cats) {
+                        const currentY = window.scrollY;
+                        if (currentY > 200) {
+                            if (currentY > lastY + 10) cats.classList.add('hide-cats');
+                            else if (currentY < lastY - 5) cats.classList.remove('hide-cats');
+                        } else {
+                            cats.classList.remove('hide-cats');
                         }
-                    } else {
-                        cats.classList.remove('hide-cats');
+                        lastY = currentY;
                     }
-                    lastY = currentY;
-                }
+                } catch(e) {}
                 ticking = false;
             });
             ticking = true;
         }
     }, { passive: true });
 })();
+} catch(e) {}
 </script>
 <!-- ════════════════════════════════════════════════════════ -->
 </body></html>

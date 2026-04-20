@@ -1,21 +1,25 @@
 {
   "name": "Marvel Food Delivery",
   "short_name": "Marvel Food",
-  "start_url": "./index.html",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#e23636",
+  "background_color": "#0A0A0A",
+  "theme_color": "#7B2FBE",
   "description": "Pedí las mejores hamburguesas del universo.",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }

@@ -41,7 +41,7 @@
     // Alias global — se actualiza cada vez que _initFirebase resuelve
     var db = window.db || null;
 </script><meta charset="utf-8" />
-<!-- ══ PWA: Manifest, tema y soporte iOS ══════════════════════ -->
+<!-- ══ PWA ══════════════════════════════════════════════════ -->
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#7B2FBE">
 <meta name="mobile-web-app-capable" content="yes">
@@ -49,7 +49,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Marvel Food">
 <link rel="apple-touch-icon" href="./icon-192x192.png">
-<!-- ══════════════════════════════════════════════════════════ --><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/><title>Marvel Food | Tienda Online</title><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"><style> :root {
+<!-- ════════════════════════════════════════════════════════ --><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/><title>Marvel Food | Tienda Online</title><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"><style> :root {
             --primary: #f59e0b;
             --primary-hover: #d97706;
             --dark: #000000;
@@ -202,19 +202,55 @@
         .address-bar select option { background: var(--surface); color: var(--white); }
 
         .nav-cats {
-    display: flex;
-    overflow-x: auto;
-    padding: 10px 20px 12px;
-    gap: 12px;
-    scrollbar-width: none;
-    position: sticky;
-    top: 56px;                          /* justo debajo del header fijo */
-    background: var(--bg);
-    z-index: 95;
+    display: flex; overflow-x: auto; padding: 10px 20px 12px; gap: 12px;
+    scrollbar-width: none; position: sticky; top: 56px;
+    background: var(--bg); z-index: 95; isolation: isolate;
     border-bottom: 1px solid var(--border);
-    /* isolation evita que los cards con transform/animation rompan el z-index */
-    isolation: isolate;
+    transition: transform 0.3s ease, opacity 0.3s ease;
 }
+.nav-cats.hide-cats {
+    transform: translateY(-110%);
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* ── Cancelar pedido ── */
+.btn-cancelar-pedido {
+    width: 100%; padding: 13px; margin-top: 12px;
+    background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.4);
+    color: #ef4444; border-radius: 12px; font-weight: 800; font-size: 14px;
+    cursor: pointer; transition: background .2s;
+}
+.btn-cancelar-pedido:hover { background: rgba(239,68,68,0.2); }
+
+/* ── Pill: botón cerrar ── */
+.pill-close {
+    background: rgba(255,255,255,0.1); border: none; color: #fff;
+    width: 26px; height: 26px; border-radius: 50%; font-size: 14px;
+    cursor: pointer; flex-shrink: 0; display: flex; align-items: center;
+    justify-content: center; pointer-events: all;
+}
+
+/* ── Pedido en curso banner (tab-pedidos) ── */
+.pedido-en-curso-card {
+    background: var(--surface); border: 1.5px solid var(--primary);
+    border-radius: 16px; padding: 16px; margin-bottom: 16px; position: relative;
+    overflow: hidden;
+}
+.pedido-en-curso-card::before {
+    content: ''; position: absolute; top: 0; left: 0;
+    width: 100%; height: 3px;
+    background: linear-gradient(90deg, var(--primary), #f97316);
+}
+.pec-estado {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 800;
+}
+.pec-estado.Pendiente  { background: rgba(245,158,11,.15); color: var(--primary); }
+.pec-estado.Aceptado   { background: rgba(16,185,129,.15);  color: #10b981; }
+.pec-estado.Listo      { background: rgba(59,130,246,.15);  color: #3b82f6; }
+.pec-estado.Entregado  { background: rgba(107,114,128,.15); color: #9ca3af; }
+.pec-estado.Cancelado  { background: rgba(239,68,68,.15);   color: #ef4444; }
         .nav-cats::-webkit-scrollbar { display: none; }
         .cat-tag { 
     padding: 11px 22px; 
@@ -251,7 +287,7 @@
     letter-spacing: 0.5px;
     position: relative;
     padding-left: 12px;
-    scroll-margin-top: 115px; /* header (56px) + nav-cats (~50px) + margen */
+    scroll-margin-top: 120px;
 }
 .cat-title::before {
     content: '';
@@ -943,7 +979,7 @@
             width:100%;padding:16px;border-radius:12px;border:none;
             background:var(--primary);color:#000;font-weight:800;font-size:15px;cursor:pointer;
         ">Enviar Opinión</button></div></div><!-- TAB PEDIDOS --><div id="tab-pedidos" class="tab-page hidden" style="padding: 20px; padding-bottom: 100px;"><div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;"><div><h2 style="font-weight:800; font-size:22px; color:var(--white); margin:0 0 4px;">MIS PEDIDOS</h2><p style="color:var(--text-light); font-size:13px; margin:0;">Historial de tus últimas órdenes</p></div><button onclick="limpiarHistorialPedidos()" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#ef4444;padding:8px 12px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;"> Limpiar
-        </button></div><div id="historial-pedidos-lista"></div></div><div class="cart-float" onclick="toggleCart()"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg><span id="cart-badge" class="badge-qty">0</span></div><nav class="bottom-nav">
+        </button></div><div id="pedido-en-curso-container"></div><div id="historial-pedidos-lista"></div></div><div class="cart-float" onclick="toggleCart()"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg><span id="cart-badge" class="badge-qty">0</span></div><nav class="bottom-nav">
     <div class="nav-item active" onclick="switchTab('tab-inicio', this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
         Inicio
@@ -2525,6 +2561,7 @@ window.reordenarUltimo = () => {
 
 // ── RENDER DE HISTORIAL DE PEDIDOS ──────────────────────────
 function renderHistorialPedidos() {
+    renderPedidoEnCurso();
     const lista = document.getElementById('historial-pedidos-lista');
     if (!lista) return;
     try {
@@ -2578,7 +2615,8 @@ const TRACKING_ESTADOS = [
     { key: 'Pendiente',  label: 'Pedido recibido',   emoji: '' },
     { key: 'Aceptado',   label: 'En preparación',    emoji: '' },
     { key: 'Listo',      label: 'Listo para envío',  emoji: '' },
-    { key: 'Entregado',  label: 'Entregado',          emoji: '✓' }
+    { key: 'Entregado',  label: 'Entregado',          emoji: '✓' },
+    { key: 'Cancelado',  label: 'Pedido cancelado',   emoji: '✗' }
 ];
 
 function iniciarSeguimiento(pedidoId) {
@@ -2625,8 +2663,26 @@ function actualizarTrackingUI(p, pedidoId) {
         return `<span class="tracking-step ${cls}">${e.emoji} ${e.label}</span>`;
     }).join('');
 
+    // Si está cancelado, limpiar la pill
+    if (p.estado === 'Cancelado') {
+        bar.innerHTML = '';
+        localStorage.removeItem('mf_last_pedido');
+        if (trackingUnsubscribe) { trackingUnsubscribe(); trackingUnsubscribe = null; }
+        renderPedidoEnCurso();
+        return;
+    }
+
     bar.innerHTML = `
-        <div class="tracking-pill" onclick="abrirTrackingModal('${pedidoId}')"><div class="tracking-dot"></div><div style="flex:1;min-width:0;"><div style="font-size:11px;font-weight:700;color:var(--primary);margin-bottom:4px;">TU PEDIDO · ${p.cliente}</div><div class="tracking-steps" style="flex-wrap:wrap;">${pasos}</div></div><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg></div>`;
+        <div class="tracking-pill" onclick="abrirTrackingModal('${pedidoId}')">
+          <div class="tracking-dot"></div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:11px;font-weight:700;color:var(--primary);margin-bottom:4px;">TU PEDIDO · ${p.cliente}</div>
+            <div class="tracking-steps" style="flex-wrap:wrap;">${pasos}</div>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;opacity:.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          <button class="pill-close" onclick="event.stopPropagation();cerrarPillTemporal()" title="Minimizar">✕</button>
+        </div>`;
+    renderPedidoEnCurso();
 
     // Actualizar modal si está abierto
     if (document.getElementById('tracking-modal').classList.contains('open')) {
@@ -2668,11 +2724,106 @@ function renderTrackingModal(p) {
     ).join('');
     document.getElementById('tracking-items').innerHTML = itemsHtml;
     document.getElementById('tracking-total').innerText = `Total: $${(p.total||0).toLocaleString('es-AR')}`;
+
+    // Botón cancelar: solo si el pedido está Pendiente
+    const cancelContainer = document.getElementById('tracking-cancel-container');
+    if (cancelContainer) {
+        const lastRaw = localStorage.getItem('mf_last_pedido');
+        const pedidoId = lastRaw ? JSON.parse(lastRaw).id : null;
+        if (p.estado === 'Pendiente' && pedidoId) {
+            cancelContainer.innerHTML = `
+                <button class="btn-cancelar-pedido" onclick="cancelarPedido('${pedidoId}')">
+                    ✕ CANCELAR PEDIDO
+                </button>
+                <p style="font-size:11px;color:var(--text-light);text-align:center;margin-top:6px;">
+                    Solo podés cancelar mientras el pedido aún no fue aceptado
+                </p>`;
+        } else if (p.estado === 'Cancelado') {
+            cancelContainer.innerHTML = `
+                <div style="text-align:center;padding:12px;background:rgba(239,68,68,0.1);border-radius:10px;border:1px solid rgba(239,68,68,0.3);">
+                    <span style="color:#ef4444;font-weight:800;font-size:14px;">✗ Pedido cancelado</span>
+                </div>`;
+        } else {
+            cancelContainer.innerHTML = '';
+        }
+    }
 }
 
 window.cerrarTracking = () => {
     document.getElementById('tracking-modal').classList.remove('open');
 };
+
+// Cierra la pill temporalmente (reaparece si hay actualización)
+window.cerrarPillTemporal = () => {
+    const bar = document.getElementById('tracking-bar');
+    if (bar) bar.innerHTML = '';
+};
+
+// Cancela el pedido en Firebase
+window.cancelarPedido = async (pedidoId) => {
+    if (!confirm('¿Querés cancelar tu pedido?\nSolo podés hacerlo si todavía no fue aceptado por el local.')) return;
+    try {
+        await db.collection('pedidos_v2').doc(pedidoId).update({ estado: 'Cancelado' });
+        cerrarTracking();
+        const bar = document.getElementById('tracking-bar');
+        if (bar) bar.innerHTML = '';
+        localStorage.removeItem('mf_last_pedido');
+        if (trackingUnsubscribe) { trackingUnsubscribe(); trackingUnsubscribe = null; }
+        renderPedidoEnCurso();
+        // Toast
+        const t = document.getElementById('toast');
+        if (t) { t.innerText = 'Pedido cancelado'; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
+    } catch(e) {
+        alert('No se pudo cancelar el pedido. Comunicate con el local directamente.');
+    }
+};
+
+// Muestra el pedido en curso en el tab-pedidos
+function renderPedidoEnCurso() {
+    const container = document.getElementById('pedido-en-curso-container');
+    if (!container) return;
+    const lastRaw = localStorage.getItem('mf_last_pedido');
+    if (!lastRaw) { container.innerHTML = ''; return; }
+    const last = JSON.parse(lastRaw);
+    if (!last || !last.id || !window.db) { container.innerHTML = ''; return; }
+
+    db.collection('pedidos_v2').doc(last.id).get().then(snap => {
+        if (!snap.exists) { container.innerHTML = ''; return; }
+        const p = snap.data();
+        const estado = p.estado || 'Pendiente';
+        if (estado === 'Entregado') { container.innerHTML = ''; return; }
+
+        const fecha = p.fecha ? (p.fecha.toDate ? p.fecha.toDate() : new Date(p.fecha)) : new Date();
+        const horaStr = fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+        const items = (p.items || []).map(i => `${i.cant}x ${i.n}`).join(', ');
+
+        const puedeCancelar = estado === 'Pendiente';
+        const esCancelado   = estado === 'Cancelado';
+
+        container.innerHTML = `
+        <div class="pedido-en-curso-card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                <div style="font-size:13px;font-weight:800;color:var(--white);">PEDIDO EN CURSO</div>
+                <span class="pec-estado ${estado}">${estado === 'Pendiente' ? '⏳ ' : estado === 'Aceptado' ? '👨‍🍳 ' : estado === 'Listo' ? '🚀 ' : estado === 'Cancelado' ? '✗ ' : '✓ '}${estado}</span>
+            </div>
+            <div style="font-size:12px;color:var(--text-light);margin-bottom:4px;">Hora: ${horaStr} · ${p.sucursal || ''} · ${p.tipo || ''}</div>
+            <div style="font-size:13px;color:var(--white);margin-bottom:12px;line-height:1.5;">${items}</div>
+            <div style="font-size:16px;font-weight:800;color:var(--primary);margin-bottom:12px;">Total: $${(p.total||0).toLocaleString('es-AR')}</div>
+            <div style="display:flex;gap:8px;">
+                <button onclick="abrirTrackingModal('${last.id}')"
+                    style="flex:1;padding:11px;border-radius:10px;background:var(--primary);border:none;color:#000;font-weight:800;font-size:13px;cursor:pointer;">
+                    Ver detalle
+                </button>
+                ${puedeCancelar ? `
+                <button onclick="cancelarPedido('${last.id}')"
+                    style="flex:1;padding:11px;border-radius:10px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.4);color:#ef4444;font-weight:800;font-size:13px;cursor:pointer;">
+                    Cancelar
+                </button>` : ''}
+            </div>
+            ${esCancelado ? '<p style="text-align:center;color:#ef4444;font-size:12px;margin-top:8px;">Este pedido fue cancelado</p>' : ''}
+        </div>`;
+    }).catch(() => { container.innerHTML = ''; });
+}
 
 // ── 5. SISTEMA DE RESEÑAS ──
 let resenaActualPedidoId = null;
@@ -4170,7 +4321,8 @@ setInterval(() => {
 // 5. Prevent right-click inspect on admin panel only
 document.getElementById('admin-root') && document.getElementById('admin-root').addEventListener('contextmenu', e => e.preventDefault());
 
-    </script><!-- BARRA SEGUIMIENTO PEDIDO --><div id="tracking-bar"></div><!-- MODAL SEGUIMIENTO --><div id="tracking-modal"><div class="tracking-sheet"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><h2 style="font-weight:800;font-size:18px;color:var(--primary);">TU PEDIDO</h2><button onclick="document.getElementById('tracking-modal').classList.remove('open')" style="background:rgba(255,255,255,0.1);border:none;color:var(--white);width:32px;height:32px;border-radius:50%;font-size:20px;cursor:pointer;font-weight:300;">×</button></div><div id="tracking-cliente" style="color:var(--text-light);font-size:13px;margin-bottom:4px;"></div><div id="tracking-sucursal" style="color:var(--text-light);font-size:12px;margin-bottom:16px;"></div><div class="tracking-progress" id="tracking-progress"></div><div id="tracking-items" style="background:var(--bg);border-radius:10px;padding:12px;margin-bottom:16px;"></div><div id="tracking-total" style="font-size:18px;font-weight:800;color:var(--primary);text-align:right;"></div><button onclick="cerrarTracking()" style="width:100%;padding:12px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text-light);font-weight:700;margin-top:16px;cursor:pointer;">CERRAR</button></div></div><!-- MODAL RESEÑA --><div id="resena-modal"><div class="resena-sheet"><div style="font-size:40px;margin-bottom:8px;"></div><h3 style="font-weight:800;font-size:18px;color:var(--white);margin-bottom:6px;">¿Cómo estuvo tu pedido?</h3><p style="color:var(--text-light);font-size:13px;">Tu opinión nos ayuda a mejorar</p><div class="stars-row" id="stars-row"><span class="star-btn" data-v="1" onclick="setStars(1)">★</span><span class="star-btn" data-v="2" onclick="setStars(2)">★</span><span class="star-btn" data-v="3" onclick="setStars(3)">★</span><span class="star-btn" data-v="4" onclick="setStars(4)">★</span><span class="star-btn" data-v="5" onclick="setStars(5)">★</span></div><textarea id="resena-comentario" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--white);font-size:13px;resize:none;height:80px;margin-bottom:16px;" placeholder="Comentario opcional..."></textarea><button onclick="enviarResena()" id="resena-btn" style="width:100%;padding:14px;border-radius:10px;border:none;background:var(--primary);color:#000;font-weight:800;font-size:15px;cursor:pointer;">ENVIAR RESEÑA</button><button onclick="document.getElementById('resena-modal').classList.remove('open')" style="width:100%;padding:10px;border-radius:10px;border:none;background:transparent;color:var(--text-light);font-size:13px;margin-top:8px;cursor:pointer;">Ahora no</button></div></div><!-- ADMIN --><div id="admin-root" style="display:none;"><!-- LOGIN --><div id="adm-login-screen"><div class="adm-login-box"><div style="font-size:36px;margin-bottom:8px;"></div><h1>MARVEL FOOD</h1><p>Panel de administración</p><input class="adm-inp" type="password" id="adm-pin" placeholder="PIN de acceso" autocomplete="off"
+    </script><!-- BARRA SEGUIMIENTO PEDIDO --><div id="tracking-bar"></div><!-- MODAL SEGUIMIENTO --><div id="tracking-modal"><div class="tracking-sheet"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><h2 style="font-weight:800;font-size:18px;color:var(--primary);">TU PEDIDO</h2><button onclick="document.getElementById('tracking-modal').classList.remove('open')" style="background:rgba(255,255,255,0.1);border:none;color:var(--white);width:32px;height:32px;border-radius:50%;font-size:20px;cursor:pointer;font-weight:300;">×</button></div><div id="tracking-cliente" style="color:var(--text-light);font-size:13px;margin-bottom:4px;"></div><div id="tracking-sucursal" style="color:var(--text-light);font-size:12px;margin-bottom:16px;"></div><div class="tracking-progress" id="tracking-progress"></div><div id="tracking-items" style="background:var(--bg);border-radius:10px;padding:12px;margin-bottom:16px;"></div><div id="tracking-total" style="font-size:18px;font-weight:800;color:var(--primary);text-align:right;"></div><div id="tracking-cancel-container"></div>
+<button onclick="cerrarTracking()" style="width:100%;padding:12px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text-light);font-weight:700;margin-top:12px;cursor:pointer;">CERRAR</button></div></div><!-- MODAL RESEÑA --><div id="resena-modal"><div class="resena-sheet"><div style="font-size:40px;margin-bottom:8px;"></div><h3 style="font-weight:800;font-size:18px;color:var(--white);margin-bottom:6px;">¿Cómo estuvo tu pedido?</h3><p style="color:var(--text-light);font-size:13px;">Tu opinión nos ayuda a mejorar</p><div class="stars-row" id="stars-row"><span class="star-btn" data-v="1" onclick="setStars(1)">★</span><span class="star-btn" data-v="2" onclick="setStars(2)">★</span><span class="star-btn" data-v="3" onclick="setStars(3)">★</span><span class="star-btn" data-v="4" onclick="setStars(4)">★</span><span class="star-btn" data-v="5" onclick="setStars(5)">★</span></div><textarea id="resena-comentario" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--white);font-size:13px;resize:none;height:80px;margin-bottom:16px;" placeholder="Comentario opcional..."></textarea><button onclick="enviarResena()" id="resena-btn" style="width:100%;padding:14px;border-radius:10px;border:none;background:var(--primary);color:#000;font-weight:800;font-size:15px;cursor:pointer;">ENVIAR RESEÑA</button><button onclick="document.getElementById('resena-modal').classList.remove('open')" style="width:100%;padding:10px;border-radius:10px;border:none;background:transparent;color:var(--text-light);font-size:13px;margin-top:8px;cursor:pointer;">Ahora no</button></div></div><!-- ADMIN --><div id="admin-root" style="display:none;"><!-- LOGIN --><div id="adm-login-screen"><div class="adm-login-box"><div style="font-size:36px;margin-bottom:8px;"></div><h1>MARVEL FOOD</h1><p>Panel de administración</p><input class="adm-inp" type="password" id="adm-pin" placeholder="PIN de acceso" autocomplete="off"
                 onkeydown="if(event.key==='Enter') admCheckPin()">
 <div id="adm-pin-feedback" style="min-height:18px;font-size:12px;font-weight:700;margin:6px 0 2px;text-align:center;"></div>
 <button class="adm-btn-primary" onclick="admCheckPin()">INGRESAR</button></div></div><!-- PANEL PRINCIPAL --><div id="adm-app" style="display:none;"><!-- Header --><div class="adm-header"><h1>MARVEL <span>ADMIN</span></h1><div style="display:flex;align-items:center;gap:8px;"><span class="adm-badge-live">● EN VIVO</span><span style="color:#9ca3af;font-size:10px;" id="adm-last-update">—</span><button onclick="admLogout()" style="background:transparent;border:1px solid #333;color:#9ca3af;padding:5px 10px;border-radius:8px;font-size:10px;cursor:pointer;">SALIR</button></div></div><!-- Stats --><div class="adm-stats-bar"><div class="adm-stat"><span>Pendientes</span><span id="adm-s-pend">0</span></div><div class="adm-stat"><span>Aceptados</span><span id="adm-s-acep" style="color:#10b981">0</span></div><div class="adm-stat"><span>Listos</span><span id="adm-s-list" style="color:#3b82f6">0</span></div><div class="adm-stat"><span>Hoy</span><span id="adm-s-total" style="color:#fff">0</span></div><div class="adm-stat"><span>Recaudado</span><span id="adm-s-cash" style="color:#10b981">$0</span></div></div><!-- Barra de filtros --><!-- Tabs del admin --><div style="display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);overflow-x:auto;"><button class="adm-tab active" onclick="admSwitchTab('pedidos',this)">Pedidos</button><button class="adm-tab" onclick="admSwitchTab('dashboard',this)">Dashboard</button><button class="adm-tab" onclick="admSwitchTab('menu',this)">Menu</button><button class="adm-tab" onclick="admSwitchTab('promos',this)">Promos</button><button class="adm-tab" onclick="admSwitchTab('cupones',this)">Cupones</button><button class="adm-tab" onclick="admSwitchTab('codigos',this)">Codigos</button><button class="adm-tab" onclick="admSwitchTab('resenas',this)">Reseñas</button></div><!-- TAB PEDIDOS --><div id="adm-tab-pedidos"><div class="adm-filterbar"><!-- Fila 1: Fecha + Sucursal --><div class="adm-filterrow"><div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;"><span style="color:#9ca3af;font-size:11px;font-weight:700;white-space:nowrap;"> FECHA</span><input type="date" id="adm-fecha-filtro" class="adm-date-inp" onchange="admAplicarFiltros()"><button onclick="admFechaHoy()" class="adm-filter-btn" style="white-space:nowrap;padding:5px 10px;">Hoy</button><button onclick="admVerTodoHistorial()" id="btn-todo-historial" class="adm-filter-btn" style="white-space:nowrap;padding:5px 10px;background:rgba(99,102,241,0.15);border-color:#6366f1;color:#a5b4fc;">Todo</button></div><div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;"><span style="color:#9ca3af;font-size:11px;font-weight:700;white-space:nowrap;">SUCURSAL</span><select id="adm-suc-filtro" class="adm-date-inp" onchange="admAplicarFiltros()" style="flex:1;"><option value="">Todas</option><option value="PELLEGRINI">Centro</option><option value="Rondeau">Norte</option><option value="San Martin">Sur</option><option value="Funes">Funes</option></select></div></div><!-- Fila 2: Estado + Tipo + Limpiar --><div class="adm-filterrow" style="margin-top:8px;"><button class="adm-filter-btn active" data-f="Todos"    onclick="admFiltroEstado('Todos',this)">Todos</button><button class="adm-filter-btn"        data-f="Pendiente" onclick="admFiltroEstado('Pendiente',this)">Pendientes</button><button class="adm-filter-btn f-acep" data-f="Aceptado" onclick="admFiltroEstado('Aceptado',this)">Aceptados</button><button class="adm-filter-btn f-list" data-f="Listo"    onclick="admFiltroEstado('Listo',this)">Listos</button><button class="adm-filter-btn f-ent"  data-f="Entregado" onclick="admFiltroEstado('Entregado',this)">Entregados</button><button class="adm-filter-btn"        data-f="Delivery" onclick="admFiltroEstado('Delivery',this)">Delivery</button><button class="adm-filter-btn"        data-f="Retiro"   onclick="admFiltroEstado('Retiro',this)">Retiro</button><button onclick="admLimpiarDia()" style="margin-left:auto;background:rgba(239,68,68,.15);border:1px solid #ef4444;color:#ef4444;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">Limpiar día</button></div></div><!-- Lista pedidos --><div class="adm-orders" id="adm-orders"></div></div><!-- /adm-tab-pedidos --><!-- TAB DASHBOARD --><div id="adm-tab-dashboard" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:16px;">MÉTRICAS DEL DÍA</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;"><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Pedidos hoy</div><div id="dash-total" style="font-size:28px;font-weight:800;color:var(--primary);">0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Recaudado</div><div id="dash-cash" style="font-size:22px;font-weight:800;color:#10b981;">$0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Ticket promedio</div><div id="dash-ticket" style="font-size:22px;font-weight:800;color:#3b82f6;">$0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Delivery / Retiro</div><div id="dash-tipos" style="font-size:16px;font-weight:800;color:var(--white);">0 / 0</div></div></div><!-- Ventas por hora --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Ventas por hora</div><div id="dash-chart-horas" style="display:flex;align-items:flex-end;gap:4px;height:80px;"></div><div id="dash-chart-labels" style="display:flex;gap:4px;margin-top:4px;"></div></div><!-- Productos más pedidos --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Productos más pedidos hoy</div><div id="dash-top-prods"></div></div><!-- Mapa de calor de zonas --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Pedidos por zona</div><div id="dash-zonas"></div></div></div><!-- TAB MENÚ --><div id="adm-tab-menu" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:6px;"> GESTIÓN DE MENÚ</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Pausá productos o editá precios. Los cambios son inmediatos en la tienda.</p><div id="adm-menu-lista" style="display:flex;flex-direction:column;gap:8px;"></div></div><!-- TAB RESEÑAS / OPINIONES --><div id="adm-tab-resenas" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">OPINIONES DE CLIENTES</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Podés eliminar cualquier opinión que no corresponda. Los cambios son inmediatos.</p><div style="display:flex;gap:12px;margin-bottom:20px;"><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);flex:1;text-align:center;"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Promedio</div><div id="res-promedio" style="font-size:32px;font-weight:800;color:var(--primary);">—</div><div style="color:#9ca3af;font-size:11px;" id="res-count">0 reseñas</div></div><div id="res-dist" style="flex:2;background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);display:flex;flex-direction:column;gap:5px;justify-content:center;"></div></div><!-- Tabs internas: Pedido / Públicas --><div style="display:flex;gap:8px;margin-bottom:16px;"><button id="adm-res-tab-ped" onclick="admResTab('pedidos')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--primary);background:rgba(245,158,11,.15);color:var(--primary);font-weight:800;font-size:12px;cursor:pointer;">Desde pedido</button><button id="adm-res-tab-pub" onclick="admResTab('publicas')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--border);background:transparent;color:#9ca3af;font-weight:800;font-size:12px;cursor:pointer;">Opiniones públicas</button></div><div id="adm-resenas-lista" style="display:flex;flex-direction:column;gap:10px;"></div></div><!-- TAB PROMOS --><div id="adm-tab-promos" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">GESTIÓN DE PROMOS</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Editá precios y el día de venta de cada promo. Los cambios se aplican en tiempo real en la tienda.</p><div id="adm-promos-lista"></div></div><!-- TAB CÓDIGOS DE DESCUENTO --><div id="adm-tab-codigos" style="display:none;padding:20px;">
@@ -5125,15 +5277,44 @@ function actualizarBadgePromos() {
     else run();
 })();
 </script>
-<!-- ══ Registro del Service Worker (PWA) ═════════════════════ -->
+<!-- ══ Registro del Service Worker (PWA) ════════════════════ -->
 <script>
-  if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./service-worker.js')
-        .then(reg => console.log('[SW] Registrado. Scope:', reg.scope))
-        .catch(err => console.warn('[SW] Error al registrar:', err));
+        navigator.serviceWorker.register('./service-worker.js')
+            .then(r => console.log('[SW] Registrado. Scope:', r.scope))
+            .catch(e => console.warn('[SW] Error:', e));
     });
-  }
+}
+
+// ── Nav-cats: ocultar al bajar, mostrar al subir ──────────
+(function() {
+    let lastY = 0;
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+        if (!ticking) {
+            requestAnimationFrame(() => {
+                const cats = document.querySelector('.nav-cats');
+                if (cats) {
+                    const currentY = window.scrollY;
+                    // Solo aplica cuando el usuario ya bajó > 200px (ya pasó el hero)
+                    if (currentY > 200) {
+                        if (currentY > lastY + 10) {
+                            cats.classList.add('hide-cats');    // bajando → ocultar
+                        } else if (currentY < lastY - 5) {
+                            cats.classList.remove('hide-cats'); // subiendo → mostrar
+                        }
+                    } else {
+                        cats.classList.remove('hide-cats');
+                    }
+                    lastY = currentY;
+                }
+                ticking = false;
+            });
+            ticking = true;
+        }
+    }, { passive: true });
+})();
 </script>
-<!-- ══════════════════════════════════════════════════════════ -->
+<!-- ════════════════════════════════════════════════════════ -->
 </body></html>

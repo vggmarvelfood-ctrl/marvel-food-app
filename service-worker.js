@@ -1,23 +1,45 @@
-const CACHE_NAME = 'marvel-food-v1';
+const CACHE_NAME = 'marvel-food-v2';
 const urlsToCache = [
-  './tienda marvel.html'
+  './',
+  './index.html'
 ];
 
-// Instalación: guardamos el archivo principal
+// Instalación: pre-cachear el shell de la app
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        return cache.addAll(urlsToCache);
-      })
+    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
   );
+  self.skipWaiting(); // Activa el nuevo SW de inmediato
 });
 
-// Interceptar peticiones: Busca en internet primero, si falla, usa el caché
+// Activación: elimina cachés viejos
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    )
+  );
+  self.clients.claim();
+});
+
+// ── Estrategia: NETWORK FIRST ──────────────────────────────
+// Siempre busca en la red primero (garantiza precios actualizados
+// desde Firebase). Solo usa el caché si no hay conexión.
 self.addEventListener('fetch', event => {
+  // Solo interceptar peticiones GET
+  if (event.request.method !== 'GET') return;
+
   event.respondWith(
-    fetch(event.request).catch(() => {
-      return caches.match(event.request);
-    })
+    fetch(event.request)
+      .then(networkResponse => {
+        // Actualizar el caché con la respuesta fresca
+        const responseClone = networkResponse.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseClone));
+        return networkResponse;
+      })
+      .catch(() => {
+        // Sin conexión → servir desde caché
+        return caches.match(event.request);
+      })
   );
 });

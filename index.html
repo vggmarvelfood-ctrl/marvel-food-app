@@ -561,6 +561,13 @@ try {
 }
 
         #menu-container { padding: 16px 20px 0; }
+        #menu-container > div[id^="sec-"] { content-visibility: auto; contain-intrinsic-size: auto 450px; }
+        /* content-visibility: auto hace que el navegador saltee el render de
+        secciones que no están en la ventana visible → hasta 4x menos trabajo de layout */
+        #menu-container > div {
+            content-visibility: auto;
+            contain-intrinsic-size: auto 400px; /* altura estimada por sección */
+        }
         .cat-title { 
     font-size: 26px; 
     font-weight: 900; 
@@ -602,15 +609,27 @@ try {
     flex-direction: column; 
     box-shadow: var(--shadow-card);
     contain: layout style; /* Evitar reflow masivo en listas largas */
-    will-change: transform; /* Hint al compositor para animaciones */
+    /* will-change: transform removido → evita una capa GPU por cada card en listas largas.
+       Se añade dinámicamente via :hover si se necesita animación suave. */
 }
 .card-p:hover { 
     transform: translateY(-4px); 
     box-shadow: var(--shadow-hover);
     border-color: var(--primary);
+    will-change: transform; /* solo activar en hover, no en reposo */
 }
         .card-p:active { transform: translateY(-2px) scale(0.98); }
-        .p-img-wrapper { position: relative; padding-top: 100%; }
+        .p-img-wrapper {
+            position: relative;
+            padding-top: 100%;          /* fallback para navegadores sin aspect-ratio */
+            aspect-ratio: 1 / 1;        /* reserva espacio antes de cargar imágenes → evita CLS */
+            overflow: hidden;
+            contain-intrinsic-size: 200px 200px; /* hint para virtual-scroll / content-visibility */
+        }
+        /* Con aspect-ratio soporte nativo, padding-top ya no genera doble espacio */
+        @supports (aspect-ratio: 1) {
+            .p-img-wrapper { padding-top: 0; height: auto; }
+        }
         .p-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
         .p-txt { padding: 15px; display: flex; flex-direction: column; flex: 1; justify-content: space-between; }
         .p-txt h3 { 
@@ -1171,6 +1190,93 @@ try {
     z-index: 999999; letter-spacing: .3px;
 }
 #offline-banner.show { display: block; }
+
+/* ═══════════════════════════════════════════════════════════
+   CLASES DE UTILIDAD — reemplazan inline styles repetidos.
+   Reducen el tamaño del HTML del admin y mejoran la caché CSS.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Tipografía */
+.u-fw8  { font-weight: 800; }
+.u-fw7  { font-weight: 700; }
+.u-fw6  { font-weight: 600; }
+.u-fs10 { font-size: 10px; }
+.u-fs11 { font-size: 11px; }
+.u-fs12 { font-size: 12px; }
+.u-fs13 { font-size: 13px; }
+.u-fs14 { font-size: 14px; }
+.u-uppercase { text-transform: uppercase; }
+.u-center    { text-align: center; }
+.u-ltr1      { letter-spacing: 1px; }
+.u-ls05      { letter-spacing: .5px; }
+
+/* Colores */
+.u-primary   { color: var(--primary); }
+.u-white     { color: var(--white); }
+.u-light     { color: var(--text-light); }
+.u-muted     { color: var(--text-muted); }
+.u-success   { color: #10b981; }
+.u-danger    { color: #ef4444; }
+
+/* Layout */
+.u-flex      { display: flex; }
+.u-flex-col  { display: flex; flex-direction: column; }
+.u-ai-c      { align-items: center; }
+.u-jc-sb     { justify-content: space-between; }
+.u-jc-c      { justify-content: center; }
+.u-w100      { width: 100%; }
+.u-flex1     { flex: 1; min-width: 0; }
+.u-shrink0   { flex-shrink: 0; }
+
+/* Espaciado */
+.u-mb4  { margin-bottom: 4px; }
+.u-mb8  { margin-bottom: 8px; }
+.u-mb10 { margin-bottom: 10px; }
+.u-mb12 { margin-bottom: 12px; }
+.u-mb16 { margin-bottom: 16px; }
+.u-mt4  { margin-top: 4px; }
+.u-mt8  { margin-top: 8px; }
+.u-mt12 { margin-top: 12px; }
+.u-p12  { padding: 12px; }
+.u-p14  { padding: 14px; }
+.u-p16  { padding: 16px; }
+.u-gap8 { gap: 8px; }
+.u-gap10{ gap: 10px; }
+.u-gap12{ gap: 12px; }
+
+/* Bordes */
+.u-br8  { border-radius: 8px; }
+.u-br10 { border-radius: 10px; }
+.u-br12 { border-radius: 12px; }
+.u-br16 { border-radius: 16px; }
+.u-border { border: 1px solid var(--border); }
+
+/* Superficie */
+.u-surface { background: var(--surface); }
+.u-bg      { background: var(--bg); }
+
+/* Clases de utilidad (reemplazan inline styles repetidos en HTML dinamico) */
+.u-fw8{font-weight:800}.u-fw7{font-weight:700}.u-fw6{font-weight:600}
+.u-fs10{font-size:10px}.u-fs11{font-size:11px}.u-fs12{font-size:12px}
+.u-fs13{font-size:13px}.u-fs14{font-size:14px}.u-fs16{font-size:16px}
+.u-upper{text-transform:uppercase}.u-center{text-align:center}
+.u-ltr1{letter-spacing:1px}.u-ltr05{letter-spacing:.5px}
+.u-primary{color:var(--primary)}.u-white{color:var(--white)}
+.u-light{color:var(--text-light)}.u-muted{color:var(--text-muted)}
+.u-ok{color:#10b981}.u-err{color:#ef4444}
+.u-flex{display:flex}.u-col{display:flex;flex-direction:column}
+.u-aic{align-items:center}.u-jcsb{justify-content:space-between}
+.u-jcc{justify-content:center}.u-w100{width:100%}
+.u-flex1{flex:1;min-width:0}.u-sh0{flex-shrink:0}
+.u-mb4{margin-bottom:4px}.u-mb8{margin-bottom:8px}
+.u-mb10{margin-bottom:10px}.u-mb12{margin-bottom:12px}.u-mb16{margin-bottom:16px}
+.u-mt4{margin-top:4px}.u-mt8{margin-top:8px}.u-mt12{margin-top:12px}
+.u-p12{padding:12px}.u-p14{padding:14px}.u-p16{padding:16px}
+.u-g8{gap:8px}.u-g10{gap:10px}.u-g12{gap:12px}
+.u-br8{border-radius:8px}.u-br10{border-radius:10px}
+.u-br12{border-radius:12px}.u-br16{border-radius:16px}
+.u-brd{border:1px solid var(--border)}
+.u-surf{background:var(--surface)}.u-bg{background:var(--bg)}
 </style></head><body>
 <div id="offline-banner">📵 Sin conexión — algunos datos pueden estar desactualizados</div>
 <script>
@@ -1237,7 +1343,7 @@ try {
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     padding:28px 24px;
     font-family:'Montserrat','Open Sans',sans-serif;
-"><!-- Logo + marca --><div style="text-align:center;margin-bottom:32px;"><img src="./icon-192x192.png" alt="Marvel Food" style="width:110px;height:110px;object-fit:contain;margin:0 auto 14px;display:block;filter:drop-shadow(0 0 28px rgba(123,47,190,0.55));"><h1 style="font-size:26px;font-weight:800;color:#fff;margin:0 0 6px;">MARVEL FOOD</h1><p style="color:#9ca3af;font-size:14px;margin:0;">¿A dónde te enviamos el pedido?</p></div><!-- Card principal --><div style="width:100%;max-width:400px;background:#1e1e1e;border:1px solid #333;border-radius:20px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,0.6);"><!-- Botón GPS --><button id="ws-btn-gps" onclick="welcomeUsarGPS()" style="
+"><!-- Logo + marca --><div style="text-align:center;margin-bottom:32px;"><img src="./icon-192x192.png" alt="Marvel Food" loading="lazy" decoding="async" style="width:110px;height:110px;object-fit:contain;margin:0 auto 14px;display:block;filter:drop-shadow(0 0 28px rgba(123,47,190,0.55));"><h1 style="font-size:26px;font-weight:800;color:#fff;margin:0 0 6px;">MARVEL FOOD</h1><p style="color:#9ca3af;font-size:14px;margin:0;">¿A dónde te enviamos el pedido?</p></div><!-- Card principal --><div style="width:100%;max-width:400px;background:#1e1e1e;border:1px solid #333;border-radius:20px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,0.6);"><!-- Botón GPS --><button id="ws-btn-gps" onclick="welcomeUsarGPS()" style="
             width:100%;padding:16px;border-radius:14px;border:2px solid #10b981;
             background:rgba(16,185,129,0.08);color:#10b981;
             font-weight:800;font-size:15px;cursor:pointer;
@@ -1257,7 +1363,7 @@ try {
             color:#6b7280;font-size:13px;cursor:pointer;margin-top:8px;
         ">Saltar por ahora</button></div></div><!-- ════ FIN PANTALLA DE BIENVENIDA ════ --><!-- ══ SPLASH DE CARGA ══════════════════════════════════════ -->
 <div id="app-splash">
-    <img src="./icon-192x192.png" alt="Marvel Food" class="splash-logo" loading="eager" fetchpriority="high" onerror="this.style.display='none'">
+    <img src="./icon-192x192.png" alt="Marvel Food" class="splash-logo" loading="eager" decoding="async" fetchpriority="high" onerror="this.style.display='none'">
     <div class="splash-title">MARVEL <span>FOOD</span></div>
     <div class="splash-bar-wrap"><div class="splash-bar"></div></div>
     <div class="splash-sub">Cargando tu menú...</div>
@@ -1316,7 +1422,7 @@ try {
         <div id="zona-modal-precios" style="padding:14px 20px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;"></div>
         <!-- Imagen del mapa — ocupa todo el espacio restante -->
         <div style="flex:1;overflow:hidden;position:relative;background:#000;">
-            <img id="zona-modal-img" src="" alt="Mapa de cobertura"
+            <img id="zona-modal-img" src="" alt="Mapa de cobertura" loading="lazy" decoding="async"
                 style="width:100%;height:100%;object-fit:contain;display:block;" />
             <div id="zona-modal-no-img" style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--text-light);">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -1852,7 +1958,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof mostrarBannerReorden === 'function') mostrarBannerReorden();
 
     actualizarEstadoLocal();
-    setInterval(actualizarEstadoLocal, 3000);
+    // Guardar referencia para poder limpiar el interval si fuera necesario
+    // (evita acumular intervalos si DOMContentLoaded se dispara más de una vez)
+    if (!window._storeStatusInterval) {
+        window._storeStatusInterval = setInterval(actualizarEstadoLocal, 3000);
+    }
 });
 
 // ---------------------------------------
@@ -1942,11 +2052,13 @@ let   _batchQueue  = [];   // [{grid: DOMElement, html: string}, ...]
 let   _batchObs    = null; // IntersectionObserver activo
 
 function _buildCardHtml(p, precioFinal, agotado) {
-    // Construye el HTML de una card; openModal recibe los datos via JSON inline.
-    const onClickAttr = agotado
-        ? ''
-        : `onclick='openModal(${JSON.stringify({...p, p: precioFinal}).replace(/'/g, "\'")})'`;
-    return `<div class="card-p${agotado ? ' agotado' : ''}" ${onClickAttr}>${agotado ? '<div class="agotado-badge">Agotado</div>' : ''}<div class="p-img-wrapper"><img class="p-img" src="${p.img}" alt="${p.n}" loading="lazy" decoding="async"></div><div class="p-txt"><div><h3>${p.n}</h3><p>${p.d}</p></div><div class="p-action-row"><span class="p-price">$${precioFinal.toLocaleString()}</span><button class="add-btn">+</button></div></div></div>`;
+    // Bug fix: usar &#39; en lugar de \' para escapar comillas simples en atributos HTML.
+    // \' no es entidad HTML valida -> puede romper JSON en Safari/FF. &#39; si lo es.
+    const _safeJson = JSON.stringify({...p, p: precioFinal})
+        .replace(/&/g, '&amp;').replace(/'/g, '&#39;');
+    const onClickAttr = agotado ? '' : `onclick='openModal(${_safeJson})'`;
+    // width + height: el navegador calcula el aspect-ratio antes del CSS -> menos CLS.
+    return `<div class="card-p${agotado ? ' agotado' : ''}" ${onClickAttr}>${agotado ? '<div class="agotado-badge">Agotado</div>' : ''}<div class="p-img-wrapper"><img class="p-img" src="${p.img}" alt="${p.n}" width="200" height="200" loading="lazy" decoding="async"></div><div class="p-txt"><div><h3>${p.n}</h3><p>${p.d}</p></div><div class="p-action-row"><span class="p-price">$${precioFinal.toLocaleString()}</span><button class="add-btn">+</button></div></div></div>`;
 }
 
 function _renderNextBatch() {
@@ -2822,7 +2934,7 @@ function obtenerCuponDelDia() {
                 html += `<div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid var(--border); padding-bottom:8px;"><span style="color: var(--text-light);">${l}</span><b style="color: var(--white);">$${data.locs[l]}</b></div>`; 
             }
             html += `</div>`;
-            if(data.mapImg) html += `<img src="${data.mapImg}" style="width:100%; border-radius:12px; border:1px solid var(--border); box-shadow: var(--shadow-card);">`;
+            if(data.mapImg) html += `<img src="${data.mapImg}" loading="lazy" decoding="async" style="width:100%; border-radius:12px; border:1px solid var(--border); box-shadow: var(--shadow-card);">`;
             
             mostrarInfo(`Cobertura ${data.n}`, html);
         };
@@ -2842,7 +2954,7 @@ function obtenerCuponDelDia() {
                 
                 html += `
                 <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: var(--shadow);"><h3 style="color: var(--primary); font-weight: 800; font-size: 16px; margin-bottom: 15px; text-transform: uppercase;">${suc.n}</h3><div style="margin-bottom: 15px; background: var(--bg); padding: 12px; border-radius: 10px;"> ${locsHtml}
-                    </div> ${suc.mapImg ? `<img src="${suc.mapImg}" style="width: 100%; border-radius: 10px; border: 1px solid var(--border); object-fit: cover;">` : ''}
+                    </div> ${suc.mapImg ? `<img src="${suc.mapImg}" loading="lazy" decoding="async" style="width: 100%; border-radius: 10px; border: 1px solid var(--border); object-fit: cover;">` : ''}
                 </div>`;
             }
             container.innerHTML = html;
@@ -4145,7 +4257,7 @@ function admRenderPromos() {
                     style="width:100%;padding:9px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;outline:none;"></div><div><div style="font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:4px;">PRECIO PROMO $</div><input id="pf-precio" type="number" placeholder="12000"
                     style="width:100%;padding:9px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;outline:none;"></div><div style="grid-column:1/-1;"><div style="font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:4px;">URL DE IMAGEN</div><input id="pf-img" type="url" placeholder="https://i.ibb.co/..."
                     oninput="admPreviewPromoImg()" 
-                    style="width:100%;padding:9px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:12px;outline:none;"><img id="pf-img-preview" src="" style="display:none;width:100%;height:100px;object-fit:cover;border-radius:8px;margin-top:6px;border:1px solid var(--border);"></div><div style="grid-column:1/-1;"><div style="font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:4px;">DÍA DE VENTA</div><select id="pf-dia" style="width:100%;padding:9px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;outline:none;"><option value="null">Todos los días</option> ${DIAS.map((d,i) => `<option value="${i}">${d}</option>`).join('')}
+                    style="width:100%;padding:9px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:12px;outline:none;"><img id="pf-img-preview" src="" loading="lazy" decoding="async" style="display:none;width:100%;height:100px;object-fit:cover;border-radius:8px;margin-top:6px;border:1px solid var(--border);"></div><div style="grid-column:1/-1;"><div style="font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:4px;">DÍA DE VENTA</div><select id="pf-dia" style="width:100%;padding:9px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;outline:none;"><option value="null">Todos los días</option> ${DIAS.map((d,i) => `<option value="${i}">${d}</option>`).join('')}
                 </select></div></div><div style="display:flex;gap:8px;margin-top:4px;"><button onclick="admGuardarFormPromo()"
                 style="flex:1;padding:10px;background:var(--primary);color:#000;border:none;border-radius:8px;font-weight:800;font-size:13px;cursor:pointer;"> GUARDAR
             </button><button onclick="admCerrarFormPromo()"
@@ -4157,7 +4269,7 @@ function admRenderPromos() {
         const diaLabel = p.diaVenta !== null && p.diaVenta !== undefined ? DIAS[p.diaVenta] : 'Todos los días';
         const descuento = p.pOriginal > p.p ? Math.round((1 - p.p / p.pOriginal) * 100) : 0;
         html += `
-        <div style="background:var(--surface);border:1px solid ${activo ? 'var(--border)' : '#ef444444'};border-radius:12px;margin-bottom:10px;overflow:hidden;"><div style="display:flex;gap:10px;padding:12px;"><img src="${p.img || ''}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;flex-shrink:0;background:#333;"
+        <div style="background:var(--surface);border:1px solid ${activo ? 'var(--border)' : '#ef444444'};border-radius:12px;margin-bottom:10px;overflow:hidden;"><div style="display:flex;gap:10px;padding:12px;"><img src="${p.img || ''}" loading="lazy" decoding="async" width="60" height="60" style="width:60px;height:60px;object-fit:cover;border-radius:8px;flex-shrink:0;background:#333;"
                     onerror="this.style.background='#333';this.src=''"><div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:800;color:${activo ? 'var(--white)' : '#666'};margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.n}</div><div style="font-size:10px;color:#9ca3af;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.d || ''}</div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:11px;color:#9ca3af;text-decoration:line-through;">$${(p.pOriginal||0).toLocaleString('es-AR')}</span><span style="font-size:14px;font-weight:800;color:#10b981;">$${(p.p||0).toLocaleString('es-AR')}</span> ${descuento > 0 ? `<span style="background:rgba(16,185,129,.15);color:#10b981;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;">-${descuento}%</span>` : ''}
                         <span style="background:rgba(245,158,11,.12);color:var(--primary);font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;"> ${diaLabel}</span></div></div><div style="display:flex;flex-direction:column;align-items:center;gap:4px;"><label class="adm-toggle" title="${activo ? 'Desactivar' : 'Activar'}"><input type="checkbox" ${activo ? 'checked' : ''} onchange="admTogglePromo('${p.id}')"><span class="adm-toggle-slider"></span></label><span style="font-size:9px;color:${activo ? '#10b981' : '#ef4444'};font-weight:700;">${activo ? 'ON' : 'OFF'}</span></div></div><div style="display:flex;gap:0;border-top:1px solid var(--border);"><button onclick="admAbrirFormPromo('${p.id}')"
                     style="flex:1;padding:8px;background:transparent;border:none;border-right:1px solid var(--border);color:var(--primary);font-size:12px;font-weight:700;cursor:pointer;"> Editar
@@ -4785,7 +4897,7 @@ document.getElementById('admin-root') && document.getElementById('admin-root').a
 <div id="pwa-install-banner">
     <div class="pwa-banner-stripe"></div>
     <div class="pwa-banner-body">
-        <img src="./icon-192x192.png" alt="Marvel Food" class="pwa-banner-icon"
+        <img src="./icon-192x192.png" alt="Marvel Food" class="pwa-banner-icon" loading="lazy" decoding="async"
              onerror="this.style.display='none'">
         <div class="pwa-banner-text">
             <div class="pwa-banner-tag">Gratis · 1 clic</div>

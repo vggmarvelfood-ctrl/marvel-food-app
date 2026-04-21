@@ -1255,28 +1255,13 @@ try {
 .u-surface { background: var(--surface); }
 .u-bg      { background: var(--bg); }
 
-/* Clases de utilidad (reemplazan inline styles repetidos en HTML dinamico) */
-.u-fw8{font-weight:800}.u-fw7{font-weight:700}.u-fw6{font-weight:600}
-.u-fs10{font-size:10px}.u-fs11{font-size:11px}.u-fs12{font-size:12px}
-.u-fs13{font-size:13px}.u-fs14{font-size:14px}.u-fs16{font-size:16px}
-.u-upper{text-transform:uppercase}.u-center{text-align:center}
-.u-ltr1{letter-spacing:1px}.u-ltr05{letter-spacing:.5px}
-.u-primary{color:var(--primary)}.u-white{color:var(--white)}
-.u-light{color:var(--text-light)}.u-muted{color:var(--text-muted)}
+/* Aliases cortos únicos (complementan el bloque de utilidades de arriba) */
+.u-upper{text-transform:uppercase}.u-fs16{font-size:16px}.u-ltr05{letter-spacing:.5px}
 .u-ok{color:#10b981}.u-err{color:#ef4444}
-.u-flex{display:flex}.u-col{display:flex;flex-direction:column}
-.u-aic{align-items:center}.u-jcsb{justify-content:space-between}
-.u-jcc{justify-content:center}.u-w100{width:100%}
-.u-flex1{flex:1;min-width:0}.u-sh0{flex-shrink:0}
-.u-mb4{margin-bottom:4px}.u-mb8{margin-bottom:8px}
-.u-mb10{margin-bottom:10px}.u-mb12{margin-bottom:12px}.u-mb16{margin-bottom:16px}
-.u-mt4{margin-top:4px}.u-mt8{margin-top:8px}.u-mt12{margin-top:12px}
-.u-p12{padding:12px}.u-p14{padding:14px}.u-p16{padding:16px}
-.u-g8{gap:8px}.u-g10{gap:10px}.u-g12{gap:12px}
-.u-br8{border-radius:8px}.u-br10{border-radius:10px}
-.u-br12{border-radius:12px}.u-br16{border-radius:16px}
-.u-brd{border:1px solid var(--border)}
-.u-surf{background:var(--surface)}.u-bg{background:var(--bg)}
+.u-col{display:flex;flex-direction:column}
+.u-aic{align-items:center}.u-jcsb{justify-content:space-between}.u-jcc{justify-content:center}
+.u-sh0{flex-shrink:0}.u-g8{gap:8px}.u-g10{gap:10px}.u-g12{gap:12px}
+.u-brd{border:1px solid var(--border)}.u-surf{background:var(--surface)}
 </style></head><body>
 <div id="offline-banner">📵 Sin conexión — algunos datos pueden estar desactualizados</div>
 <script>
@@ -2793,11 +2778,11 @@ function obtenerCuponDelDia() {
                 return;
             }
 
-            container.innerHTML = promosVisibles.map(item => `
-                <div class="promo-card"><div class="badge-promo">${item.diaVenta === 2 ? 'SOLO POR HOY' : 'PROMO'}</div><img src="${item.img}" style="width:100%; height:140px; object-fit:cover; border-radius:10px; margin-bottom:10px;" loading="lazy" decoding="async"><h3 style="font-size:16px; font-weight:800;">${item.n}</h3><p style="font-size:12px; color:var(--text-light); margin: 5px 0;">${item.d}</p><div class="price-container"><span class="old-price">$${item.pOriginal.toLocaleString()}</span><span class="new-price">$${item.p.toLocaleString()}</span></div><button class="btn-action" 
-                            onclick='openModal(${JSON.stringify(item)})' 
-                            style="margin-top:12px; padding:10px; font-size:13px;"> AGREGAR PROMO
-                    </button></div> `).join('');
+            // Bug fix: usar &#39; + &amp; igual que _buildCardHtml para evitar HTML inválido en Safari/FF.
+            container.innerHTML = promosVisibles.map(item => {
+                const _safeJson = JSON.stringify(item).replace(/&/g, '&amp;').replace(/'/g, '&#39;');
+                return `<div class="promo-card"><div class="badge-promo">${item.diaVenta === 2 ? 'SOLO POR HOY' : 'PROMO'}</div><img src="${item.img}" width="400" height="140" style="width:100%; height:140px; object-fit:cover; border-radius:10px; margin-bottom:10px;" loading="lazy" decoding="async"><h3 style="font-size:16px; font-weight:800;">${item.n}</h3><p style="font-size:12px; color:var(--text-light); margin: 5px 0;">${item.d}</p><div class="price-container"><span class="old-price">$${item.pOriginal.toLocaleString()}</span><span class="new-price">$${item.p.toLocaleString()}</span></div><button class="btn-action" onclick='openModal(${_safeJson})' style="margin-top:12px; padding:10px; font-size:13px;"> AGREGAR PROMO</button></div>`;
+            }).join('');
         }
 
         function renderCenaHoy() {
@@ -2826,13 +2811,11 @@ function obtenerCuponDelDia() {
                 }
             ];
 
-            container.innerHTML = `
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;"> ${opciones.map(item => `
-                        <div class="promo-card" style="padding: 10px;"><div class="badge-promo" style="font-size: 8px;">${item.badge}</div><h3 style="font-size: 14px; margin-top: 25px; min-height: 40px;">${item.n}</h3><div class="price-container" style="flex-direction: column; align-items: flex-start; gap: 2px;"><span class="old-price" style="font-size: 12px;">$${item.pOriginal.toLocaleString()}</span><span class="new-price" style="font-size: 16px;">$${item.p.toLocaleString()}</span></div><button class="btn-action" 
-                                    onclick='openModal(${JSON.stringify(item)})' 
-                                    style="margin-top:10px; padding:8px; font-size:11px; width: 100%;"> AGREGAR
-                            </button></div> `).join('')}
-                </div> `;
+            // Bug fix: escapar & y ' igual que _buildCardHtml para evitar HTML inválido en Safari/FF.
+            container.innerHTML = `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">${opciones.map(item => {
+                const _safeJson = JSON.stringify(item).replace(/&/g, '&amp;').replace(/'/g, '&#39;');
+                return `<div class="promo-card" style="padding: 10px;"><div class="badge-promo" style="font-size: 8px;">${item.badge}</div><h3 style="font-size: 14px; margin-top: 25px; min-height: 40px;">${item.n}</h3><div class="price-container" style="flex-direction: column; align-items: flex-start; gap: 2px;"><span class="old-price" style="font-size: 12px;">$${item.pOriginal.toLocaleString()}</span><span class="new-price" style="font-size: 16px;">$${item.p.toLocaleString()}</span></div><button class="btn-action" onclick='openModal(${_safeJson})' style="margin-top:10px; padding:8px; font-size:11px; width: 100%;"> AGREGAR</button></div>`;
+            }).join('')}</div>`;
         }
 
         // Render automático del tab Locales: botones por sucursal con precios y botón ver mapa
@@ -2934,7 +2917,7 @@ function obtenerCuponDelDia() {
                 html += `<div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid var(--border); padding-bottom:8px;"><span style="color: var(--text-light);">${l}</span><b style="color: var(--white);">$${data.locs[l]}</b></div>`; 
             }
             html += `</div>`;
-            if(data.mapImg) html += `<img src="${data.mapImg}" loading="lazy" decoding="async" style="width:100%; border-radius:12px; border:1px solid var(--border); box-shadow: var(--shadow-card);">`;
+            if(data.mapImg) html += `<img src="${data.mapImg}" width="600" height="400" loading="lazy" decoding="async" style="width:100%; border-radius:12px; border:1px solid var(--border); box-shadow: var(--shadow-card);">`;
             
             mostrarInfo(`Cobertura ${data.n}`, html);
         };
@@ -2954,7 +2937,7 @@ function obtenerCuponDelDia() {
                 
                 html += `
                 <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: var(--shadow);"><h3 style="color: var(--primary); font-weight: 800; font-size: 16px; margin-bottom: 15px; text-transform: uppercase;">${suc.n}</h3><div style="margin-bottom: 15px; background: var(--bg); padding: 12px; border-radius: 10px;"> ${locsHtml}
-                    </div> ${suc.mapImg ? `<img src="${suc.mapImg}" loading="lazy" decoding="async" style="width: 100%; border-radius: 10px; border: 1px solid var(--border); object-fit: cover;">` : ''}
+                    </div> ${suc.mapImg ? `<img src="${suc.mapImg}" width="600" height="400" loading="lazy" decoding="async" style="width: 100%; border-radius: 10px; border: 1px solid var(--border); object-fit: cover;">` : ''}
                 </div>`;
             }
             container.innerHTML = html;

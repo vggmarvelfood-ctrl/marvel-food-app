@@ -80,15 +80,15 @@
 </script><meta charset="utf-8" />
 <!-- ══ PWA ══════════════════════════════════════════════════ -->
 <link rel="manifest" href="./manifest.json">
-<link rel="icon" type="image/png" sizes="192x192" href="https://i.ibb.co/99ZnNCv2/marvellogo-1776049384955.jpg">
-<link rel="icon" type="image/png" sizes="512x512" href="https://i.ibb.co/99ZnNCv2/marvellogo-1776049384955.jpg">
-<link rel="shortcut icon" href="https://i.ibb.co/gbvnBKmB/icon-192x192.pngg">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192x192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="./icon-512x512.png">
+<link rel="shortcut icon" href="./icon-192x192.png">
 <meta name="theme-color" content="#7B2FBE">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Marvel Food">
-<link rel="apple-touch-icon" href="https://i.ibb.co/99ZnNCv2/marvellogo-1776049384955.jpg">
+<link rel="apple-touch-icon" href="./icon-192x192.png">
 <!-- ════════════════════════════════════════════════════════ --><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <!-- Preload primera imagen del hero para mejor LCP en móvil -->
 <link rel="preload" as="image" href="https://i.ibb.co/CsY32Zpc/Hulk-6.jpg" fetchpriority="high">
@@ -303,164 +303,132 @@
 .pec-estado.Cancelado  { background: rgba(239,68,68,.15);   color: #ef4444; }
         .nav-cats::-webkit-scrollbar { display: none; }
 
-/* ── Banner PWA Install — notificación inferior morado/azul ── */
-@keyframes pwaSlideUp {
-    from { opacity: 0; transform: translateY(110%) scale(0.95); }
-    to   { opacity: 1; transform: translateY(0)   scale(1);    }
+/* ── Banner PWA Install ─────────────────────────────────── */
+/* ══ PWA INSTALL BANNER — estilo anuncio premium ══════════ */
+@keyframes pwaSlideDown {
+    from { opacity: 0; transform: translateY(-110%); }
+    to   { opacity: 1; transform: translateY(0); }
 }
-@keyframes pwaGlow {
-    0%,100% { box-shadow: 0 -4px 32px rgba(139,92,246,0.35), 0 8px 40px rgba(0,0,0,0.55); }
-    50%     { box-shadow: 0 -4px 48px rgba(99,102,241,0.55),  0 8px 40px rgba(0,0,0,0.55); }
+@keyframes pwaShimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position: 200% center; }
 }
 @keyframes pwaBtnPulse {
-    0%,100% { box-shadow: 0 0 0 0   rgba(255,255,255,0.4); }
-    60%     { box-shadow: 0 0 0 10px rgba(255,255,255,0);   }
-}
-@keyframes pwaShine {
-    0%   { left: -60%; }
-    100% { left: 130%;  }
+    0%,100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.5); }
+    60%     { box-shadow: 0 0 0 8px rgba(245,158,11,0); }
 }
 
 #pwa-install-banner {
     position: fixed;
-    bottom: 90px;           /* justo sobre la nav bar */
-    left: 14px; right: 14px;
+    top: 0; left: 0; right: 0;        /* banner en el TOP como anuncio */
     display: none;
     flex-direction: column;
     z-index: 9000;
-    border-radius: 20px;
-    overflow: hidden;
-    /* gradiente morado-azul oscuro */
+    animation: pwaSlideDown 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
+    /* fondo con efecto shimmer dorado */
     background: linear-gradient(135deg,
-        #2d1b69 0%,
-        #1e1b4b 30%,
-        #1a237e 60%,
-        #283593 100%);
-    border: 1px solid rgba(139,92,246,0.45);
-    animation: pwaSlideUp 0.5s cubic-bezier(0.34,1.56,0.64,1) both,
-               pwaGlow    3s 0.8s ease-in-out infinite;
-    max-width: 480px;
-    margin: 0 auto;
+        #1a1a1a 0%,
+        #222 40%,
+        #1a1a1a 100%);
+    border-bottom: 2px solid var(--primary);
+    box-shadow: 0 4px 24px rgba(245,158,11,0.25), 0 2px 8px rgba(0,0,0,0.6);
 }
 #pwa-install-banner.visible { display: flex; }
 
-/* Franja superior brillante */
+/* Franja dorada animada arriba del banner */
 .pwa-banner-stripe {
-    height: 2px;
+    height: 3px;
     background: linear-gradient(90deg,
         transparent 0%,
-        rgba(167,139,250,0.8) 25%,
-        rgba(199,210,254,1)   50%,
-        rgba(167,139,250,0.8) 75%,
+        var(--primary) 30%,
+        #f97316 50%,
+        var(--primary) 70%,
         transparent 100%);
+    background-size: 200% auto;
+    animation: pwaShimmer 2.5s linear infinite;
 }
 
-/* Cuerpo */
+/* Cuerpo del banner */
 .pwa-banner-body {
     display: flex;
     align-items: center;
-    gap: 13px;
-    padding: 14px 16px 16px;
-    position: relative;
+    gap: 12px;
+    padding: 12px 14px 14px;
 }
 
-/* Ícono */
+/* Ícono de la app */
 .pwa-banner-icon {
-    width: 48px; height: 48px;
-    border-radius: 13px;
+    width: 52px; height: 52px;
+    border-radius: 14px;
     object-fit: cover;
     flex-shrink: 0;
-    border: 1.5px solid rgba(167,139,250,0.5);
-    box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+    border: 2px solid rgba(245,158,11,0.4);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
 }
 
 /* Textos */
 .pwa-banner-text { flex: 1; min-width: 0; }
 
 .pwa-banner-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    background: rgba(167,139,250,0.18);
-    border: 1px solid rgba(167,139,250,0.4);
-    color: #c4b5fd;
-    font-size: 9px; font-weight: 800;
-    padding: 2px 9px; border-radius: 20px;
-    letter-spacing: 1px; text-transform: uppercase;
-    margin-bottom: 5px;
-}
-.pwa-banner-tag::before {
-    content: '';
-    width: 5px; height: 5px;
-    border-radius: 50%;
-    background: #a78bfa;
     display: inline-block;
+    background: rgba(245,158,11,0.15);
+    border: 1px solid rgba(245,158,11,0.4);
+    color: var(--primary);
+    font-size: 9px; font-weight: 800;
+    padding: 2px 8px; border-radius: 20px;
+    letter-spacing: 1.2px; text-transform: uppercase;
+    margin-bottom: 4px;
 }
 
 .pwa-banner-title {
     font-size: 14px; font-weight: 900;
-    color: #fff; line-height: 1.25;
+    color: #fff; line-height: 1.2;
     margin-bottom: 3px;
     letter-spacing: -0.2px;
 }
-.pwa-banner-title span { color: #a5b4fc; }
+.pwa-banner-title span { color: var(--primary); }
 
 .pwa-banner-sub {
     font-size: 11px;
-    color: rgba(196,181,253,0.7);
+    color: rgba(255,255,255,0.5);
     font-weight: 500;
-    line-height: 1.35;
+    line-height: 1.3;
 }
 
-/* Botón instalar — blanco con texto morado */
+/* Botón instalar */
 .pwa-btn-install {
-    background: rgba(255,255,255,0.95);
-    border: none;
-    color: #3730a3;
-    padding: 11px 15px;
-    border-radius: 13px;
+    background: var(--primary);
+    border: none; color: #000;
+    padding: 11px 16px;
+    border-radius: 12px;
     font-weight: 900; font-size: 12px;
     cursor: pointer; white-space: nowrap;
-    letter-spacing: 0.2px;
+    letter-spacing: 0.3px;
     flex-shrink: 0;
     text-transform: uppercase;
-    animation: pwaBtnPulse 2.5s 1.2s infinite;
-    transition: background .15s, transform .15s;
-    line-height: 1.35;
+    animation: pwaBtnPulse 2s 1s infinite;
+    transition: background .2s, transform .15s;
+    line-height: 1.3;
     text-align: center;
-    position: relative;
-    overflow: hidden;
 }
-/* efecto de brillo que recorre el botón */
-.pwa-btn-install::after {
-    content: '';
-    position: absolute;
-    top: 0; left: -60%;
-    width: 40%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
-    animation: pwaShine 2.4s 2s infinite;
-    transform: skewX(-20deg);
-}
-.pwa-btn-install:hover  { background: #fff; }
-.pwa-btn-install:active { transform: scale(0.94); }
+.pwa-btn-install:active { transform: scale(0.95); }
 
 /* Botón cerrar */
 .pwa-btn-dismiss {
     position: absolute;
     top: 8px; right: 10px;
-    background: rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.08);
     border: none;
-    color: rgba(196,181,253,0.6);
-    font-size: 13px;
-    width: 22px; height: 22px;
+    color: rgba(255,255,255,0.45);
+    font-size: 14px;
+    width: 24px; height: 24px;
     border-radius: 50%;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     transition: background .2s, color .2s;
-    line-height: 1;
 }
 .pwa-btn-dismiss:hover {
-    background: rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.15);
     color: #fff;
 }
 /* ── PWA progress toast (descargando / instalado) ── */
@@ -1224,7 +1192,7 @@
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     padding:28px 24px;
     font-family:'Montserrat','Open Sans',sans-serif;
-"><!-- Logo + marca --><div style="text-align:center;margin-bottom:32px;"><img src="https://i.ibb.co/gbvnBKmB/icon-192x192.png" alt="Marvel Food" style="width:110px;height:110px;object-fit:contain;margin:0 auto 14px;display:block;filter:drop-shadow(0 0 28px rgba(123,47,190,0.55));"><h1 style="font-size:26px;font-weight:800;color:#fff;margin:0 0 6px;">MARVEL FOOD</h1><p style="color:#9ca3af;font-size:14px;margin:0;">¿A dónde te enviamos el pedido?</p></div><!-- Card principal --><div style="width:100%;max-width:400px;background:#1e1e1e;border:1px solid #333;border-radius:20px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,0.6);"><!-- Botón GPS --><button id="ws-btn-gps" onclick="welcomeUsarGPS()" style="
+"><!-- Logo + marca --><div style="text-align:center;margin-bottom:32px;"><img src="https://i.ibb.co/mCNJGMBt/marvellogo-1776049384955.jpg" alt="Marvel Food" style="width:110px;height:110px;object-fit:contain;margin:0 auto 14px;display:block;filter:drop-shadow(0 0 28px rgba(123,47,190,0.55));"><h1 style="font-size:26px;font-weight:800;color:#fff;margin:0 0 6px;">MARVEL FOOD</h1><p style="color:#9ca3af;font-size:14px;margin:0;">¿A dónde te enviamos el pedido?</p></div><!-- Card principal --><div style="width:100%;max-width:400px;background:#1e1e1e;border:1px solid #333;border-radius:20px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,0.6);"><!-- Botón GPS --><button id="ws-btn-gps" onclick="welcomeUsarGPS()" style="
             width:100%;padding:16px;border-radius:14px;border:2px solid #10b981;
             background:rgba(16,185,129,0.08);color:#10b981;
             font-weight:800;font-size:15px;cursor:pointer;
@@ -1244,9 +1212,10 @@
             color:#6b7280;font-size:13px;cursor:pointer;margin-top:8px;
         ">Saltar por ahora</button></div></div><!-- ════ FIN PANTALLA DE BIENVENIDA ════ --><!-- ══ SPLASH DE CARGA ══════════════════════════════════════ -->
 <div id="app-splash">
+    <img src="./icon-192x192.png" alt="Marvel Food" class="splash-logo" loading="eager" fetchpriority="high" onerror="this.style.display='none'">
     <div class="splash-title">MARVEL <span>FOOD</span></div>
     <div class="splash-bar-wrap"><div class="splash-bar"></div></div>
-    <div class="splash-sub">Muchas gracias por preferirnos!</div>
+    <div class="splash-sub">Cargando tu menú...</div>
 </div>
 <!-- ════════════════════════════════════════════════════════ -->
 <div class="hero-slider" id="hero-slider"><!-- SLIDE 1: Hulk --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/CsY32Zpc/Hulk-6.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> DESTACADO DEL MENÚ</div><h1 class="hero-title">LA MEJOR<br>DE LA CARTA<br><span>Nuestra Hulk</span></h1><p class="hero-subtitle">Doble carne, cheddar, panceta, cebolla caramelizada y bbq.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Pedir Ahora</button><button class="hero-btn-secondary" onclick="scrollToMenu()">Ver Menú</button></div></div></div><!-- SLIDE 2: Compartir --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/sp9f92tD/DSC04607.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> ESPECIAL</div><h1 class="hero-title">COMPARTIR<br><span>Una Marvel</span></h1><p class="hero-subtitle">¡No hay 1 sin 2! Invitá a alguien y disfrutá juntos.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Aprovechar</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);})()">Ver Promos</button></div></div></div><!-- SLIDE 3: Combo --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/gLZH7hJW/DSC04609.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> COMBOS</div><h1 class="hero-title">ARMÁ TU<br><span>Combo Perfecto</span></h1><p class="hero-subtitle">¿Papas, Nuggets o Aros de cebolla? Elegí lo tuyo.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Pedir Combo</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);})()">Ver Promos</button></div></div></div><!-- SLIDE 4: Promos --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/wNQdcXh6/Dr-Strange-8.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> OFERTAS ACTIVAS</div><h1 class="hero-title">PROMOS<br><span>Para Vos</span></h1><p class="hero-subtitle">Las mejores promos del momento. ¡No te las pierdas!</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);scrollToMenu&&scrollToMenu();})()">Ver Promos</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-perfil]');if(n)switchTab('tab-perfil',n);})()">Cupones</button></div></div></div><!-- SLIDE 5: Smash --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/hRgTKHLs/DSC-4850.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> LÍNEA SMASH</div><h1 class="hero-title">¿NOCHE<br>DE SMASH?<br><span>Línea Flama</span></h1><p class="hero-subtitle">Probá nuestra línea smashed y dejanos tu opinión.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Ver Smash</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('#nav-pedidos');if(n)switchTab('tab-pedidos',n);})()">Mis Pedidos</button></div></div></div><!-- SLIDE 6: Brand --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/4B4ZCwF/DSC-4842.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> GRACIAS POR ELEGIRNOS</div><h1 class="hero-title">MARVEL<br>FOOD<br><span>Más que una Burger</span></h1><p class="hero-subtitle">Dejanos tu opinión y ayudá a otros a elegir mejor.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Pedir Ahora</button><button class="hero-btn-secondary" onclick="abrirModalOpinion()">Dejar Opinión</button></div></div></div><!-- Dots indicadores --><div class="hero-dots" id="hero-dots"></div><div class="scroll-indicator" onclick="scrollToMenu()"><span style="font-size: 12px; font-weight: 700; letter-spacing: 2px; margin-bottom: 5px;">MENÚ</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></div></div><div class="main-content"><div id="tab-inicio" class="tab-page"><div id="store-status-banner"></div><div id="cart-restore-banner"></div><div class="nav-cats" id="cat-list"></div><!-- TOP PRODUCTOS — alimentado por Firebase -->
@@ -4682,23 +4651,24 @@ setInterval(() => {
 document.getElementById('admin-root') && document.getElementById('admin-root').addEventListener('contextmenu', e => e.preventDefault());
 
     </script><!-- BARRA SEGUIMIENTO PEDIDO --><div id="tracking-bar"></div>
-<!-- ══ BANNER INSTALAR PWA — notificación inferior ══════════ -->
+<!-- ══ BANNER INSTALAR PWA ══════════════════════════════════ -->
 <div id="pwa-install-banner">
+    <!-- franja animada arriba -->
     <div class="pwa-banner-stripe"></div>
+    <!-- cuerpo -->
     <div class="pwa-banner-body">
-        <img src="https://i.ibb.co/99ZnNCv2/marvellogo-1776049384955.jpg" alt="Marvel Food" class="pwa-banner-icon"
+        <img src="./icon-192x192.png" alt="Marvel Food" class="pwa-banner-icon"
              onerror="this.style.display='none'">
         <div class="pwa-banner-text">
-         
-            <div class="pwa-banner-title">Bajate ahora nuestra APP Oficial<span> </span></div>
-        
-            <div class="pwa-banner-sub">Pedí más rápido y sin esperas!</div>
-             <div class="pwa-banner-tag">GRATIS</div>
+            <div class="pwa-banner-tag">Gratis · 1 click</div>
+            <div class="pwa-banner-title">Descargá la app y pedí <span>más rápido</span></div>
+            <div class="pwa-banner-sub">Guardala en tu pantalla · Sin tiendas · Sin esperas</div>
         </div>
         <button class="pwa-btn-install" id="pwa-btn-install" onclick="pwaTriggerInstall()">
-            ⬇ Instalar<br>
+            Instalar<br>gratis
         </button>
     </div>
+    <!-- botón cerrar flotante -->
     <button class="pwa-btn-dismiss" onclick="pwaDismissBanner()" title="Cerrar">✕</button>
 </div><!-- MODAL SEGUIMIENTO --><div id="tracking-modal"><div class="tracking-sheet"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><h2 style="font-weight:800;font-size:18px;color:var(--primary);">TU PEDIDO</h2><button onclick="document.getElementById('tracking-modal').classList.remove('open')" style="background:rgba(255,255,255,0.1);border:none;color:var(--white);width:32px;height:32px;border-radius:50%;font-size:20px;cursor:pointer;font-weight:300;">×</button></div><div id="tracking-cliente" style="color:var(--text-light);font-size:13px;margin-bottom:4px;"></div><div id="tracking-sucursal" style="color:var(--text-light);font-size:12px;margin-bottom:16px;"></div><div class="tracking-progress" id="tracking-progress"></div><div id="tracking-items" style="background:var(--bg);border-radius:10px;padding:12px;margin-bottom:16px;"></div><div id="tracking-total" style="font-size:18px;font-weight:800;color:var(--primary);text-align:right;"></div><div id="tracking-cancel-container"></div>
 <button onclick="cerrarTracking()" style="width:100%;padding:12px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text-light);font-weight:700;margin-top:12px;cursor:pointer;">CERRAR</button></div></div><!-- MODAL RESEÑA --><div id="resena-modal"><div class="resena-sheet"><div style="font-size:40px;margin-bottom:8px;"></div><h3 style="font-weight:800;font-size:18px;color:var(--white);margin-bottom:6px;">¿Cómo estuvo tu pedido?</h3><p style="color:var(--text-light);font-size:13px;">Tu opinión nos ayuda a mejorar</p><div class="stars-row" id="stars-row"><span class="star-btn" data-v="1" onclick="setStars(1)">★</span><span class="star-btn" data-v="2" onclick="setStars(2)">★</span><span class="star-btn" data-v="3" onclick="setStars(3)">★</span><span class="star-btn" data-v="4" onclick="setStars(4)">★</span><span class="star-btn" data-v="5" onclick="setStars(5)">★</span></div><textarea id="resena-comentario" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--white);font-size:13px;resize:none;height:80px;margin-bottom:16px;" placeholder="Comentario opcional..."></textarea><button onclick="enviarResena()" id="resena-btn" style="width:100%;padding:14px;border-radius:10px;border:none;background:var(--primary);color:#000;font-weight:800;font-size:15px;cursor:pointer;">ENVIAR RESEÑA</button><button onclick="document.getElementById('resena-modal').classList.remove('open')" style="width:100%;padding:10px;border-radius:10px;border:none;background:transparent;color:var(--text-light);font-size:13px;margin-top:8px;cursor:pointer;">Ahora no</button></div></div><!-- ADMIN --><div id="admin-root" style="display:none;"><!-- LOGIN --><div id="adm-login-screen"><div class="adm-login-box"><div style="font-size:36px;margin-bottom:8px;"></div><h1>MARVEL FOOD</h1><p>Panel de administración</p><input class="adm-inp" type="password" id="adm-pin" placeholder="PIN de acceso" autocomplete="off"
@@ -5681,12 +5651,23 @@ function _pwaMostrarBanner() {
     const banner = document.getElementById('pwa-install-banner');
     if (!banner) return;
     banner.classList.add('visible');
+    // Empujar el header y el contenido hacia abajo para no tapar nada
+    requestAnimationFrame(() => {
+        const h = banner.offsetHeight;
+        const header = document.querySelector('.top-header');
+        const splash = document.getElementById('app-splash');
+        if (header) header.style.top = h + 'px';
+        if (splash) splash.style.paddingTop = h + 'px';
+    });
 }
 
 function _pwaOcultarBanner() {
     const banner = document.getElementById('pwa-install-banner');
     if (!banner) return;
     banner.classList.remove('visible');
+    // Restaurar posición del header
+    const header = document.querySelector('.top-header');
+    if (header) header.style.top = '0px';
 }
 
 // ── Toast de progreso (descargando / completado) ───────────

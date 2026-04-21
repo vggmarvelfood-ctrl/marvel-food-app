@@ -1,82 +1,95 @@
-<!DOCTYPE html><html lang="es"><head><!-- EmailJS: cargado con defer para no bloquear el parser --><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js" defer></script><!-- Firebase: cargados con defer (no bloquea parser, ejecuta en orden) --><script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" onerror="window._fbLoadErr=true;console.error('[Firebase] firebase-app no cargó')"></script><script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js" onerror="window._fbLoadErr=true;console.error('[Firebase] firebase-firestore no cargó')"></script><script> // ── EmailJS: inicializar cuando el script esté disponible ──
-    // ── OPTIMIZACIÓN: EmailJS via evento load del script ──
-    (function() {
-        function _doInitEmailJS() {
-            if (window.emailjs) {
-                emailjs.init("sATMMVYtIbZLT1tMD");
-            }
-        }
-        const ejsScript = document.querySelector('script[src*="emailjs"]');
-        if (ejsScript) {
-            ejsScript.addEventListener('load', _doInitEmailJS);
-            // Fallback: si ya cargó (defer)
-            if (document.readyState !== 'loading') _doInitEmailJS();
-        } else {
-            document.addEventListener('DOMContentLoaded', _doInitEmailJS);
-        }
-    })();
+<!DOCTYPE html><html lang="es"><head><!-- ── FIREBASE MODULAR 10.7.1 ──────────────────────────────────────────
+     SDK modular: solo se importan las funciones usadas (sin bundle completo).
+     Ahorra ~60 KB de RAM vs compat (no carga analytics, auth, storage, etc.)
+     EmailJS se carga TARDE (lazy) en toggleCart, no aquí.
+──────────────────────────────────────────────────────────────────────── -->
+<script type="module">
+import { initializeApp }   from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import {
+    getFirestore, collection, doc,
+    getDoc, getDocs, addDoc, updateDoc, deleteDoc, setDoc,
+    onSnapshot, query, where, orderBy, limit, serverTimestamp
+} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
-    // ── Firebase: inicializar con reintentos por si el SDK tarda ──
-    const _fbConfig = {
-        apiKey: "AIzaSyAeRlE9S5pnEUuhxRXoOX6lMX4Ryky0uSI",
-        authDomain: "marvel-food-fa570.firebaseapp.com",
-        projectId: "marvel-food-fa570",
-        storageBucket: "marvel-food-fa570.firebasestorage.app",
-        messagingSenderId: "351263580699",
-        appId: "1:351263580699:web:9ba99708a021e5eabecebe",
-        measurementId: "G-Z7X80SVSX6"
+const _fbConfig = {
+    apiKey:            "AIzaSyAeRlE9S5pnEUuhxRXoOX6lMX4Ryky0uSI",
+    authDomain:        "marvel-food-fa570.firebaseapp.com",
+    projectId:         "marvel-food-fa570",
+    storageBucket:     "marvel-food-fa570.firebasestorage.app",
+    messagingSenderId: "351263580699",
+    appId:             "1:351263580699:web:9ba99708a021e5eabecebe",
+    measurementId:     "G-Z7X80SVSX6"
+};
+
+// ── Parchear DocumentSnapshot para que .exists sea una PROPIEDAD (igual que compat) ──
+// En v9 modular .exists() es un método; el resto de la app lo usa como propiedad.
+function _patchSnap(snap) {
+    try {
+        const _orig = snap.exists.bind(snap);
+        Object.defineProperty(snap, 'exists', { get: () => _orig(), configurable: true });
+    } catch(_) {}
+    return snap;
+}
+
+// ── Query builder: soporta encadenamiento .where().orderBy().limit() ──
+function _qb(colRef, constraints) {
+    return {
+        where:      (f, op, v) => _qb(colRef, [...constraints, where(f, op, v)]),
+        orderBy:    (f, dir)   => _qb(colRef, [...constraints, orderBy(f, dir || 'asc')]),
+        limit:      (n)        => _qb(colRef, [...constraints, limit(n)]),
+        onSnapshot: (fn, errFn) => onSnapshot(query(colRef, ...constraints), snap => fn(snap), errFn),
+        get:        ()         => getDocs(query(colRef, ...constraints))
+    };
+}
+
+// ── Wrapper de documento (reemplaza doc().get(), doc().update(), etc.) ──
+function _docCompat(rawDb, colPath, id) {
+    const ref = doc(rawDb, colPath, id);
+    return {
+        get:        ()            => getDoc(ref).then(_patchSnap),
+        update:     (data)        => updateDoc(ref, data),
+        set:        (data, opts)  => setDoc(ref, data, opts || {}),
+        delete:     ()            => deleteDoc(ref),
+        onSnapshot: (fn, errFn)   => onSnapshot(ref, snap => fn(_patchSnap(snap)), errFn)
+    };
+}
+
+// ── Wrapper de colección (reemplaza db.collection('x').add(), .doc(), etc.) ──
+function _colCompat(rawDb, colPath) {
+    const colRef = collection(rawDb, colPath);
+    return {
+        add:        (data)         => addDoc(colRef, data),
+        doc:        (id)           => _docCompat(rawDb, colPath, id),
+        where:      (f, op, v)     => _qb(colRef, [where(f, op, v)]),
+        orderBy:    (f, dir)       => _qb(colRef, [orderBy(f, dir || 'asc')]),
+        limit:      (n)            => _qb(colRef, [limit(n)]),
+        onSnapshot: (fn, errFn)    => onSnapshot(colRef, fn, errFn),
+        get:        ()             => getDocs(colRef)
+    };
+}
+
+try {
+    const _app   = initializeApp(_fbConfig);
+    const _rawDb = getFirestore(_app);
+
+    // ── window.db: API idéntica a compat — ninguna llamada existente cambia ──
+    window.db = { collection: (path) => _colCompat(_rawDb, path) };
+
+    // ── Compatibilidad con firebase.firestore.FieldValue.serverTimestamp() ──
+    window.firebase = {
+        firestore: {
+            FieldValue: { serverTimestamp: () => serverTimestamp() }
+        }
     };
 
-    // ── OPTIMIZACIÓN: usar evento 'load' del script en lugar de setTimeout recursivo ──
-    function _initFirebase() {
-        try {
-            if (typeof firebase === 'undefined' || !firebase.firestore) {
-                // Esto solo debería ocurrir en race conditions extremas
-                console.warn('[Firebase] SDK aún no disponible al llamar _initFirebase');
-                window.db = null;
-                return;
-            }
-            if (!firebase.apps.length) firebase.initializeApp(_fbConfig);
-            window.db = firebase.firestore();
-            try { db = window.db; } catch(e) {}
-            // Disparar evento personalizado para que otros módulos sepan que DB está lista
-            document.dispatchEvent(new CustomEvent('firebase:ready', { detail: { db: window.db } }));
-        } catch(e) {
-            console.error("Firebase init error:", e);
-            window.db = null;
-            _logError('firebase_init', e.message);
-        }
-    }
+    // Avisar al resto de la app que la DB está lista
+    document.dispatchEvent(new CustomEvent('firebase:ready', { detail: { db: window.db } }));
 
-    // Iniciar cuando el script de Firebase esté disponible
-    function _waitForFirebase(attempts) {
-        attempts = attempts || 0;
-        if (typeof firebase !== 'undefined' && firebase.firestore) {
-            _initFirebase();
-        } else if (attempts < 25) {
-            setTimeout(function() { _waitForFirebase(attempts + 1); }, 200);
-        } else {
-            console.error('[Firebase] SDK no cargó. Continuando sin conexión.');
-            window.db = null;
-        }
-    }
-
-    // Intentar enlazar al evento load del script; si ya cargó, ejecutar directo
-    (function() {
-        const scripts = document.querySelectorAll('script[src*="firebase-app"]');
-        const fbScript = scripts[scripts.length - 1];
-        if (fbScript && !fbScript._initHooked) {
-            fbScript._initHooked = true;
-            fbScript.addEventListener('load', function() { _waitForFirebase(0); });
-            // Por si 'load' ya disparó (defer script ejecutado)
-            setTimeout(function() { if (!window.db) _waitForFirebase(0); }, 100);
-        } else {
-            _waitForFirebase(0);
-        }
-    })();
-
-    // Alias global — se actualiza cada vez que _initFirebase resuelve
-    var db = window.db || null;
+} catch(e) {
+    console.error('[Firebase] Error de inicialización modular:', e);
+    window.db   = null;
+    window.firebase = { firestore: { FieldValue: { serverTimestamp: () => null } } };
+}
 </script><meta charset="utf-8" />
 <!-- ══ PWA ══════════════════════════════════════════════════ -->
 <link rel="manifest" href="./manifest.json">
@@ -1920,45 +1933,116 @@ window.cambiarSucursalPrincipal = () => {
     actualizarEstadoLocal();
 };
 
+// ── BATCH RENDERING — carga progresiva del catálogo ────────────────
+// Renderiza los primeros 12 items de inmediato y carga el resto de forma
+// incremental usando IntersectionObserver cuando el usuario hace scroll.
+// Esto evita generar +40 nodos DOM de golpe en dispositivos de bajos recursos.
+const _BATCH_SIZE  = 12;
+let   _batchQueue  = [];   // [{grid: DOMElement, html: string}, ...]
+let   _batchObs    = null; // IntersectionObserver activo
+
+function _buildCardHtml(p, precioFinal, agotado) {
+    // Construye el HTML de una card; openModal recibe los datos via JSON inline.
+    const onClickAttr = agotado
+        ? ''
+        : `onclick='openModal(${JSON.stringify({...p, p: precioFinal}).replace(/'/g, "\'")})'`;
+    return `<div class="card-p${agotado ? ' agotado' : ''}" ${onClickAttr}>${agotado ? '<div class="agotado-badge">Agotado</div>' : ''}<div class="p-img-wrapper"><img class="p-img" src="${p.img}" alt="${p.n}" loading="lazy" decoding="async"></div><div class="p-txt"><div><h3>${p.n}</h3><p>${p.d}</p></div><div class="p-action-row"><span class="p-price">$${precioFinal.toLocaleString()}</span><button class="add-btn">+</button></div></div></div>`;
+}
+
+function _renderNextBatch() {
+    if (_batchQueue.length === 0) {
+        // Cola vacía → desconectar observer y ocultar sentinel
+        if (_batchObs) { _batchObs.disconnect(); _batchObs = null; }
+        const sentinel = document.getElementById('menu-load-sentinel');
+        if (sentinel) sentinel.style.display = 'none';
+        return;
+    }
+
+    // Tomar el próximo lote y volcarlo al DOM usando DocumentFragment
+    const batch = _batchQueue.splice(0, _BATCH_SIZE);
+    batch.forEach(({ grid, html }) => {
+        const tmp = document.createElement('div');
+        tmp.innerHTML = html;
+        while (tmp.firstChild) grid.appendChild(tmp.firstChild);
+    });
+
+    // Si se agotó la cola, limpiar observer y sentinel
+    if (_batchQueue.length === 0) {
+        if (_batchObs) { _batchObs.disconnect(); _batchObs = null; }
+        const sentinel = document.getElementById('menu-load-sentinel');
+        if (sentinel) sentinel.style.display = 'none';
+    }
+}
+
 function renderMenu() {
     const cats = document.getElementById('cat-list');
     const menu = document.getElementById('menu-container');
-    cats.innerHTML = ""; menu.innerHTML = "";
+    cats.innerHTML = ''; menu.innerHTML = '';
+
+    // Reiniciar cola y observer al re-renderizar (ej: cuando llegan overrides de Firebase)
+    _batchQueue = [];
+    if (_batchObs) { _batchObs.disconnect(); _batchObs = null; }
 
     MENU.forEach((c, idx) => {
+        // ── Botón de categoría ──
         const btn = document.createElement('button');
-        btn.className = `cat-tag ${idx===0?'active':''}`;
+        btn.className = `cat-tag ${idx === 0 ? 'active' : ''}`;
         btn.innerText = c.cat;
         btn.onclick = () => {
             document.querySelector('.cat-tag.active').classList.remove('active');
             btn.classList.add('active');
             const element = document.getElementById(`sec-${idx}`);
             const y = element.getBoundingClientRect().top + window.scrollY - 140;
-            window.scrollTo({top: y, behavior: 'smooth'});
+            window.scrollTo({ top: y, behavior: 'smooth' });
         };
         cats.appendChild(btn);
 
-        const sec = document.createElement('div');
-        sec.id = `sec-${idx}`;
-        sec.innerHTML = `<h3 class="cat-title">${c.cat}</h3>`;
-        
-        let gridHtml = `<div class="menu-grid">`;
-        c.items.forEach(p => {
-            
-            // NUEVA LÍNEA: Le pasamos la categoría al producto para que el modal sepa qué extras mostrar
-            p.cat = c.cat; 
+        // ── Sección de categoría (header + grid vacío) ──
+        const sec  = document.createElement('div');
+        sec.id     = `sec-${idx}`;
+        const h3   = document.createElement('h3');
+        h3.className = 'cat-title';
+        h3.textContent = c.cat;
+        sec.appendChild(h3);
 
-            // Precio y disponibilidad dinámicos desde Firebase
-            const precioFinal = (menuOverrides[p.id] && menuOverrides[p.id].precio) ? menuOverrides[p.id].precio : p.p;
-            const agotado = menuOverrides[p.id] && menuOverrides[p.id].agotado === true;
-            gridHtml += `
-                <div class="card-p${agotado?' agotado':''}" onclick='${agotado?'':'openModal('+JSON.stringify({...p,p:precioFinal})+')'}'> ${agotado?'<div class=\"agotado-badge\">Agotado</div>':''}
-                    <div class="p-img-wrapper"><img class="p-img" src="${p.img}" alt="${p.n}" loading="lazy" decoding="async"></div><div class="p-txt"><div><h3>${p.n}</h3><p>${p.d}</p></div><div class="p-action-row"><span class="p-price">$${precioFinal.toLocaleString()}</span><button class="add-btn">+</button></div></div></div> `;
-        });
-        gridHtml += `</div>`;
-        sec.innerHTML += gridHtml;
+        const grid = document.createElement('div');
+        grid.className = 'menu-grid';
+        sec.appendChild(grid);
         menu.appendChild(sec);
+
+        // ── Encolar cada item (no se inserta en DOM todavía) ──
+        c.items.forEach(p => {
+            p.cat = c.cat; // para que el modal sepa qué extras mostrar
+            const precioFinal = (menuOverrides[p.id] && menuOverrides[p.id].precio)
+                ? menuOverrides[p.id].precio : p.p;
+            const agotado = !!(menuOverrides[p.id] && menuOverrides[p.id].agotado === true);
+            _batchQueue.push({ grid, html: _buildCardHtml(p, precioFinal, agotado) });
+        });
     });
+
+    // ── Sentinel: div invisible al final del catálogo para detectar scroll ──
+    let sentinel = document.getElementById('menu-load-sentinel');
+    if (!sentinel) {
+        sentinel = document.createElement('div');
+        sentinel.id = 'menu-load-sentinel';
+        sentinel.style.cssText = 'height:2px;width:100%;margin:0;padding:0;';
+        menu.after(sentinel);
+    }
+    sentinel.style.display = 'block';
+
+    // ── Primer lote: renderizar de inmediato (sin esperar scroll) ──
+    _renderNextBatch();
+
+    // ── Observer: cargar siguiente lote cuando el sentinel es visible ──
+    if ('IntersectionObserver' in window && _batchQueue.length > 0) {
+        _batchObs = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting) _renderNextBatch();
+        }, { rootMargin: '300px' }); // 300px de antelación para carga suave
+        _batchObs.observe(sentinel);
+    } else {
+        // Fallback para navegadores sin IntersectionObserver
+        while (_batchQueue.length > 0) _renderNextBatch();
+    }
 }
   
   
@@ -2052,7 +2136,21 @@ window.toggleExt = (id) => {
         window.toggleCart = () => {
             const cv = document.getElementById('cart-view');
             cv.classList.toggle('open');
-            // El historial de reorden ahora vive en la pestaña Pedidos, no en el carrito
+
+            // ── EmailJS: carga diferida ──────────────────────────────────────
+            // Se descarga el script SOLO cuando el usuario abre el carrito por
+            // primera vez. Esto libera ~20 KB del hilo principal durante la carga
+            // inicial de la página y evita bloquear el First Contentful Paint.
+            if (cv.classList.contains('open') && !window._ejsLoaded) {
+                window._ejsLoaded = true; // flag para no cargar dos veces
+                const _ejsScript = document.createElement('script');
+                _ejsScript.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js';
+                _ejsScript.onload = () => {
+                    if (window.emailjs) emailjs.init('sATMMVYtIbZLT1tMD');
+                };
+                _ejsScript.onerror = () => { window._ejsLoaded = false; }; // permitir reintento
+                document.head.appendChild(_ejsScript);
+            }
         };
         function updateCartUI() { document.getElementById('cart-badge').innerText = carrito.reduce((s,i)=>s+i.cant,0); }
         window.toggleVuelto = () => document.getElementById('vuelto-box').style.display = (document.getElementById('p-metodo').value === 'Efectivo') ? 'block' : 'none';

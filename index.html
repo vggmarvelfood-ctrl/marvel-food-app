@@ -73,7 +73,38 @@ try {
     const _rawDb = getFirestore(_app);
 
     // ── window.db: API idéntica a compat — ninguna llamada existente cambia ──
-    window.db = { collection: (path) => _colCompat(_rawDb, path) };
+    // ── batch() añadido: admLimpiarDia lo necesita para borrado masivo atómico ──
+    function _batchCompat(rawDb) {
+        const ops = [];
+        return {
+            delete: (colOrRef) => {
+                // Acepta tanto el resultado de db.collection().doc() como una ref directa
+                const ref = colOrRef._ref || colOrRef;
+                ops.push({ type: 'delete', ref });
+                return this;
+            },
+            set:    (colOrRef, data, opts) => { ops.push({ type: 'set',    ref: colOrRef._ref || colOrRef, data, opts }); return this; },
+            update: (colOrRef, data)       => { ops.push({ type: 'update', ref: colOrRef._ref || colOrRef, data });       return this; },
+            commit: async () => {
+                // Firestore SDK v9 no tiene WriteBatch en esta forma; emulamos con Promise.all en chunks de 500
+                const { writeBatch, doc: _doc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                const CHUNK = 499;
+                for (let i = 0; i < ops.length; i += CHUNK) {
+                    const b = writeBatch(rawDb);
+                    ops.slice(i, i + CHUNK).forEach(op => {
+                        if (op.type === 'delete') b.delete(op.ref);
+                        else if (op.type === 'set') b.set(op.ref, op.data, op.opts || {});
+                        else if (op.type === 'update') b.update(op.ref, op.data);
+                    });
+                    await b.commit();
+                }
+            }
+        };
+    }
+    window.db = {
+        collection: (path) => _colCompat(_rawDb, path),
+        batch:      ()     => _batchCompat(_rawDb)
+    };
 
     // ── Compatibilidad con firebase.firestore.FieldValue.serverTimestamp() ──
     window.firebase = {
@@ -2486,9 +2517,19 @@ window.procesarPedido = async () => {
 
     if (cuponAplicado) {
         detalleCupon = cuponAplicado.titulo;
+        // Bug fix: manejar todos los tipos de cupón (antes solo "porcentaje" se calculaba)
         if (cuponAplicado.tipo === "porcentaje") {
             montoDescuento = Math.round(sub * cuponAplicado.valor);
+        } else if (cuponAplicado.tipo === "efectivo" || cuponAplicado.tipo === "descuento_efectivo") {
+            montoDescuento = cuponAplicado.valor || 0;
+        } else if (cuponAplicado.tipo === "porcentaje_veggie") {
+            // Solo aplica sobre ítems veggie (nombre incluye VEGGIE/VEGE/CHOCLO/VEGAN)
+            const subVeggie = carrito
+                .filter(i => /VEGGIE|VEGE|CHOCLO|VEGAN/i.test(i.n))
+                .reduce((a, i) => a + i.totalItem, 0);
+            montoDescuento = Math.round(subVeggie * (cuponAplicado.valor || 0));
         }
+        // regalo_papas / regalo_libre / regalo → sin descuento numérico; el regalo se acuerda en local
     }
 
     let total = Math.max(0, sub + envio - montoDescuento);
@@ -2513,7 +2554,8 @@ window.procesarPedido = async () => {
         descuento: montoDescuento,
         cuponUsado: detalleCupon,
         total: total, 
-        pago, 
+        pago,
+        vuelto: (pago === 'Efectivo' && vuelto > 0) ? vuelto : 0,
         estado: "Pendiente", 
         fecha: firebase.firestore.FieldValue.serverTimestamp()
     };
@@ -2561,6 +2603,11 @@ window.procesarPedido = async () => {
         // Iniciar seguimiento
         iniciarSeguimiento(pedidoId);
 
+        // Notificar sistema externo (webhook / sonido) con el nuevo pedido
+        if (typeof _integNotificar === 'function') {
+            _integNotificar('nuevo_pedido', { ...ordenDatos, id: pedidoId });
+        }
+
         // Registrar venta para estadísticas
         registrarVentaStats(carrito, total, SUC_MAP[sucId].n);
 
@@ -2587,8 +2634,9 @@ window.procesarPedido = async () => {
         if (pago === 'Efectivo' && vuelto > 0) {
             t += `*Abona con:* $${vuelto} (Vuelto: $${vuelto - total})%0A`;
         }
-        if (cuponAplicado) {
-            t += `*Cupón aplicado:* ${cuponAplicado.titulo}%0A`;
+        // Bug fix: usar detalleCupon (capturado antes de nullificar cuponAplicado)
+        if (detalleCupon && detalleCupon !== 'Ninguno') {
+            t += `*Cupón aplicado:* ${detalleCupon}%0A`;
         }
 
         t += `---------------------------%0A`;
@@ -3613,6 +3661,8 @@ function admIniciar() {
     const procesar = snap => {
         admPedidos = [];
         snap.forEach(doc => admPedidos.push({ id: doc.id, ...doc.data() }));
+        // Detectar pedidos nuevos y notificar sistema externo
+        if (typeof _integProcesarSnapshot === 'function') _integProcesarSnapshot(admPedidos);
         admRenderPedidos();
         admActualizarStats();
         const el = document.getElementById('adm-last-update');
@@ -3786,7 +3836,12 @@ function admToggle(id) {
 
 // ─── CAMBIAR ESTADO ───────────────────────────────────
 async function admCambiarEstado(id, estado) {
-    try { await db.collection("pedidos_v2").doc(id).update({ estado }); }
+    try {
+        await db.collection("pedidos_v2").doc(id).update({ estado });
+        // Notificar sistema externo con el pedido actualizado
+        const p = admPedidos.find(x => x.id === id);
+        if (p) _integNotificar('estado_cambiado', { ...p, estado });
+    }
     catch (e) { alert("Error: " + e.message); }
 }
 
@@ -3843,6 +3898,267 @@ async function admMover(id) {
     } catch (e) { alert("Error: " + e.message); }
 }
 
+// ════════════════════════════════════════════════════════════════
+// ── SISTEMA DE INTEGRACIÓN EXTERNA ──────────────────────────────
+//    Conecta cada evento del sistema de pedidos con un servicio
+//    externo (POS, KDS, pantalla de cocina, Zapier, n8n, etc.)
+//    Configuración persistida en localStorage para sobrevivir recargas.
+// ════════════════════════════════════════════════════════════════
+
+// ── Configuración persistida ──────────────────────────────────
+const _INTEG_KEY = 'mf_integ_config_v1';
+
+function _integGetConfig() {
+    try { return JSON.parse(localStorage.getItem(_INTEG_KEY) || '{}'); } catch { return {}; }
+}
+function _integSaveConfig(cfg) {
+    try { localStorage.setItem(_INTEG_KEY, JSON.stringify(cfg)); } catch(e) {}
+}
+
+// ── Notificador principal ─────────────────────────────────────
+// evento: 'nuevo_pedido' | 'estado_cambiado' | 'pedido_editado'
+// payload: objeto con los datos del pedido + evento
+async function _integNotificar(evento, pedido) {
+    const cfg = _integGetConfig();
+    if (!cfg.habilitado) return;
+
+    const payload = {
+        evento,
+        source: 'marvel_food',
+        timestamp: new Date().toISOString(),
+        pedido_id: pedido.id,
+        numero: pedido.id ? pedido.id.slice(-6).toUpperCase() : '—',
+        cliente: pedido.cliente || '',
+        tel: pedido.tel || '',
+        sucursal: pedido.sucursal || '',
+        tipo: pedido.tipo || '',
+        estado: pedido.estado || '',
+        total: pedido.total || 0,
+        subtotal: pedido.subtotal || 0,
+        envio: pedido.envio || 0,
+        descuento: pedido.descuento || 0,
+        pago: pedido.pago || '',
+        vuelto: pedido.vuelto || 0,
+        horario: pedido.horarioEstimado || '',
+        dir: pedido.dir || '',
+        loc: pedido.loc || '',
+        piso: pedido.piso || '',
+        gps: pedido.gps || '',
+        items: pedido.items || [],
+        cupon: pedido.cuponUsado || 'Ninguno',
+        obs: pedido.obs || ''
+    };
+
+    // ── Webhook HTTP ──────────────────────────────────────────
+    if (cfg.webhookUrl) {
+        try {
+            const headers = { 'Content-Type': 'application/json' };
+            if (cfg.webhookSecret) headers['X-Marvel-Secret'] = cfg.webhookSecret;
+            const resp = await fetch(cfg.webhookUrl, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(payload),
+                signal: AbortSignal.timeout(8000)
+            });
+            _integLog(`✓ Webhook [${evento}] → ${resp.status}`);
+        } catch (err) {
+            _integLog(`✗ Webhook error [${evento}]: ${err.message}`);
+        }
+    }
+
+    // ── Auto-imprimir al Aceptar ──────────────────────────────
+    if (cfg.autoImprimir && evento === 'estado_cambiado' && pedido.estado === 'Aceptado') {
+        setTimeout(() => admImprimir(pedido.id), 400);
+    }
+
+    // ── Auto-WhatsApp al Aceptar ──────────────────────────────
+    if (cfg.autoWsp && evento === 'estado_cambiado' && pedido.estado === 'Aceptado') {
+        setTimeout(() => admWhatsapp(pedido.id), 800);
+    }
+
+    // ── Notificación de sonido ────────────────────────────────
+    if (cfg.sonido && evento === 'nuevo_pedido') {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            [523.25, 659.25, 783.99].forEach((freq, i) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.frequency.value = freq;
+                osc.type = 'sine';
+                gain.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.15);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.4);
+                osc.start(ctx.currentTime + i * 0.15);
+                osc.stop(ctx.currentTime + i * 0.15 + 0.4);
+            });
+        } catch(e) {}
+    }
+}
+
+// ── Log circular para diagnóstico ────────────────────────────
+const _integLogs = [];
+function _integLog(msg) {
+    _integLogs.unshift(`[${new Date().toLocaleTimeString('es-AR')}] ${msg}`);
+    if (_integLogs.length > 50) _integLogs.pop();
+    const el = document.getElementById('integ-log-body');
+    if (el) el.innerHTML = _integLogs.map(l => `<div style="font-size:11px;padding:3px 0;border-bottom:1px solid #222;color:${l.includes('✗')?'#ef4444':l.includes('✓')?'#10b981':'#9ca3af'}">${l}</div>`).join('');
+}
+
+// ── Detector de pedidos NUEVOS en el snapshot ─────────────────
+// Compara el snapshot anterior con el nuevo para disparar 'nuevo_pedido'
+let _integPedidosConocidos = new Set();
+function _integProcesarSnapshot(pedidos) {
+    const cfg = _integGetConfig();
+    if (!cfg.habilitado) { _integPedidosConocidos = new Set(pedidos.map(p => p.id)); return; }
+    pedidos.forEach(p => {
+        if (!_integPedidosConocidos.has(p.id)) {
+            _integNotificar('nuevo_pedido', p);
+        }
+    });
+    _integPedidosConocidos = new Set(pedidos.map(p => p.id));
+}
+
+// ── Exponer para que admIniciar lo llame ─────────────────────
+window._integProcesarSnapshot = _integProcesarSnapshot;
+
+// ─── UI: Tab "Integración" del panel admin ───────────────────
+function _integRenderTab() {
+    const cfg = _integGetConfig();
+    const el = document.getElementById('adm-tab-integracion');
+    if (!el) return;
+    el.innerHTML = `
+    <div style="padding:20px;">
+        <h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">INTEGRACIÓN EXTERNA</h3>
+        <p style="color:#9ca3af;font-size:12px;margin-bottom:20px;">Conectá Marvel Food con sistemas externos: POS, KDS de cocina, Zapier, n8n, Make, Google Sheets, etc.</p>
+
+        <!-- Estado -->
+        <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:16px;">
+            <div>
+                <div style="font-weight:800;color:var(--white);font-size:14px;">Sistema de integración</div>
+                <div style="font-size:11px;color:#9ca3af;margin-top:2px;">Activa/desactiva todas las notificaciones externas</div>
+            </div>
+            <label style="position:relative;display:inline-block;width:48px;height:26px;cursor:pointer;">
+                <input type="checkbox" id="integ-habilitado" ${cfg.habilitado ? 'checked' : ''} onchange="_integGuardar()" style="opacity:0;width:0;height:0;">
+                <span style="position:absolute;inset:0;background:${cfg.habilitado?'#10b981':'#333'};border-radius:13px;transition:.3s;"></span>
+                <span style="position:absolute;top:3px;left:${cfg.habilitado?'25px':'3px'};width:20px;height:20px;background:#fff;border-radius:50%;transition:.3s;"></span>
+            </label>
+        </div>
+
+        <!-- Webhook -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
+            <div style="font-size:11px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:10px;">🔗 Webhook HTTP</div>
+            <div style="font-size:10px;color:#6b7280;margin-bottom:8px;">Cada pedido nuevo y cambio de estado enviará un POST con JSON al URL configurado.</div>
+            <input id="integ-webhook-url" type="url" placeholder="https://hooks.zapier.com/hooks/catch/..." value="${cfg.webhookUrl||''}"
+                style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--white);font-size:12px;margin-bottom:8px;outline:none;">
+            <input id="integ-webhook-secret" type="text" placeholder="Clave secreta (opcional, header X-Marvel-Secret)" value="${cfg.webhookSecret||''}"
+                style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--white);font-size:12px;margin-bottom:10px;outline:none;">
+            <button onclick="_integTestWebhook()" style="background:rgba(59,130,246,.2);border:1px solid #3b82f6;color:#3b82f6;padding:8px 16px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;width:100%;">
+                ▶ PROBAR WEBHOOK AHORA
+            </button>
+        </div>
+
+        <!-- Opciones de automatización -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
+            <div style="font-size:11px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">⚡ Automatizaciones</div>
+            ${[
+                ['integ-auto-imprimir', 'autoImprimir', '🖨️ Imprimir ticket automáticamente al Aceptar'],
+                ['integ-auto-wsp',      'autoWsp',      '💬 Enviar WhatsApp al cliente al Aceptar'],
+                ['integ-sonido',        'sonido',       '🔔 Sonido de alerta en pedidos nuevos'],
+            ].map(([id, key, label]) => `
+            <label style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;">
+                <input type="checkbox" id="${id}" ${cfg[key]?'checked':''} onchange="_integGuardar()" style="width:16px;height:16px;accent-color:var(--primary);">
+                <span style="font-size:13px;color:var(--white);">${label}</span>
+            </label>`).join('')}
+        </div>
+
+        <!-- Botón guardar -->
+        <button onclick="_integGuardar(true)" style="width:100%;padding:14px;border-radius:12px;border:none;background:var(--primary);color:#000;font-weight:800;font-size:14px;cursor:pointer;margin-bottom:12px;">
+            💾 GUARDAR CONFIGURACIÓN
+        </button>
+
+        <!-- Payload de ejemplo -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
+            <div style="font-size:11px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:8px;">📋 Formato del payload JSON</div>
+            <pre style="font-size:10px;color:#10b981;background:#0a0a0a;padding:10px;border-radius:8px;overflow-x:auto;line-height:1.5;">${JSON.stringify({
+                evento: "nuevo_pedido | estado_cambiado | pedido_editado",
+                source: "marvel_food",
+                timestamp: "2025-01-15T20:30:00.000Z",
+                pedido_id: "abc123xyz",
+                numero: "X1Y2Z3",
+                cliente: "NOMBRE DEL CLIENTE",
+                tel: "3415000000",
+                sucursal: "PELLEGRINI 1149, Rosario Centro",
+                tipo: "Delivery | Retiro",
+                estado: "Pendiente | Aceptado | Listo | Entregado",
+                total: 15000,
+                items: [{ n: "HULK BURGER", cant: 2, totalItem: 10000 }],
+                horario: "21:00 a 21:30",
+                pago: "Efectivo | Mercado Pago | Transferencia"
+            }, null, 2)}</pre>
+        </div>
+
+        <!-- Log -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <div style="font-size:11px;color:#9ca3af;font-weight:700;text-transform:uppercase;">📡 Log de actividad</div>
+                <button onclick="_integLogs.length=0;_integLog('Log limpiado')" style="background:transparent;border:1px solid #333;color:#9ca3af;padding:3px 8px;border-radius:6px;font-size:10px;cursor:pointer;">Limpiar</button>
+            </div>
+            <div id="integ-log-body" style="max-height:160px;overflow-y:auto;">
+                <div style="font-size:11px;color:#6b7280;">Sin actividad aún...</div>
+            </div>
+        </div>
+    </div>`;
+}
+
+window._integGuardar = function(mostrarToast) {
+    const cfg = {
+        habilitado:    document.getElementById('integ-habilitado')?.checked || false,
+        webhookUrl:    document.getElementById('integ-webhook-url')?.value.trim() || '',
+        webhookSecret: document.getElementById('integ-webhook-secret')?.value.trim() || '',
+        autoImprimir:  document.getElementById('integ-auto-imprimir')?.checked || false,
+        autoWsp:       document.getElementById('integ-auto-wsp')?.checked || false,
+        sonido:        document.getElementById('integ-sonido')?.checked || false,
+    };
+    _integSaveConfig(cfg);
+    _integRenderTab(); // Re-render para actualizar colores del toggle
+    if (mostrarToast) _integLog('✓ Configuración guardada');
+};
+
+window._integTestWebhook = async function() {
+    const url = document.getElementById('integ-webhook-url')?.value.trim();
+    if (!url) return alert('Ingresá una URL de webhook primero.');
+    _integLog('▶ Probando webhook...');
+    try {
+        const secret = document.getElementById('integ-webhook-secret')?.value.trim();
+        const headers = { 'Content-Type': 'application/json' };
+        if (secret) headers['X-Marvel-Secret'] = secret;
+        const resp = await fetch(url, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+                evento: 'test',
+                source: 'marvel_food',
+                timestamp: new Date().toISOString(),
+                mensaje: 'Prueba de integración desde Marvel Food Admin'
+            }),
+            signal: AbortSignal.timeout(8000)
+        });
+        _integLog(`✓ Webhook respondió: HTTP ${resp.status}`);
+    } catch(err) {
+        _integLog(`✗ Error: ${err.message}`);
+    }
+};
+
+// ─── INIT: cargar config al abrir el admin ────────────────────
+document.addEventListener('firebase:ready', () => {
+    const cfg = _integGetConfig();
+    if (cfg.sonido === undefined) {
+        // Primera vez: activar sonido por defecto
+        _integSaveConfig({ ...cfg, sonido: true });
+    }
+});
+
+// ════════════════════════════════════════════════════════════════
 // ─── WHATSAPP ─────────────────────────────────────────
 function admWhatsapp(id) {
     const p = admPedidos.find(x => x.id === id);
@@ -3941,6 +4257,9 @@ async function admGuardar() {
             fechaEdicion: firebase.firestore.FieldValue.serverTimestamp()
         });
         admCloseModal();
+        // Notificar sistema externo con el pedido editado
+        const pActualizado = admPedidos.find(x => x.id === admEditId) || {};
+        _integNotificar('pedido_editado', { ...pActualizado, id: admEditId });
     } catch (e) { alert("Error al guardar: " + e.message); }
 }
 
@@ -4165,12 +4484,23 @@ function admImprimir(id) {
         win.document.write(html);
         win.document.close();
     } else {
-        // Fallback si el popup fue bloqueado: usar printArea
-        const printArea = document.getElementById('adm-print-area');
-        if (printArea) {
-            printArea.innerHTML = `<iframe srcdoc="${html.replace(/"/g,"'")}" style="width:100%;height:100vh;border:none;"></iframe>`;
+        // Fallback si el popup fue bloqueado: usar Blob URL (evita problemas de encoding con srcdoc)
+        // Bug fix: html.replace(/"/g,"'") rompía si los nombres de productos tenían comillas simples
+        try {
+            const blob = new Blob([html], { type: 'text/html' });
+            const blobUrl = URL.createObjectURL(blob);
+            const printArea = document.getElementById('adm-print-area');
+            if (printArea) {
+                const ifr = document.createElement('iframe');
+                ifr.style.cssText = 'width:100%;height:100vh;border:none;';
+                ifr.onload = () => { ifr.contentWindow.print(); URL.revokeObjectURL(blobUrl); };
+                ifr.src = blobUrl;
+                printArea.innerHTML = '';
+                printArea.appendChild(ifr);
+            }
+        } catch(blobErr) {
+            alert(' El navegador bloqueó la ventana emergente. Habilitá los popups para este sitio y volvé a intentarlo.');
         }
-        alert(' El navegador bloqueó la ventana emergente. Habilitá los popups para este sitio y volvé a intentarlo.');
     }
 }
 
@@ -4178,6 +4508,7 @@ function admImprimir(id) {
 // ═══ ADMIN TABS + DASHBOARD + MENU + RESENAS ═══════════════════
 
 function admSwitchTab(tab, btn) {
+    if (tab === 'integracion') { _integRenderTab(); }
     ['pedidos','dashboard','menu','resenas','promos','cupones'].forEach(t => {
         const el = document.getElementById('adm-tab-' + t);
         if (el) el.style.display = t === tab ? 'block' : 'none';
@@ -4897,7 +5228,7 @@ document.getElementById('admin-root') && document.getElementById('admin-root').a
 <button onclick="cerrarTracking()" style="width:100%;padding:12px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text-light);font-weight:700;margin-top:12px;cursor:pointer;">CERRAR</button></div></div><!-- MODAL RESEÑA --><div id="resena-modal"><div class="resena-sheet"><div style="font-size:40px;margin-bottom:8px;"></div><h3 style="font-weight:800;font-size:18px;color:var(--white);margin-bottom:6px;">¿Cómo estuvo tu pedido?</h3><p style="color:var(--text-light);font-size:13px;">Tu opinión nos ayuda a mejorar</p><div class="stars-row" id="stars-row"><span class="star-btn" data-v="1" onclick="setStars(1)">★</span><span class="star-btn" data-v="2" onclick="setStars(2)">★</span><span class="star-btn" data-v="3" onclick="setStars(3)">★</span><span class="star-btn" data-v="4" onclick="setStars(4)">★</span><span class="star-btn" data-v="5" onclick="setStars(5)">★</span></div><textarea id="resena-comentario" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--white);font-size:13px;resize:none;height:80px;margin-bottom:16px;" placeholder="Comentario opcional..."></textarea><button onclick="enviarResena()" id="resena-btn" style="width:100%;padding:14px;border-radius:10px;border:none;background:var(--primary);color:#000;font-weight:800;font-size:15px;cursor:pointer;">ENVIAR RESEÑA</button><button onclick="document.getElementById('resena-modal').classList.remove('open')" style="width:100%;padding:10px;border-radius:10px;border:none;background:transparent;color:var(--text-light);font-size:13px;margin-top:8px;cursor:pointer;">Ahora no</button></div></div><!-- ADMIN --><div id="admin-root" style="display:none;"><!-- LOGIN --><div id="adm-login-screen"><div class="adm-login-box"><div style="font-size:36px;margin-bottom:8px;"></div><h1>MARVEL FOOD</h1><p>Panel de administración</p><input class="adm-inp" type="password" id="adm-pin" placeholder="PIN de acceso" autocomplete="off"
                 onkeydown="if(event.key==='Enter') admCheckPin()">
 <div id="adm-pin-feedback" style="min-height:18px;font-size:12px;font-weight:700;margin:6px 0 2px;text-align:center;"></div>
-<button class="adm-btn-primary" onclick="admCheckPin()">INGRESAR</button></div></div><!-- PANEL PRINCIPAL --><div id="adm-app" style="display:none;"><!-- Header --><div class="adm-header"><h1>MARVEL <span>ADMIN</span></h1><div style="display:flex;align-items:center;gap:8px;"><span class="adm-badge-live">● EN VIVO</span><span style="color:#9ca3af;font-size:10px;" id="adm-last-update">—</span><button onclick="admLogout()" style="background:transparent;border:1px solid #333;color:#9ca3af;padding:5px 10px;border-radius:8px;font-size:10px;cursor:pointer;">SALIR</button></div></div><!-- Stats --><div class="adm-stats-bar"><div class="adm-stat"><span>Pendientes</span><span id="adm-s-pend">0</span></div><div class="adm-stat"><span>Aceptados</span><span id="adm-s-acep" style="color:#10b981">0</span></div><div class="adm-stat"><span>Listos</span><span id="adm-s-list" style="color:#3b82f6">0</span></div><div class="adm-stat"><span>Hoy</span><span id="adm-s-total" style="color:#fff">0</span></div><div class="adm-stat"><span>Recaudado</span><span id="adm-s-cash" style="color:#10b981">$0</span></div></div><!-- Barra de filtros --><!-- Tabs del admin --><div style="display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);overflow-x:auto;"><button class="adm-tab active" onclick="admSwitchTab('pedidos',this)">Pedidos</button><button class="adm-tab" onclick="admSwitchTab('dashboard',this)">Dashboard</button><button class="adm-tab" onclick="admSwitchTab('menu',this)">Menu</button><button class="adm-tab" onclick="admSwitchTab('promos',this)">Promos</button><button class="adm-tab" onclick="admSwitchTab('cupones',this)">Cupones</button><button class="adm-tab" onclick="admSwitchTab('codigos',this)">Codigos</button><button class="adm-tab" onclick="admSwitchTab('resenas',this)">Reseñas</button></div><!-- TAB PEDIDOS --><div id="adm-tab-pedidos"><div class="adm-filterbar"><!-- Fila 1: Fecha + Sucursal --><div class="adm-filterrow"><div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;"><span style="color:#9ca3af;font-size:11px;font-weight:700;white-space:nowrap;"> FECHA</span><input type="date" id="adm-fecha-filtro" class="adm-date-inp" onchange="admAplicarFiltros()"><button onclick="admFechaHoy()" class="adm-filter-btn" style="white-space:nowrap;padding:5px 10px;">Hoy</button><button onclick="admVerTodoHistorial()" id="btn-todo-historial" class="adm-filter-btn" style="white-space:nowrap;padding:5px 10px;background:rgba(99,102,241,0.15);border-color:#6366f1;color:#a5b4fc;">Todo</button></div><div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;"><span style="color:#9ca3af;font-size:11px;font-weight:700;white-space:nowrap;">SUCURSAL</span><select id="adm-suc-filtro" class="adm-date-inp" onchange="admAplicarFiltros()" style="flex:1;"><option value="">Todas</option><option value="PELLEGRINI">Centro</option><option value="Rondeau">Norte</option><option value="San Martin">Sur</option><option value="Funes">Funes</option></select></div></div><!-- Fila 2: Estado + Tipo + Limpiar --><div class="adm-filterrow" style="margin-top:8px;"><button class="adm-filter-btn active" data-f="Todos"    onclick="admFiltroEstado('Todos',this)">Todos</button><button class="adm-filter-btn"        data-f="Pendiente" onclick="admFiltroEstado('Pendiente',this)">Pendientes</button><button class="adm-filter-btn f-acep" data-f="Aceptado" onclick="admFiltroEstado('Aceptado',this)">Aceptados</button><button class="adm-filter-btn f-list" data-f="Listo"    onclick="admFiltroEstado('Listo',this)">Listos</button><button class="adm-filter-btn f-ent"  data-f="Entregado" onclick="admFiltroEstado('Entregado',this)">Entregados</button><button class="adm-filter-btn"        data-f="Delivery" onclick="admFiltroEstado('Delivery',this)">Delivery</button><button class="adm-filter-btn"        data-f="Retiro"   onclick="admFiltroEstado('Retiro',this)">Retiro</button><button onclick="admLimpiarDia()" style="margin-left:auto;background:rgba(239,68,68,.15);border:1px solid #ef4444;color:#ef4444;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">Limpiar día</button></div></div><!-- Lista pedidos --><div class="adm-orders" id="adm-orders"></div></div><!-- /adm-tab-pedidos --><!-- TAB DASHBOARD --><div id="adm-tab-dashboard" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:16px;">MÉTRICAS DEL DÍA</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;"><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Pedidos hoy</div><div id="dash-total" style="font-size:28px;font-weight:800;color:var(--primary);">0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Recaudado</div><div id="dash-cash" style="font-size:22px;font-weight:800;color:#10b981;">$0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Ticket promedio</div><div id="dash-ticket" style="font-size:22px;font-weight:800;color:#3b82f6;">$0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Delivery / Retiro</div><div id="dash-tipos" style="font-size:16px;font-weight:800;color:var(--white);">0 / 0</div></div></div><!-- Ventas por hora --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Ventas por hora</div><div id="dash-chart-horas" style="display:flex;align-items:flex-end;gap:4px;height:80px;"></div><div id="dash-chart-labels" style="display:flex;gap:4px;margin-top:4px;"></div></div><!-- Productos más pedidos --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Productos más pedidos hoy</div><div id="dash-top-prods"></div></div><!-- Mapa de calor de zonas --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Pedidos por zona</div><div id="dash-zonas"></div></div></div><!-- TAB MENÚ --><div id="adm-tab-menu" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:6px;"> GESTIÓN DE MENÚ</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Pausá productos o editá precios. Los cambios son inmediatos en la tienda.</p><div id="adm-menu-lista" style="display:flex;flex-direction:column;gap:8px;"></div></div><!-- TAB RESEÑAS / OPINIONES --><div id="adm-tab-resenas" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">OPINIONES DE CLIENTES</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Podés eliminar cualquier opinión que no corresponda. Los cambios son inmediatos.</p><div style="display:flex;gap:12px;margin-bottom:20px;"><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);flex:1;text-align:center;"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Promedio</div><div id="res-promedio" style="font-size:32px;font-weight:800;color:var(--primary);">—</div><div style="color:#9ca3af;font-size:11px;" id="res-count">0 reseñas</div></div><div id="res-dist" style="flex:2;background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);display:flex;flex-direction:column;gap:5px;justify-content:center;"></div></div><!-- Tabs internas: Pedido / Públicas --><div style="display:flex;gap:8px;margin-bottom:16px;"><button id="adm-res-tab-ped" onclick="admResTab('pedidos')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--primary);background:rgba(245,158,11,.15);color:var(--primary);font-weight:800;font-size:12px;cursor:pointer;">Desde pedido</button><button id="adm-res-tab-pub" onclick="admResTab('publicas')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--border);background:transparent;color:#9ca3af;font-weight:800;font-size:12px;cursor:pointer;">Opiniones públicas</button></div><div id="adm-resenas-lista" style="display:flex;flex-direction:column;gap:10px;"></div></div><!-- TAB PROMOS --><div id="adm-tab-promos" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">GESTIÓN DE PROMOS</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Editá precios y el día de venta de cada promo. Los cambios se aplican en tiempo real en la tienda.</p><div id="adm-promos-lista"></div></div><!-- TAB CÓDIGOS DE DESCUENTO --><div id="adm-tab-codigos" style="display:none;padding:20px;">
+<button class="adm-btn-primary" onclick="admCheckPin()">INGRESAR</button></div></div><!-- PANEL PRINCIPAL --><div id="adm-app" style="display:none;"><!-- Header --><div class="adm-header"><h1>MARVEL <span>ADMIN</span></h1><div style="display:flex;align-items:center;gap:8px;"><span class="adm-badge-live">● EN VIVO</span><span style="color:#9ca3af;font-size:10px;" id="adm-last-update">—</span><button onclick="admLogout()" style="background:transparent;border:1px solid #333;color:#9ca3af;padding:5px 10px;border-radius:8px;font-size:10px;cursor:pointer;">SALIR</button></div></div><!-- Stats --><div class="adm-stats-bar"><div class="adm-stat"><span>Pendientes</span><span id="adm-s-pend">0</span></div><div class="adm-stat"><span>Aceptados</span><span id="adm-s-acep" style="color:#10b981">0</span></div><div class="adm-stat"><span>Listos</span><span id="adm-s-list" style="color:#3b82f6">0</span></div><div class="adm-stat"><span>Hoy</span><span id="adm-s-total" style="color:#fff">0</span></div><div class="adm-stat"><span>Recaudado</span><span id="adm-s-cash" style="color:#10b981">$0</span></div></div><!-- Barra de filtros --><!-- Tabs del admin --><div style="display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);overflow-x:auto;"><button class="adm-tab active" onclick="admSwitchTab('pedidos',this)">Pedidos</button><button class="adm-tab" onclick="admSwitchTab('dashboard',this)">Dashboard</button><button class="adm-tab" onclick="admSwitchTab('menu',this)">Menu</button><button class="adm-tab" onclick="admSwitchTab('promos',this)">Promos</button><button class="adm-tab" onclick="admSwitchTab('cupones',this)">Cupones</button><button class="adm-tab" onclick="admSwitchTab('codigos',this)">Codigos</button><button class="adm-tab" onclick="admSwitchTab('resenas',this)">Reseñas</button><button class="adm-tab" onclick="admSwitchTab('integracion',this)" style="color:#a78bfa;">⚡ Integración</button></div><!-- TAB PEDIDOS --><div id="adm-tab-pedidos"><div class="adm-filterbar"><!-- Fila 1: Fecha + Sucursal --><div class="adm-filterrow"><div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;"><span style="color:#9ca3af;font-size:11px;font-weight:700;white-space:nowrap;"> FECHA</span><input type="date" id="adm-fecha-filtro" class="adm-date-inp" onchange="admAplicarFiltros()"><button onclick="admFechaHoy()" class="adm-filter-btn" style="white-space:nowrap;padding:5px 10px;">Hoy</button><button onclick="admVerTodoHistorial()" id="btn-todo-historial" class="adm-filter-btn" style="white-space:nowrap;padding:5px 10px;background:rgba(99,102,241,0.15);border-color:#6366f1;color:#a5b4fc;">Todo</button></div><div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;"><span style="color:#9ca3af;font-size:11px;font-weight:700;white-space:nowrap;">SUCURSAL</span><select id="adm-suc-filtro" class="adm-date-inp" onchange="admAplicarFiltros()" style="flex:1;"><option value="">Todas</option><option value="PELLEGRINI">Centro</option><option value="Rondeau">Norte</option><option value="San Martin">Sur</option><option value="Funes">Funes</option></select></div></div><!-- Fila 2: Estado + Tipo + Limpiar --><div class="adm-filterrow" style="margin-top:8px;"><button class="adm-filter-btn active" data-f="Todos"    onclick="admFiltroEstado('Todos',this)">Todos</button><button class="adm-filter-btn"        data-f="Pendiente" onclick="admFiltroEstado('Pendiente',this)">Pendientes</button><button class="adm-filter-btn f-acep" data-f="Aceptado" onclick="admFiltroEstado('Aceptado',this)">Aceptados</button><button class="adm-filter-btn f-list" data-f="Listo"    onclick="admFiltroEstado('Listo',this)">Listos</button><button class="adm-filter-btn f-ent"  data-f="Entregado" onclick="admFiltroEstado('Entregado',this)">Entregados</button><button class="adm-filter-btn"        data-f="Delivery" onclick="admFiltroEstado('Delivery',this)">Delivery</button><button class="adm-filter-btn"        data-f="Retiro"   onclick="admFiltroEstado('Retiro',this)">Retiro</button><button onclick="admLimpiarDia()" style="margin-left:auto;background:rgba(239,68,68,.15);border:1px solid #ef4444;color:#ef4444;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">Limpiar día</button></div></div><!-- Lista pedidos --><div class="adm-orders" id="adm-orders"></div></div><!-- /adm-tab-pedidos --><!-- TAB DASHBOARD --><div id="adm-tab-dashboard" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:16px;">MÉTRICAS DEL DÍA</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;"><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Pedidos hoy</div><div id="dash-total" style="font-size:28px;font-weight:800;color:var(--primary);">0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Recaudado</div><div id="dash-cash" style="font-size:22px;font-weight:800;color:#10b981;">$0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Ticket promedio</div><div id="dash-ticket" style="font-size:22px;font-weight:800;color:#3b82f6;">$0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Delivery / Retiro</div><div id="dash-tipos" style="font-size:16px;font-weight:800;color:var(--white);">0 / 0</div></div></div><!-- Ventas por hora --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Ventas por hora</div><div id="dash-chart-horas" style="display:flex;align-items:flex-end;gap:4px;height:80px;"></div><div id="dash-chart-labels" style="display:flex;gap:4px;margin-top:4px;"></div></div><!-- Productos más pedidos --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Productos más pedidos hoy</div><div id="dash-top-prods"></div></div><!-- Mapa de calor de zonas --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Pedidos por zona</div><div id="dash-zonas"></div></div></div><!-- TAB MENÚ --><div id="adm-tab-menu" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:6px;"> GESTIÓN DE MENÚ</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Pausá productos o editá precios. Los cambios son inmediatos en la tienda.</p><div id="adm-menu-lista" style="display:flex;flex-direction:column;gap:8px;"></div></div><!-- TAB RESEÑAS / OPINIONES --><div id="adm-tab-resenas" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">OPINIONES DE CLIENTES</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Podés eliminar cualquier opinión que no corresponda. Los cambios son inmediatos.</p><div style="display:flex;gap:12px;margin-bottom:20px;"><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);flex:1;text-align:center;"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Promedio</div><div id="res-promedio" style="font-size:32px;font-weight:800;color:var(--primary);">—</div><div style="color:#9ca3af;font-size:11px;" id="res-count">0 reseñas</div></div><div id="res-dist" style="flex:2;background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);display:flex;flex-direction:column;gap:5px;justify-content:center;"></div></div><!-- Tabs internas: Pedido / Públicas --><div style="display:flex;gap:8px;margin-bottom:16px;"><button id="adm-res-tab-ped" onclick="admResTab('pedidos')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--primary);background:rgba(245,158,11,.15);color:var(--primary);font-weight:800;font-size:12px;cursor:pointer;">Desde pedido</button><button id="adm-res-tab-pub" onclick="admResTab('publicas')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--border);background:transparent;color:#9ca3af;font-weight:800;font-size:12px;cursor:pointer;">Opiniones públicas</button></div><div id="adm-resenas-lista" style="display:flex;flex-direction:column;gap:10px;"></div></div><!-- TAB INTEGRACIÓN --><div id="adm-tab-integracion" style="display:none;"></div><!-- TAB PROMOS --><div id="adm-tab-promos" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">GESTIÓN DE PROMOS</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Editá precios y el día de venta de cada promo. Los cambios se aplican en tiempo real en la tienda.</p><div id="adm-promos-lista"></div></div><!-- TAB CÓDIGOS DE DESCUENTO --><div id="adm-tab-codigos" style="display:none;padding:20px;">
 <h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">CODIGOS DE DESCUENTO</h3>
 <p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Gestioná los códigos de uso interno del personal y los códigos promocionales. Podés activar, desactivar o agregar nuevos.</p>
 

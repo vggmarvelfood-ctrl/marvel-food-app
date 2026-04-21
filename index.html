@@ -2731,7 +2731,7 @@ function actualizarVistasPerfil() {
             const c = CUPONES_DEL_DIA[diaHoy];
             if (c && c.horario === 'mediodía') {
                 boxHoy.innerHTML = `
-                <div style="background:var(--surface);border:1px dashed var(--border);border-radius:14px;padding:18px;text-align:center;margin-bottom:12px;"><span style="font-size:32px;">⏰</span><p style="color:var(--text-light);font-size:13px;margin:8px 0 0;">El cupón de hoy estará disponible<br><strong style="color:var(--primary);">de 11:00 a 16:00 hs</strong></p></div>`;
+                <div style="background:var(--surface);border:1px dashed var(--border);border-radius:14px;padding:18px;text-align:center;margin-bottom:12px;"><span style="font-size:32px;"></span><p style="color:var(--text-light);font-size:13px;margin:8px 0 0;">El cupón de hoy estará disponible<br><strong style="color:var(--primary);">de 11:00 a 16:00 hs</strong></p></div>`;
             } else if (c && c.horario === 'noche') {
                 boxHoy.innerHTML = `
                 <div style="background:var(--surface);border:1px dashed var(--border);border-radius:14px;padding:18px;text-align:center;margin-bottom:12px;"><span style="font-size:32px;"></span><p style="color:var(--text-light);font-size:13px;margin:8px 0 0;">El cupón de hoy estará disponible<br><strong style="color:var(--primary);">de 20:00 a 23:59 hs</strong></p></div>`;

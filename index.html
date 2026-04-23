@@ -2724,7 +2724,7 @@ async function mostrarSucesoPedido(tipo, waUrl, total) {
                 <div id="peo-check">✓</div>
                 <div id="peo-title">¡Pedido enviado al local!</div>
                 <div id="peo-sub">Gracias por preferirnos</div>
-                <div id="peo-msg">Tu pedido está en marcha 🚀</div>
+                <div id="peo-msg">Tu pedido está en marcha</div>
                 <div id="peo-redirect-msg"></div>
                 <div id="peo-spinner"></div>
             </div>`;
@@ -2743,7 +2743,7 @@ async function mostrarSucesoPedido(tipo, waUrl, total) {
     spinner.style.cssText = 'width:26px;height:26px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:peoSpin 1s linear infinite;margin:0 auto;';
 
     if (tipo === 'mercadopago') {
-        redirMsg.innerHTML = '⏳ Generando link de Mercado Pago...';
+        redirMsg.innerHTML = 'Generando link de Mercado Pago...';
         try {
             const mpSnap = await window.db.collection('config_menu').doc('mercadopago').get();
             if (!mpSnap.exists || !mpSnap.data()?.accessToken) throw new Error('no_token');
@@ -2760,18 +2760,18 @@ async function mostrarSucesoPedido(tipo, waUrl, total) {
             });
             if (!prefRes.ok) throw new Error('mp_api_' + prefRes.status);
             const prefData = await prefRes.json();
-            redirMsg.innerHTML = '✅ Link generado · Abriendo Mercado Pago...';
+            redirMsg.innerHTML = 'Link generado · Abriendo Mercado Pago...';
             spinner.style.display = 'none';
-            setTimeout(() => _peoCerrarYRedirigir(overlay, prefData.init_point), 1800);
+            setTimeout(() => _peoCerrarYRedirigir(overlay, prefData.init_point), 4800);
         } catch(err) {
             console.warn('[MP]', err.message);
-            redirMsg.innerHTML = '⚠️ No se pudo generar el link MP.<br><span style="font-size:12px;">Pedido guardado. Redirigiendo al WhatsApp...</span>';
+            redirMsg.innerHTML = 'No se pudo generar el link MP.<br><span style="font-size:12px;">Pedido guardado. Redirigiendo al WhatsApp...</span>';
             spinner.style.display = 'none';
-            setTimeout(() => _peoCerrarYRedirigir(overlay, waUrl), 2500);
+            setTimeout(() => _peoCerrarYRedirigir(overlay, waUrl), 4500);
         }
     } else {
-        redirMsg.innerHTML = '📲 Abriendo WhatsApp...';
-        setTimeout(() => _peoCerrarYRedirigir(overlay, waUrl), 2200);
+        redirMsg.innerHTML = 'Abriendo WhatsApp...';
+        setTimeout(() => _peoCerrarYRedirigir(overlay, waUrl), 4200);
     }
 }
 

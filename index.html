@@ -1,8 +1,8 @@
-<!DOCTYPE html><html lang="es"><head><!-- ── FIREBASE MODULAR 10.7.1 ──────────────────────────────────────────
+<!DOCTYPE html><html lang="es"><head><!--  FIREBASE MODULAR 10.7.1 
      SDK modular: solo se importan las funciones usadas (sin bundle completo).
      Ahorra ~60 KB de RAM vs compat (no carga analytics, auth, storage, etc.)
      EmailJS se carga TARDE (lazy) en toggleCart, no aquí.
-──────────────────────────────────────────────────────────────────────── -->
+ -->
 <script type="module">
 import { initializeApp }   from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import {
@@ -21,7 +21,7 @@ const _fbConfig = {
     measurementId:     "G-Z7X80SVSX6"
 };
 
-// ── Parchear DocumentSnapshot para que .exists sea una PROPIEDAD (igual que compat) ──
+//  Parchear DocumentSnapshot para que .exists sea una PROPIEDAD (igual que compat) 
 // En v9 modular .exists() es un método; el resto de la app lo usa como propiedad.
 function _patchSnap(snap) {
     try {
@@ -31,7 +31,7 @@ function _patchSnap(snap) {
     return snap;
 }
 
-// ── Query builder: soporta encadenamiento .where().orderBy().limit() ──
+//  Query builder: soporta encadenamiento .where().orderBy().limit() 
 function _qb(colRef, constraints) {
     return {
         where:      (f, op, v) => _qb(colRef, [...constraints, where(f, op, v)]),
@@ -42,7 +42,7 @@ function _qb(colRef, constraints) {
     };
 }
 
-// ── Wrapper de documento (reemplaza doc().get(), doc().update(), etc.) ──
+//  Wrapper de documento (reemplaza doc().get(), doc().update(), etc.) 
 function _docCompat(rawDb, colPath, id) {
     const ref = doc(rawDb, colPath, id);
     return {
@@ -54,7 +54,7 @@ function _docCompat(rawDb, colPath, id) {
     };
 }
 
-// ── Wrapper de colección (reemplaza db.collection('x').add(), .doc(), etc.) ──
+//  Wrapper de colección (reemplaza db.collection('x').add(), .doc(), etc.) 
 function _colCompat(rawDb, colPath) {
     const colRef = collection(rawDb, colPath);
     return {
@@ -72,8 +72,8 @@ try {
     const _app   = initializeApp(_fbConfig);
     const _rawDb = getFirestore(_app);
 
-    // ── window.db: API idéntica a compat — ninguna llamada existente cambia ──
-    // ── batch() añadido: admLimpiarDia lo necesita para borrado masivo atómico ──
+    //  window.db: API idéntica a compat — ninguna llamada existente cambia 
+    //  batch() añadido: admLimpiarDia lo necesita para borrado masivo atómico 
     function _batchCompat(rawDb) {
         const ops = [];
         return {
@@ -106,7 +106,7 @@ try {
         batch:      ()     => _batchCompat(_rawDb)
     };
 
-    // ── Compatibilidad con firebase.firestore.FieldValue.serverTimestamp() ──
+    //  Compatibilidad con firebase.firestore.FieldValue.serverTimestamp() 
     window.firebase = {
         firestore: {
             FieldValue: { serverTimestamp: () => serverTimestamp() }
@@ -122,7 +122,7 @@ try {
     window.firebase = { firestore: { FieldValue: { serverTimestamp: () => null } } };
 }
 </script><meta charset="utf-8" />
-<!-- ══ PWA ══════════════════════════════════════════════════ -->
+<!--  PWA  -->
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="./icon-192x192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="./icon-512x512.png">
@@ -133,17 +133,17 @@ try {
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Marvel Food">
 <link rel="apple-touch-icon" href="./icon-192x192.png">
-<!-- ════════════════════════════════════════════════════════ --><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<!--  --><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <!-- Preload primera imagen del hero para mejor LCP en móvil -->
 <link rel="preload" as="image" href="https://i.ibb.co/CsY32Zpc/Hulk-6.jpg" fetchpriority="high">
-<!-- ══ Preconnect: reducir latencia en móvil ════════════ -->
+<!--  Preconnect: reducir latencia en móvil  -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://www.gstatic.com">
 <link rel="preconnect" href="https://firestore.googleapis.com">
 <link rel="dns-prefetch" href="https://i.ibb.co">
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-<!-- ════════════════════════════════════════════════════ --><title>Marvel Food | Tienda Online</title><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'" crossorigin><noscript><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript><style> :root {
+<!--  --><title>Marvel Food | Tienda Online</title><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'" crossorigin><noscript><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript><style> :root {
             --primary: #f59e0b;
             --primary-hover: #d97706;
             --dark: #000000;
@@ -173,7 +173,7 @@ try {
             scroll-snap-type: x mandatory; scrollbar-width: none; position: relative;
         }
         .hero-slider::-webkit-scrollbar { display: none; }
-        /* ── HERO ANIMACIONES ── */
+        /*  HERO ANIMACIONES  */
         @keyframes heroFadeUp   { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
         @keyframes heroGlow     { 0%,100%{text-shadow:0 0 20px rgba(245,158,11,.6);} 50%{text-shadow:0 0 40px rgba(245,158,11,1),0 0 80px rgba(245,158,11,.4);} }
         @keyframes heroPulseBtn { 0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.5);} 70%{box-shadow:0 0 0 12px rgba(245,158,11,0);} }
@@ -308,7 +308,7 @@ try {
     pointer-events: none;
 }
 
-/* ── Cancelar pedido ── */
+/*  Cancelar pedido  */
 .btn-cancelar-pedido {
     width: 100%; padding: 13px; margin-top: 12px;
     background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.4);
@@ -317,7 +317,7 @@ try {
 }
 .btn-cancelar-pedido:hover { background: rgba(239,68,68,0.2); }
 
-/* ── Pill: botón cerrar ── */
+/*  Pill: botón cerrar  */
 .pill-close {
     background: rgba(255,255,255,0.1); border: none; color: #fff;
     width: 26px; height: 26px; border-radius: 50%; font-size: 14px;
@@ -325,7 +325,7 @@ try {
     justify-content: center; pointer-events: all;
 }
 
-/* ── Pedido en curso banner (tab-pedidos) ── */
+/*  Pedido en curso banner (tab-pedidos)  */
 .pedido-en-curso-card {
     background: var(--surface); border: 1.5px solid var(--primary);
     border-radius: 16px; padding: 16px; margin-bottom: 16px; position: relative;
@@ -347,7 +347,7 @@ try {
 .pec-estado.Cancelado  { background: rgba(239,68,68,.15);   color: #ef4444; }
         .nav-cats::-webkit-scrollbar { display: none; }
 
-/* ── Banner PWA Install — notificación inferior morado/azul ── */
+/*  Banner PWA Install — notificación inferior morado/azul  */
 @keyframes pwaSlideUp {
     from { opacity: 0; transform: translateY(110%) scale(0.95); }
     to   { opacity: 1; transform: translateY(0)   scale(1);    }
@@ -507,7 +507,7 @@ try {
     background: rgba(255,255,255,0.18);
     color: #fff;
 }
-/* ── PWA progress toast (descargando / instalado) ── */
+/*  PWA progress toast (descargando / instalado)  */
 #pwa-progress-toast {
     max-width: calc(100vw - 40px);
     text-align: center;
@@ -522,7 +522,7 @@ try {
     flex-shrink: 0;
 }
 
-/* ── Splash de carga inicial ── */
+/*  Splash de carga inicial  */
 #app-splash {
     position: fixed; inset: 0; z-index: 99999;
     background: #0A0A0A;
@@ -848,7 +848,7 @@ try {
         .custom-check input { display: none; }
         .check-box { width: 22px; height: 22px; border: 2px solid var(--text-light); border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
         .custom-check input:checked + .check-box { background: var(--primary); border-color: var(--primary); }
-        .custom-check input:checked + .check-box::after { content: '✓'; color: var(--dark); font-size: 14px; font-weight: bold; }
+        .custom-check input:checked + .check-box::after { content: ''; color: var(--dark); font-size: 14px; font-weight: bold; }
 
         #cart-view { position: fixed; top: 0; right: 0; width: 100%; max-width: 450px; height: 100dvh; background: var(--bg); z-index: 3000; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s ease-out; box-shadow: -10px 0 30px rgba(0,0,0,0.5); }
         #cart-view.open { transform: translateX(0); }
@@ -933,7 +933,7 @@ try {
 }
    
 
-        /* ═══════════════════════ ADMIN ═══════════════════════ */
+        /*  ADMIN  */
         /* El admin flota sobre la tienda como overlay completo */
         #admin-root {
             display: none;
@@ -1090,9 +1090,9 @@ try {
         .adm-ticket:last-child { page-break-after: avoid; }
         .adm-ticket hr { border: none; border-top: 1px dashed #000; margin: 4px 0; }
 
-        /* ════════════════════════════ */
+        /*  */
 
-        /* ── SEGUIMIENTO PEDIDO ── */
+        /*  SEGUIMIENTO PEDIDO  */
         #tracking-bar { position:fixed; bottom:80px; left:0; right:0; z-index:450; padding:0 12px; pointer-events:none; }
         .tracking-pill { background:var(--surface); border:1px solid var(--primary); border-radius:16px; padding:10px 16px; display:flex; align-items:center; gap:10px; pointer-events:all; cursor:pointer; box-shadow:0 4px 20px rgba(245,158,11,0.25); animation:slideUp2 0.4s ease; }
         @keyframes slideUp2 { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
@@ -1117,23 +1117,23 @@ try {
         .tp-content { padding-bottom:40px; }
         .tp-title { font-weight:700; font-size:14px; color:var(--white); }
         .tp-time { font-size:11px; color:var(--text-light); margin-top:2px; }
-        /* ── CARRITO PERSISTENTE badge ── */
+        /*  CARRITO PERSISTENTE badge  */
         #cart-restore-banner { display:none; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); border-radius:12px; padding:12px 16px; margin:0 20px 15px; }
-        /* ── REORDEN ── */
+        /*  REORDEN  */
         .reorder-btn { width:100%; padding:12px; border-radius:10px; border:1px solid var(--primary); background:rgba(245,158,11,0.1); color:var(--primary); font-weight:700; font-size:13px; cursor:pointer; margin-top:10px; display:flex; align-items:center; justify-content:center; gap:8px; }
-        /* ── RESEÑA ── */
+        /*  RESEÑA  */
         #resena-modal { position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:7000; display:none; align-items:center; justify-content:center; padding:20px; }
         #resena-modal.open { display:flex; }
         .resena-sheet { background:var(--surface); border-radius:20px; padding:28px 24px; width:100%; max-width:420px; text-align:center; }
         .stars-row { display:flex; justify-content:center; gap:10px; margin:20px 0; }
         .star-btn { font-size:36px; cursor:pointer; opacity:0.3; transition:.15s; }
         .star-btn.lit { opacity:1; }
-        /* ── MENU CARD agotado ── */
+        /*  MENU CARD agotado  */
         .card-p.agotado { opacity:0.45; pointer-events:none; position:relative; }
         .agotado-badge { position:absolute; top:8px; left:8px; background:#ef4444; color:#fff; font-size:9px; font-weight:800; padding:3px 8px; border-radius:6px; text-transform:uppercase; z-index:2; }
 
    
-        /* ═══════════════════════ SISTEMA DE ESTRELLAS ═══════════════════════ */
+        /*  SISTEMA DE ESTRELLAS  */
         .stars-row {
             display: flex;
             gap: 12px;
@@ -1165,7 +1165,7 @@ try {
             100% { transform: scale(1.1); }
         }
 
-        /* ═══════════════════════ ANIMACIONES DE TARJETAS ═══════════════════════ */
+        /*  ANIMACIONES DE TARJETAS  */
         @keyframes cardFadeIn {
             from { opacity: 0; transform: translateY(20px) scale(0.95); }
             to { opacity: 1; transform: translateY(0) scale(1); }
@@ -1179,7 +1179,7 @@ try {
         .card-p:nth-child(6) { animation-delay: 0.3s; }
         .card-p:nth-child(n+7) { animation-delay: 0.35s; }
 
-        /* ═══════════════════════ PRODUCTOS AGOTADOS ═══════════════════════ */
+        /*  PRODUCTOS AGOTADOS  */
         .card-p.agotado {
             opacity: 0.6;
             cursor: not-allowed;
@@ -1213,7 +1213,7 @@ try {
             border-color: var(--border);
         }
 
-/* ── Banner offline ─────────────────────────────────────── */
+/*  Banner offline  */
 #offline-banner {
     display: none; position: fixed; top: 0; left: 0; right: 0;
     background: #ef4444; color: #fff; text-align: center;
@@ -1222,10 +1222,10 @@ try {
 }
 #offline-banner.show { display: block; }
 
-/* ═══════════════════════════════════════════════════════════
+/* 
    CLASES DE UTILIDAD — reemplazan inline styles repetidos.
    Reducen el tamaño del HTML del admin y mejoran la caché CSS.
-   ═══════════════════════════════════════════════════════════ */
+    */
 
 /* Tipografía */
 .u-fw8  { font-weight: 800; }
@@ -1294,9 +1294,9 @@ try {
 .u-sh0{flex-shrink:0}.u-g8{gap:8px}.u-g10{gap:10px}.u-g12{gap:12px}
 .u-brd{border:1px solid var(--border)}.u-surf{background:var(--surface)}
 </style></head><body>
-<div id="offline-banner">📵 Sin conexión — algunos datos pueden estar desactualizados</div>
+<div id="offline-banner"> Sin conexión — algunos datos pueden estar desactualizados</div>
 <script>
-// ══ SISTEMA BÁSICO DE DIAGNÓSTICO DE ERRORES ═══════════════
+//  SISTEMA BÁSICO DE DIAGNÓSTICO DE ERRORES 
 // Captura errores críticos antes del colapso del navegador
 // y los almacena en localStorage para diagnóstico
 (function _errorLogger() {
@@ -1343,7 +1343,7 @@ try {
 })();
 </script>
 <script>
-// ── Detector de conexión en tiempo real ──────────────────
+//  Detector de conexión en tiempo real 
 (function() {
     function setBanner(isOffline) {
         const b = document.getElementById('offline-banner');
@@ -1353,7 +1353,7 @@ try {
     window.addEventListener('offline', () => setBanner(true));
     if (!navigator.onLine) setBanner(true);
 })();
-</script><div id="toast">¡Agregado al pedido!</div><!-- ════ PANTALLA DE BIENVENIDA / VERIFICACIÓN DE ZONA ════ --><div id="welcome-screen" style="
+</script><div id="toast">¡Agregado al pedido!</div><!--  PANTALLA DE BIENVENIDA / VERIFICACIÓN DE ZONA  --><div id="welcome-screen" style="
     position:fixed; inset:0; z-index:99000;
     background:#0f0f0f;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -1366,9 +1366,9 @@ try {
             /><svg style="position:absolute;left:13px;top:50%;transform:translateY(-50%);opacity:.5;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div><input id="ws-loc-input" type="text" placeholder="Localidad (Ej: Rosario, Funes, Galvez...)"
                 style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid #444;background:#121212;color:#fff;font-size:13px;font-weight:500;outline:none;box-sizing:border-box;margin-bottom:6px;"
                 oninput="welcomeLocInput()"
-            /><p style="color:#f59e0b;font-size:11px;font-weight:700;margin:0 0 12px;text-align:center;letter-spacing:.3px;">Ingresá dirección y localidad para continuar</p><!-- Resultado zona --><div id="ws-zona-result" style="display:none;border-radius:12px;padding:14px;margin-bottom:14px;"></div></div><!-- Sección RETIRO --><div id="ws-seccion-retiro" style="display:none;"><p style="color:#d1d5db;font-size:13px;margin:0 0 12px;font-weight:600;">Seleccioná el local de retiro:</p><select id="ws-sucursal-retiro" onchange="wsRetiroSucursalChange()" style="width:100%;padding:14px;border-radius:12px;border:1px solid #444;background:#1a1a1a;color:#fff;font-size:14px;font-weight:600;outline:none;margin-bottom:12px;"><option value="" disabled selected>Elegí tu sucursal...</option><option value="Centro">(Pellegrini 1149) Rosario, Centro</option><option value="Norte">(Rondeau 2430) Rosario, Norte — Baigorria</option><option value="Sur">(San Martin 1808) Rosario Sur / V.G.Gálvez</option><option value="Funes">(RN9 972) Funes — Fisherton</option></select><div id="ws-retiro-info" style="display:none;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:12px;padding:12px;margin-bottom:14px;"><div style="font-weight:800;color:#f59e0b;font-size:13px;" id="ws-retiro-nombre"></div><div style="color:#9ca3af;font-size:12px;margin-top:3px;" id="ws-retiro-addr"></div></div></div><!-- Botón continuar --><button id="ws-btn-continuar" onclick="welcomeContinuar()" disabled style="width:100%;padding:16px;border-radius:14px;border:none;background:#444;color:#888;font-weight:800;font-size:15px;cursor:not-allowed;transition:.3s;">Continuar →</button></div></div><!-- ════ FIN PANTALLA DE BIENVENIDA ════ --><!-- ══ SPLASH DE CARGA ══════════════════════════════════════ -->
+            /><p style="color:#f59e0b;font-size:11px;font-weight:700;margin:0 0 12px;text-align:center;letter-spacing:.3px;">Ingresá dirección y localidad para continuar</p><!-- Resultado zona --><div id="ws-zona-result" style="display:none;border-radius:12px;padding:14px;margin-bottom:14px;"></div></div><!-- Sección RETIRO --><div id="ws-seccion-retiro" style="display:none;"><p style="color:#d1d5db;font-size:13px;margin:0 0 12px;font-weight:600;">Seleccioná el local de retiro:</p><select id="ws-sucursal-retiro" onchange="wsRetiroSucursalChange()" style="width:100%;padding:14px;border-radius:12px;border:1px solid #444;background:#1a1a1a;color:#fff;font-size:14px;font-weight:600;outline:none;margin-bottom:12px;"><option value="" disabled selected>Elegí tu sucursal...</option><option value="Centro">(Pellegrini 1149) Rosario, Centro</option><option value="Norte">(Rondeau 2430) Rosario, Norte — Baigorria</option><option value="Sur">(San Martin 1808) Rosario Sur / V.G.Gálvez</option><option value="Funes">(RN9 972) Funes — Fisherton</option></select><div id="ws-retiro-info" style="display:none;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:12px;padding:12px;margin-bottom:14px;"><div style="font-weight:800;color:#f59e0b;font-size:13px;" id="ws-retiro-nombre"></div><div style="color:#9ca3af;font-size:12px;margin-top:3px;" id="ws-retiro-addr"></div></div></div><!-- Botón continuar --><button id="ws-btn-continuar" onclick="welcomeContinuar()" disabled style="width:100%;padding:16px;border-radius:14px;border:none;background:#444;color:#888;font-weight:800;font-size:15px;cursor:not-allowed;transition:.3s;">Continuar →</button></div></div><!--  FIN PANTALLA DE BIENVENIDA  --><!--  SPLASH DE CARGA  -->
 <div id="app-splash" style="display:none;"></div>
-<!-- ════════════════════════════════════════════════════════ -->
+<!--  -->
 <div class="hero-slider" id="hero-slider"><!-- SLIDE 1: Hulk --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/CsY32Zpc/Hulk-6.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> DESTACADO DEL MENÚ</div><h1 class="hero-title">LA MEJOR<br>DE LA CARTA<br><span>Nuestra Hulk</span></h1><p class="hero-subtitle">Doble carne, cheddar, panceta, cebolla caramelizada y bbq.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Pedir Ahora</button><button class="hero-btn-secondary" onclick="scrollToMenu()">Ver Menú</button></div></div></div><!-- SLIDE 2: Compartir --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/sp9f92tD/DSC04607.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> ESPECIAL</div><h1 class="hero-title">COMPARTIR<br><span>Una Marvel</span></h1><p class="hero-subtitle">¡No hay 1 sin 2! Invitá a alguien y disfrutá juntos.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Aprovechar</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);})()">Ver Promos</button></div></div></div><!-- SLIDE 3: Combo --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/gLZH7hJW/DSC04609.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> COMBOS</div><h1 class="hero-title">ARMÁ TU<br><span>Combo Perfecto</span></h1><p class="hero-subtitle">¿Papas, Nuggets o Aros de cebolla? Elegí lo tuyo.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Pedir Combo</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);})()">Ver Promos</button></div></div></div><!-- SLIDE 4: Promos --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/wNQdcXh6/Dr-Strange-8.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> OFERTAS ACTIVAS</div><h1 class="hero-title">PROMOS<br><span>Para Vos</span></h1><p class="hero-subtitle">Las mejores promos del momento. ¡No te las pierdas!</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);scrollToMenu&&scrollToMenu();})()">Ver Promos</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-perfil]');if(n)switchTab('tab-perfil',n);})()">Cupones</button></div></div></div><!-- SLIDE 5: Smash --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/hRgTKHLs/DSC-4850.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> LÍNEA SMASH</div><h1 class="hero-title">¿NOCHE<br>DE SMASH?<br><span>Línea Flama</span></h1><p class="hero-subtitle">Probá nuestra línea smashed y dejanos tu opinión.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Ver Smash</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('#nav-pedidos');if(n)switchTab('tab-pedidos',n);})()">Mis Pedidos</button></div></div></div><!-- SLIDE 6: Brand --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/4B4ZCwF/DSC-4842.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> GRACIAS POR ELEGIRNOS</div><h1 class="hero-title">MARVEL<br>FOOD<br><span>Más que una Burger</span></h1><p class="hero-subtitle">Dejanos tu opinión y ayudá a otros a elegir mejor.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Pedir Ahora</button><button class="hero-btn-secondary" onclick="abrirModalOpinion()">Dejar Opinión</button></div></div></div><!-- Dots indicadores --><div class="hero-dots" id="hero-dots"></div><div class="scroll-indicator" onclick="scrollToMenu()"><span style="font-size: 12px; font-weight: 700; letter-spacing: 2px; margin-bottom: 5px;">MENÚ</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></div></div><div class="main-content"><div id="tab-inicio" class="tab-page"><div id="store-status-banner"></div><div id="cart-restore-banner"></div><div class="nav-cats" id="cat-list"></div><!-- TOP PRODUCTOS — alimentado por Firebase -->
 <div id="section-top-prods" style="margin-bottom:24px;padding:0 20px;display:none;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
@@ -1385,7 +1385,7 @@ try {
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-opiniones]');if(n)switchTab('tab-opiniones',n);})()">
         <div style="text-align:center;flex-shrink:0;">
             <div id="inicio-op-prom" style="font-size:28px;font-weight:800;color:var(--primary);line-height:1;">—</div>
-            <div id="inicio-op-stars" style="font-size:14px;color:#f59e0b;letter-spacing:2px;margin-top:2px;">☆☆☆☆☆</div>
+            <div id="inicio-op-stars" style="font-size:14px;color:#f59e0b;letter-spacing:2px;margin-top:2px;"></div>
         </div>
         <div style="flex:1;min-width:0;">
             <div style="font-weight:800;color:var(--white);font-size:13px;margin-bottom:2px;">Opiniones de clientes</div>
@@ -1431,7 +1431,7 @@ try {
         </div>
     </div>
 </div>
-<div id="tab-perfil" class="tab-page hidden" style="padding: 20px;"><!-- Título de sección --><div style="margin-bottom:20px;"><h2 style="font-weight:800; font-size:22px; color:var(--white); margin:0 0 4px;">CUPONES</h2><p style="color:var(--text-light); font-size:13px; margin:0;">Beneficios disponibles para vos hoy.</p></div><!-- Cupón del día (se rellena por JS) --><div id="cupon-del-dia-box" style="margin-bottom:20px;"></div><!-- Lista de todos los cupones de la semana --><div id="cupones-semana-box"></div></div><div id="tab-ayuda" class="tab-page hidden" style="padding: 20px;"><h2 style="color: var(--primary); font-weight: 800; margin-bottom: 20px; text-transform: uppercase; font-size: 20px;">¿Cómo realizar tu pedido?</h2><div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px;"><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">1. Seleccioná tu Sucursal</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">Elegí la sucursal más cercana para ver el menú y rango de envío correcto.</p></div><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">2. Consultá el Rango de Envío</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">En la pestaña <strong>"Locales"</strong> podés ver los mapas de cobertura y costos.</p></div><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">3. Armá tu Carrito</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">Agregá tus productos y revisá todo en el botón flotante del carrito.</p></div><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">4. Envia tu pedido</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">Envia tu pedido y recibiras un mensaje de confirmación una vez enviado con los datos y horarios.</p></div><h2 style="color: var(--primary); font-weight: 800; margin-top: 15px; margin-bottom: 15px; text-transform: uppercase; font-size: 20px;">¿SABIAS ESTE DATO?</h2><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">¡Podés venir a comer y disfrutar de nuestros espacios!</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">Contamos con 3 sucursales abiertas al público:</p><p style="color: var(--white); font-size: 14px; margin-top: 5px; font-weight: 600;">Rosario, Zona Centro: Pellegrini 1149<br>Funes: RN9 972<br>Cañada de gomez: LAVALLE 907</p></div></div><h3 style="color: var(--white); font-size: 16px; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">Nuestros Medios de Pagos Actuales</h3><div style="background: var(--surface); border-radius: 16px; overflow: hidden; border: 1px solid var(--border);"><table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;"><thead style="background: var(--primary);"><tr><th style="padding: 10px; color: black;">Método</th><th style="padding: 10px; color: black;">Sucursal</th><th style="padding: 10px; color: black;">Envío</th></tr></thead><tbody style="color: var(--text-light);"><tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px; color: var(--white);">Efectivo</td><td style="padding: 10px;color:#10b981;font-weight:700;">Si</td><td style="padding: 10px;color:#10b981;font-weight:700;">Si</td></tr><tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px; color: var(--white);">Débito/Crédito</td><td style="padding: 10px;color:#10b981;font-weight:700;">Si</td><td style="padding: 10px;">—</td></tr><tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px; color: var(--white);">QR Mercado Pago</td><td style="padding: 10px;color:#10b981;font-weight:700;">Si</td><td style="padding: 10px;">—</td></tr><tr><td style="padding: 10px; color: var(--white);">Link Mercado Pago</td><td style="padding: 10px;">—</td><td style="padding: 10px;color:#10b981;font-weight:700;">Si</td></tr></tbody></table></div></div><!-- TAB OPINIONES --><div id="tab-opiniones" class="tab-page hidden" style="padding:20px;padding-bottom:100px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;"><div><h2 style="font-weight:800;font-size:22px;color:var(--white);margin:0 0 4px;">OPINIONES</h2><p style="color:var(--text-light);font-size:13px;margin:0;">Lo que dicen nuestros clientes</p></div></div><!-- Resumen estrellas --><div id="opiniones-resumen" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:20px;display:flex;gap:20px;align-items:center;"><div style="text-align:center;flex-shrink:0;"><div id="op-prom" style="font-size:44px;font-weight:800;color:var(--primary);line-height:1;">—</div><div id="op-stars-avg" style="font-size:20px;margin:4px 0;color:#f59e0b;letter-spacing:2px;">☆☆☆☆☆</div><div id="op-count" style="font-size:11px;color:var(--text-light);font-weight:700;">0 reseñas</div></div><div id="op-bars" style="flex:1;display:flex;flex-direction:column;gap:5px;"></div></div><!-- Botón dejar opinión --><button onclick="abrirModalOpinion()" style="
+<div id="tab-perfil" class="tab-page hidden" style="padding: 20px;"><!-- Título de sección --><div style="margin-bottom:20px;"><h2 style="font-weight:800; font-size:22px; color:var(--white); margin:0 0 4px;">CUPONES</h2><p style="color:var(--text-light); font-size:13px; margin:0;">Beneficios disponibles para vos hoy.</p></div><!-- Cupón del día (se rellena por JS) --><div id="cupon-del-dia-box" style="margin-bottom:20px;"></div><!-- Lista de todos los cupones de la semana --><div id="cupones-semana-box"></div></div><div id="tab-ayuda" class="tab-page hidden" style="padding: 20px;"><h2 style="color: var(--primary); font-weight: 800; margin-bottom: 20px; text-transform: uppercase; font-size: 20px;">¿Cómo realizar tu pedido?</h2><div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px;"><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">1. Seleccioná tu Sucursal</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">Elegí la sucursal más cercana para ver el menú y rango de envío correcto.</p></div><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">2. Consultá el Rango de Envío</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">En la pestaña <strong>"Locales"</strong> podés ver los mapas de cobertura y costos.</p></div><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">3. Armá tu Carrito</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">Agregá tus productos y revisá todo en el botón flotante del carrito.</p></div><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">4. Envia tu pedido</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">Envia tu pedido y recibiras un mensaje de confirmación una vez enviado con los datos y horarios.</p></div><h2 style="color: var(--primary); font-weight: 800; margin-top: 15px; margin-bottom: 15px; text-transform: uppercase; font-size: 20px;">¿SABIAS ESTE DATO?</h2><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">¡Podés venir a comer y disfrutar de nuestros espacios!</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">Contamos con 3 sucursales abiertas al público:</p><p style="color: var(--white); font-size: 14px; margin-top: 5px; font-weight: 600;">Rosario, Zona Centro: Pellegrini 1149<br>Funes: RN9 972<br>Cañada de gomez: LAVALLE 907</p></div></div><h3 style="color: var(--white); font-size: 16px; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">Nuestros Medios de Pagos Actuales</h3><div style="background: var(--surface); border-radius: 16px; overflow: hidden; border: 1px solid var(--border);"><table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;"><thead style="background: var(--primary);"><tr><th style="padding: 10px; color: black;">Método</th><th style="padding: 10px; color: black;">Sucursal</th><th style="padding: 10px; color: black;">Envío</th></tr></thead><tbody style="color: var(--text-light);"><tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px; color: var(--white);">Efectivo</td><td style="padding: 10px;color:#10b981;font-weight:700;">Si</td><td style="padding: 10px;color:#10b981;font-weight:700;">Si</td></tr><tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px; color: var(--white);">Débito/Crédito</td><td style="padding: 10px;color:#10b981;font-weight:700;">Si</td><td style="padding: 10px;">—</td></tr><tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px; color: var(--white);">QR Mercado Pago</td><td style="padding: 10px;color:#10b981;font-weight:700;">Si</td><td style="padding: 10px;">—</td></tr><tr><td style="padding: 10px; color: var(--white);">Link Mercado Pago</td><td style="padding: 10px;">—</td><td style="padding: 10px;color:#10b981;font-weight:700;">Si</td></tr></tbody></table></div></div><!-- TAB OPINIONES --><div id="tab-opiniones" class="tab-page hidden" style="padding:20px;padding-bottom:100px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;"><div><h2 style="font-weight:800;font-size:22px;color:var(--white);margin:0 0 4px;">OPINIONES</h2><p style="color:var(--text-light);font-size:13px;margin:0;">Lo que dicen nuestros clientes</p></div></div><!-- Resumen estrellas --><div id="opiniones-resumen" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:20px;display:flex;gap:20px;align-items:center;"><div style="text-align:center;flex-shrink:0;"><div id="op-prom" style="font-size:44px;font-weight:800;color:var(--primary);line-height:1;">—</div><div id="op-stars-avg" style="font-size:20px;margin:4px 0;color:#f59e0b;letter-spacing:2px;"></div><div id="op-count" style="font-size:11px;color:var(--text-light);font-weight:700;">0 reseñas</div></div><div id="op-bars" style="flex:1;display:flex;flex-direction:column;gap:5px;"></div></div><!-- Botón dejar opinión --><button onclick="abrirModalOpinion()" style="
         width:100%;padding:16px;border-radius:14px;border:2px solid var(--primary);
         background:rgba(245,158,11,0.1);color:var(--primary);
         font-weight:800;font-size:15px;cursor:pointer;margin-bottom:20px;
@@ -1440,7 +1440,7 @@ try {
     </button><!-- Lista de reseñas --><div id="opiniones-lista"></div></div><!-- MODAL DEJAR OPINIÓN --><div id="opinion-modal" style="
     display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);
     z-index:6000;align-items:flex-end;justify-content:center;
-" onclick="if(event.target===this)cerrarModalOpinion()"><div style="background:var(--surface);width:100%;max-width:500px;border-radius:24px 24px 0 0;padding:28px 24px 40px;animation:modalSlide .3s ease-out;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;"><h3 style="font-weight:800;font-size:18px;color:var(--white);margin:0;">Tu Opinión</h3><button onclick="cerrarModalOpinion()" style="background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:20px;font-weight:300;">×</button></div><p style="color:var(--text-light);font-size:13px;margin-bottom:18px;">¿Qué te pareció tu experiencia con Marvel Food?</p><!-- Estrellas --><div style="display:flex;justify-content:center;gap:10px;margin-bottom:20px;"><button class="op-star" onclick="opSetStar(1)" data-v="1" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;">★</button><button class="op-star" onclick="opSetStar(2)" data-v="2" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;">★</button><button class="op-star" onclick="opSetStar(3)" data-v="3" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;">★</button><button class="op-star" onclick="opSetStar(4)" data-v="4" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;">★</button><button class="op-star" onclick="opSetStar(5)" data-v="5" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;">★</button></div><div id="op-label" style="text-align:center;font-size:14px;font-weight:700;color:var(--primary);margin-bottom:16px;min-height:20px;"></div><!-- Nombre y Apellido (obligatorio) --><input id="op-nombre" type="text" placeholder="Nombre y apellido *" maxlength="60"
+" onclick="if(event.target===this)cerrarModalOpinion()"><div style="background:var(--surface);width:100%;max-width:500px;border-radius:24px 24px 0 0;padding:28px 24px 40px;animation:modalSlide .3s ease-out;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;"><h3 style="font-weight:800;font-size:18px;color:var(--white);margin:0;">Tu Opinión</h3><button onclick="cerrarModalOpinion()" style="background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:20px;font-weight:300;">×</button></div><p style="color:var(--text-light);font-size:13px;margin-bottom:18px;">¿Qué te pareció tu experiencia con Marvel Food?</p><!-- Estrellas --><div style="display:flex;justify-content:center;gap:10px;margin-bottom:20px;"><button class="op-star" onclick="opSetStar(1)" data-v="1" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;"></button><button class="op-star" onclick="opSetStar(2)" data-v="2" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;"></button><button class="op-star" onclick="opSetStar(3)" data-v="3" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;"></button><button class="op-star" onclick="opSetStar(4)" data-v="4" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;"></button><button class="op-star" onclick="opSetStar(5)" data-v="5" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;"></button></div><div id="op-label" style="text-align:center;font-size:14px;font-weight:700;color:var(--primary);margin-bottom:16px;min-height:20px;"></div><!-- Nombre y Apellido (obligatorio) --><input id="op-nombre" type="text" placeholder="Nombre y apellido *" maxlength="60"
             style="width:100%;padding:13px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:#fff;font-size:14px;margin-bottom:10px;outline:none;box-sizing:border-box;" oninput="opLimpiarError(this)"><!-- Teléfono (obligatorio) --><input id="op-tel" type="tel" placeholder="Teléfono (ej: 3412345678) *" maxlength="20"
             style="width:100%;padding:13px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:#fff;font-size:14px;margin-bottom:10px;outline:none;box-sizing:border-box;" oninput="opLimpiarError(this)"><div id="op-error" style="display:none;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);color:#ef4444;border-radius:8px;padding:9px 13px;font-size:12px;font-weight:700;margin-bottom:10px;"></div><!-- Comentario --><textarea id="op-comentario" placeholder="Contanos tu experiencia (opcional)..." rows="3"
             style="width:100%;padding:13px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:#fff;font-size:14px;resize:none;outline:none;margin-bottom:16px;box-sizing:border-box;"></textarea><button id="op-btn-enviar" onclick="enviarOpinion()" style="
@@ -1486,9 +1486,9 @@ try {
 <button class="btn-action" onclick="procesarPedido()">ENVIAR PEDIDO</button></div></div></div><script> let cuponAplicado = null;
 let codigoInternoAplicado = null; // { nombre, tipo:'interno'|'promo', descuento:100|pct|0 }
 
-// ════════════════════════════════════════════════════════════
+// 
 //  CODIGOS DE DESCUENTO — base hardcoded + override en Firebase
-// ════════════════════════════════════════════════════════════
+// 
 const CODIGOS_INTERNOS_BASE = {
     // Uso interno personal — 100% descuento en productos (envío se mantiene)
     "LUCAS-LEYRIA":  { nombre: "Lucas Leyria",   tipo: "interno", descPct: 100, activo: true },
@@ -1531,16 +1531,25 @@ window.admToggleMasterCodigos = async (nuevoEstado) => {
             { _master_activo: nuevoEstado }, { merge: true }
         );
         window._codDescMasterActivo = nuevoEstado;
+        if (!window._codDescOverrides) window._codDescOverrides = {};
         window._codDescOverrides._master_activo = nuevoEstado;
         // Update card style
         if (card) card.style.border = nuevoEstado ? '2px solid #10b981' : '2px solid var(--border)';
         if (desc) desc.textContent = nuevoEstado
-            ? 'Activo — los clientes pueden ingresar un código en el checkout'
-            : 'Desactivado — el campo de código no aparece para los clientes';
-        // Reflect on storefront (no reload needed — box-cod-descuento visibility)
+            ? 'Activo — los clientes pueden ingresar un codigo en el checkout'
+            : 'Desactivado — el campo de codigo no aparece para los clientes';
+        // Mantener el toggle en el estado correcto (no dejar que se revierta)
+        const toggleEl = document.getElementById('adm-cod-master-toggle');
+        if (toggleEl) toggleEl.checked = nuevoEstado;
+        // Reflect on storefront
         const box = document.getElementById('box-cod-descuento');
         if (box) box.style.display = nuevoEstado ? 'block' : 'none';
-    } catch(e) { alert('Error: ' + e.message); }
+    } catch(e) {
+        // Revertir el toggle UI si falló
+        const toggleEl = document.getElementById('adm-cod-master-toggle');
+        if (toggleEl) toggleEl.checked = !nuevoEstado;
+        alert('Error: ' + e.message);
+    }
 };
 
 function resolverCodigos() {
@@ -1908,7 +1917,7 @@ function inicializarHeroSlider() {
     heroSlider.addEventListener('touchend', () => setTimeout(startAutoSlide, 2000), { passive: true });
 }
 
-// ── Helper: esperar a que Firebase esté disponible (usa evento o polling breve) ──────────
+//  Helper: esperar a que Firebase esté disponible (usa evento o polling breve) 
 function _esperarDB(fn) {
     if (window.db) { fn(); return; }
     // Si Firebase dispara el evento personalizado, ejecutar
@@ -1968,7 +1977,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ---------------------------------------
 
 
-        // ── OPTIMIZACIÓN: header cacheado fuera del scroll ──
+        //  OPTIMIZACIÓN: header cacheado fuera del scroll 
         (function() {
             const _header = document.getElementById('header');
             if (!_header) return;
@@ -2043,7 +2052,7 @@ window.cambiarSucursalPrincipal = () => {
     actualizarEstadoLocal();
 };
 
-// ── BATCH RENDERING — carga progresiva del catálogo ────────────────
+//  BATCH RENDERING — carga progresiva del catálogo 
 // Renderiza los primeros 12 items de inmediato y carga el resto de forma
 // incremental usando IntersectionObserver cuando el usuario hace scroll.
 // Esto evita generar +40 nodos DOM de golpe en dispositivos de bajos recursos.
@@ -2096,7 +2105,7 @@ function renderMenu() {
     if (_batchObs) { _batchObs.disconnect(); _batchObs = null; }
 
     MENU.forEach((c, idx) => {
-        // ── Botón de categoría ──
+        //  Botón de categoría 
         const btn = document.createElement('button');
         btn.className = `cat-tag ${idx === 0 ? 'active' : ''}`;
         btn.innerText = c.cat;
@@ -2109,7 +2118,7 @@ function renderMenu() {
         };
         cats.appendChild(btn);
 
-        // ── Sección de categoría (header + grid vacío) ──
+        //  Sección de categoría (header + grid vacío) 
         const sec  = document.createElement('div');
         sec.id     = `sec-${idx}`;
         const h3   = document.createElement('h3');
@@ -2122,7 +2131,7 @@ function renderMenu() {
         sec.appendChild(grid);
         menu.appendChild(sec);
 
-        // ── Encolar cada item (no se inserta en DOM todavía) ──
+        //  Encolar cada item (no se inserta en DOM todavía) 
         c.items.forEach(p => {
             p.cat = c.cat; // para que el modal sepa qué extras mostrar
             const precioFinal = (menuOverrides[p.id] && menuOverrides[p.id].precio)
@@ -2132,7 +2141,7 @@ function renderMenu() {
         });
     });
 
-    // ── Sentinel: div invisible al final del catálogo para detectar scroll ──
+    //  Sentinel: div invisible al final del catálogo para detectar scroll 
     let sentinel = document.getElementById('menu-load-sentinel');
     if (!sentinel) {
         sentinel = document.createElement('div');
@@ -2142,10 +2151,10 @@ function renderMenu() {
     }
     sentinel.style.display = 'block';
 
-    // ── Primer lote: renderizar de inmediato (sin esperar scroll) ──
+    //  Primer lote: renderizar de inmediato (sin esperar scroll) 
     _renderNextBatch();
 
-    // ── Observer: cargar siguiente lote cuando el sentinel es visible ──
+    //  Observer: cargar siguiente lote cuando el sentinel es visible 
     if ('IntersectionObserver' in window && _batchQueue.length > 0) {
         _batchObs = new IntersectionObserver(entries => {
             if (entries[0].isIntersecting) _renderNextBatch();
@@ -2249,7 +2258,7 @@ window.toggleExt = (id) => {
             const cv = document.getElementById('cart-view');
             cv.classList.toggle('open');
 
-            // ── EmailJS: carga diferida ──────────────────────────────────────
+            //  EmailJS: carga diferida 
             // Se descarga el script SOLO cuando el usuario abre el carrito por
             // primera vez. Esto libera ~20 KB del hilo principal durante la carga
             // inicial de la página y evita bloquear el First Contentful Paint.
@@ -2406,7 +2415,7 @@ function renderCartItems() {
             const sucInfo = typeof ZONA_INFO_UI !== 'undefined' && ZONA_INFO_UI[sucId];
             resumenDirBox.innerHTML = `
                 <div style="background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.3);border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:flex-start;gap:10px;">
-                    <span style="font-size:20px;flex-shrink:0;margin-top:2px;">📍</span>
+                    <span style="font-size:20px;flex-shrink:0;margin-top:2px;"></span>
                     <div style="flex:1;min-width:0;">
                         <div style="font-size:10px;font-weight:800;color:#f59e0b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">DIRECCIÓN DE ENVÍO</div>
                         <div style="font-size:13px;font-weight:700;color:#fff;">${dirVal || '—'}</div>
@@ -2418,7 +2427,7 @@ function renderCartItems() {
             const sucInfo = typeof ZONA_INFO_UI !== 'undefined' && ZONA_INFO_UI[sucId];
             resumenDirBox.innerHTML = `
                 <div style="background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.3);border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:flex-start;gap:10px;">
-                    <span style="font-size:20px;flex-shrink:0;margin-top:2px;">🏪</span>
+                    <span style="font-size:20px;flex-shrink:0;margin-top:2px;"></span>
                     <div style="flex:1;min-width:0;">
                         <div style="font-size:10px;font-weight:800;color:#10b981;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">RETIRÁS EN LOCAL</div>
                         <div style="font-size:13px;font-weight:700;color:#fff;">${sucInfo ? sucInfo.label : sucId}</div>
@@ -2705,7 +2714,7 @@ window.procesarPedido = async () => {
             window.scrollTo(0,0);
         };
 
-// ─── RENDER DE LA PESTAÑA CUPONES ─────────────────────────────────────────────
+//  RENDER DE LA PESTAÑA CUPONES 
 const ICONOS_CUPON = {
     porcentaje: '',
     regalo_papas: '',
@@ -2740,7 +2749,7 @@ function actualizarVistasPerfil() {
     const hora   = new Date().getHours();
     const DIAS   = ["DOM","LUN","MAR","MIÉ","JUE","VIE","SÁB"];
 
-    // ── Cupón del día ──
+    //  Cupón del día 
     const boxHoy = document.getElementById('cupon-del-dia-box');
     const cuponHoy = obtenerCuponDelDia();
     if (boxHoy) {
@@ -2762,7 +2771,7 @@ function actualizarVistasPerfil() {
         }
     }
 
-    // ── Resto de la semana ──
+    //  Resto de la semana 
     const boxSemana = document.getElementById('cupones-semana-box');
     if (boxSemana) {
         const otrosDias = Object.entries(CUPONES_DEL_DIA)
@@ -3054,18 +3063,18 @@ window.obtenerHorarioEstimado = (esDelivery) => {
 };
 
 
-// ════════════════════════════════════════════
+// 
 //   ADMIN — detección por URL hash #admin
 //   Abrí:  https://tu-sitio.vercel.app/#admin
-// ════════════════════════════════════════════
+// 
 
 
 
-// ══════════════════════════════════════════════════════════
+// 
 //  NUEVAS FUNCIONALIDADES — Marvel Food
-// ══════════════════════════════════════════════════════════
+// 
 
-// ── 1. MENU OVERRIDES (precios/disponibilidad desde Firebase) ──
+//  1. MENU OVERRIDES (precios/disponibilidad desde Firebase) 
 async function cargarMenuOverrides() {
     if (!window.db) { console.warn("cargarMenuOverrides: db no disponible, saltando."); return; }
     try {
@@ -3117,7 +3126,7 @@ async function cargarMenuOverrides() {
     } catch(e) { console.warn("Cupones override no disponible:", e); }
 }
 
-// ── 2. CARRITO PERSISTENTE ──
+//  2. CARRITO PERSISTENTE 
 function guardarCarritoPersistente() {
     try { localStorage.setItem('mf_carrito', JSON.stringify(carrito)); } catch(e) {}
 }
@@ -3160,7 +3169,7 @@ window.limpiarCarritoBanner = () => {
     if (banner) banner.style.display = 'none';
 };
 
-// ── 3. REORDEN — el banner ya no va en el carrito, sino en tab-pedidos ──
+//  3. REORDEN — el banner ya no va en el carrito, sino en tab-pedidos 
 function mostrarBannerReorden() {
     // No-op: el historial ahora vive en la pestaña "Pedidos"
     renderHistorialPedidos();
@@ -3181,7 +3190,7 @@ window.reordenarUltimo = () => {
     } catch(e) { alert("No se pudo restaurar el pedido."); }
 };
 
-// ── RENDER DE HISTORIAL DE PEDIDOS ──────────────────────────
+//  RENDER DE HISTORIAL DE PEDIDOS 
 function renderHistorialPedidos() {
     renderPedidoEnCurso();
     const lista = document.getElementById('historial-pedidos-lista');
@@ -3230,15 +3239,15 @@ window.limpiarHistorialPedidos = () => {
     renderHistorialPedidos();
 };
 
-// ── 4. SEGUIMIENTO EN TIEMPO REAL ──
+//  4. SEGUIMIENTO EN TIEMPO REAL 
 let trackingUnsubscribe = null;
 
 const TRACKING_ESTADOS = [
     { key: 'Pendiente',  label: 'Pedido recibido',   emoji: '' },
     { key: 'Aceptado',   label: 'En preparación',    emoji: '' },
     { key: 'Listo',      label: 'Listo para envío',  emoji: '' },
-    { key: 'Entregado',  label: 'Entregado',          emoji: '✓' },
-    { key: 'Cancelado',  label: 'Pedido cancelado',   emoji: '✗' }
+    { key: 'Entregado',  label: 'Entregado',          emoji: '' },
+    { key: 'Cancelado',  label: 'Pedido anulado',   emoji: '' }
 ];
 
 function iniciarSeguimiento(pedidoId) {
@@ -3302,7 +3311,7 @@ function actualizarTrackingUI(p, pedidoId) {
             <div class="tracking-steps" style="flex-wrap:wrap;">${pasos}</div>
           </div>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;opacity:.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-          <button class="pill-close" onclick="event.stopPropagation();cerrarPillTemporal()" title="Minimizar">✕</button>
+          <button class="pill-close" onclick="event.stopPropagation();cerrarPillTemporal()" title="Minimizar"></button>
         </div>`;
     renderPedidoEnCurso();
 
@@ -3335,12 +3344,17 @@ function renderTrackingModal(p) {
         const cirCls   = isDone ? 'done' : isActive ? 'active' : '';
         const linCls   = isDone ? 'done' : '';
         return `
-        <div class="tp-item"><div class="tp-line-col"><div class="tp-circle ${cirCls}">${isDone ? '✓' : e.emoji}</div> ${i < TRACKING_ESTADOS.length - 1 ? `<div class="tp-vline ${linCls}"></div>` : ''}
+        <div class="tp-item"><div class="tp-line-col"><div class="tp-circle ${cirCls}">${isDone ? '' : e.emoji}</div> ${i < TRACKING_ESTADOS.length - 1 ? `<div class="tp-vline ${linCls}"></div>` : ''}
             </div><div class="tp-content"><div class="tp-title" style="color:${isActive?'var(--primary)':isDone?'#10b981':'var(--text-light)'}">${e.label}</div> ${isActive ? `<div class="tp-time">En curso...</div>` : isDone ? `<div class="tp-time" style="color:#10b981">Completado</div>` : ''}
             </div></div>`;
     }).join('');
 
     document.getElementById('tracking-progress').innerHTML = progHtml;
+    // Mostrar/ocultar el label ANULADO debajo del botón CERRAR
+    const anuladoLabel = document.getElementById('tracking-anulado-label');
+    if (anuladoLabel) {
+        anuladoLabel.style.display = p.estado === 'Cancelado' ? 'block' : 'none';
+    }
 
     const itemsHtml = (p.items || []).map(i => `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed var(--border);font-size:13px;"><span style="color:var(--text-light);">${i.cant}x ${i.n}</span><span style="color:var(--white);font-weight:600;">$${(i.totalItem||0).toLocaleString('es-AR')}</span></div>`
     ).join('');
@@ -3352,18 +3366,24 @@ function renderTrackingModal(p) {
     if (cancelContainer) {
         const lastRaw = localStorage.getItem('mf_last_pedido');
         const pedidoId = lastRaw ? JSON.parse(lastRaw).id : null;
-        if (p.estado === 'Pendiente' && pedidoId) {
+        const estadosCancelablesModal = ['Pendiente', 'Aceptado', 'Listo'];
+        if (estadosCancelablesModal.includes(p.estado) && pedidoId) {
+            const msgCancelModal = p.estado === 'Pendiente'
+                ? 'Solo podés anular mientras el pedido no fue procesado'
+                : p.estado === 'Aceptado'
+                ? 'El pedido ya está en preparación'
+                : 'El pedido está listo para envío';
             cancelContainer.innerHTML = `
                 <button class="btn-cancelar-pedido" onclick="cancelarPedido('${pedidoId}')">
-                    ✕ CANCELAR PEDIDO
+                    ANULAR PEDIDO
                 </button>
                 <p style="font-size:11px;color:var(--text-light);text-align:center;margin-top:6px;">
-                    Solo podés cancelar mientras el pedido aún no fue aceptado
+                    ${msgCancelModal}
                 </p>`;
         } else if (p.estado === 'Cancelado') {
             cancelContainer.innerHTML = `
                 <div style="text-align:center;padding:12px;background:rgba(239,68,68,0.1);border-radius:10px;border:1px solid rgba(239,68,68,0.3);">
-                    <span style="color:#ef4444;font-weight:800;font-size:14px;">✗ Pedido cancelado</span>
+                    <span style="color:#ef4444;font-weight:800;font-size:14px;"> Pedido cancelado</span>
                 </div>`;
         } else {
             cancelContainer.innerHTML = '';
@@ -3383,7 +3403,7 @@ window.cerrarPillTemporal = () => {
 
 // Cancela el pedido en Firebase
 window.cancelarPedido = async (pedidoId) => {
-    if (!confirm('¿Querés cancelar tu pedido?\nSolo podés hacerlo si todavía no fue aceptado por el local.')) return;
+    if (!confirm('¿Queres anular tu pedido? Esta accion no se puede deshacer.')) return;
     try {
         await db.collection('pedidos_v2').doc(pedidoId).update({ estado: 'Cancelado' });
         cerrarTracking();
@@ -3394,7 +3414,7 @@ window.cancelarPedido = async (pedidoId) => {
         renderPedidoEnCurso();
         // Toast
         const t = document.getElementById('toast');
-        if (t) { t.innerText = 'Pedido cancelado'; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
+        if (t) { t.innerText = 'Pedido anulado'; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
     } catch(e) {
         alert('No se pudo cancelar el pedido. Comunicate con el local directamente.');
     }
@@ -3413,20 +3433,38 @@ function renderPedidoEnCurso() {
         if (!snap.exists) { container.innerHTML = ''; return; }
         const p = snap.data();
         const estado = p.estado || 'Pendiente';
-        if (estado === 'Entregado') { container.innerHTML = ''; return; }
+        if (estado === 'Entregado') {
+            // Mostrar solo botón de reseña, ocultar el card completo
+            const yaReseno = localStorage.getItem('mf_resena_' + last.id);
+            if (!yaReseno) {
+                container.innerHTML = `
+                <div style="background:var(--surface);border:1px solid rgba(16,185,129,0.4);border-radius:16px;padding:20px;margin-bottom:16px;text-align:center;">
+                    <div style="font-size:32px;margin-bottom:8px;color:#10b981;font-weight:800;">Pedido entregado</div>
+                    <p style="color:var(--text-light);font-size:13px;margin-bottom:16px;">Tu pedido fue entregado. Contanos como estuvo!</p>
+                    <button onclick="mostrarModalResena('${last.id}', null)"
+                        style="width:100%;padding:14px;border-radius:12px;border:none;background:var(--primary);color:#000;font-weight:800;font-size:15px;cursor:pointer;">
+                        Dejar mi resena
+                    </button>
+                </div>`;
+            } else {
+                container.innerHTML = '';
+            }
+            return;
+        }
 
         const fecha = p.fecha ? (p.fecha.toDate ? p.fecha.toDate() : new Date(p.fecha)) : new Date();
         const horaStr = fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
         const items = (p.items || []).map(i => `${i.cant}x ${i.n}`).join(', ');
 
-        const puedeCancelar = estado === 'Pendiente';
+        const estadosCancelablesPEC = ['Pendiente', 'Aceptado', 'Listo'];
+        const puedeCancelar = estadosCancelablesPEC.includes(estado);
         const esCancelado   = estado === 'Cancelado';
 
         container.innerHTML = `
         <div class="pedido-en-curso-card">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
                 <div style="font-size:13px;font-weight:800;color:var(--white);">PEDIDO EN CURSO</div>
-                <span class="pec-estado ${estado}">${estado === 'Pendiente' ? '⏳ ' : estado === 'Aceptado' ? '👨‍🍳 ' : estado === 'Listo' ? '🚀 ' : estado === 'Cancelado' ? '✗ ' : '✓ '}${estado}</span>
+                <span class="pec-estado ${estado}">${estado === 'Pendiente' ? '⏳ ' : estado === 'Aceptado' ? ' ' : estado === 'Listo' ? ' ' : estado === 'Cancelado' ? ' ' : ' '}${estado}</span>
             </div>
             <div style="font-size:12px;color:var(--text-light);margin-bottom:4px;">Hora: ${horaStr} · ${p.sucursal || ''} · ${p.tipo || ''}</div>
             <div style="font-size:13px;color:var(--white);margin-bottom:12px;line-height:1.5;">${items}</div>
@@ -3439,15 +3477,15 @@ function renderPedidoEnCurso() {
                 ${puedeCancelar ? `
                 <button onclick="cancelarPedido('${last.id}')"
                     style="flex:1;padding:11px;border-radius:10px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.4);color:#ef4444;font-weight:800;font-size:13px;cursor:pointer;">
-                    Cancelar
+                    ANULAR
                 </button>` : ''}
             </div>
-            ${esCancelado ? '<p style="text-align:center;color:#ef4444;font-size:12px;margin-top:8px;">Este pedido fue cancelado</p>' : ''}
+            ${esCancelado ? '<p style="text-align:center;color:#ef4444;font-size:12px;margin-top:8px;">Este pedido fue anulado</p>' : ''}
         </div>`;
     }).catch(() => { container.innerHTML = ''; });
 }
 
-// ── 5. SISTEMA DE RESEÑAS ──
+//  5. SISTEMA DE RESEÑAS 
 let resenaActualPedidoId = null;
 let resenaPuntuacion = 0;
 
@@ -3487,7 +3525,7 @@ window.enviarResena = async () => {
     finally { btn.disabled = false; btn.innerText = 'ENVIAR RESEÑA'; }
 };
 
-// ── 6. ESTADÍSTICAS DE VENTAS ──
+//  6. ESTADÍSTICAS DE VENTAS 
 async function registrarVentaStats(items, total, sucursal) {
     try {
         const hoy = new Date();
@@ -3509,7 +3547,7 @@ async function registrarVentaStats(items, total, sucursal) {
 }
 
 
-// ── Abrir/cerrar panel admin ──────────────────────────
+//  Abrir/cerrar panel admin 
 function abrirAdmin() {
     const root = document.getElementById('admin-root');
     if (root) {
@@ -3562,8 +3600,8 @@ window.addEventListener('hashchange', function() {
     }
 });
 
-// ─── PIN ──────────────────────────────────────────────
-// ── Admin Auth — SHA-256 hash + rate-limit + lockout ─────────────
+//  PIN 
+//  Admin Auth — SHA-256 hash + rate-limit + lockout 
 const _ADM_HASH = "1134c0a7d44fdae1afd7f1f64e2789496784095ca0a050947d659c256d331d34";
 let _admFailCount = 0;
 let _admLockUntil  = 0;
@@ -3626,7 +3664,7 @@ function admLogout() {
     }
 }
 
-// ─── ESTADO GLOBAL ────────────────────────────────────
+//  ESTADO GLOBAL 
 let admPedidos    = [];
 let admFiltroEst  = 'Todos';   // filtro de estado/tipo
 let admEditId     = null;
@@ -3634,7 +3672,7 @@ let admUnsubscribe = null;
 
 function admNumero(docId) { return docId.slice(-6).toUpperCase(); }
 
-// ─── FECHA ────────────────────────────────────────────
+//  FECHA 
 function admFechaHoy() {
     const hoy = new Date();
     const yyyy = hoy.getFullYear();
@@ -3653,7 +3691,7 @@ function admGetFechaFiltro() {
     return { inicio, fin };
 }
 
-// ─── LISTENER FIREBASE ────────────────────────────────
+//  LISTENER FIREBASE 
 let _admModoHistorial = false; // true = sin filtro de fecha, carga todo
 
 function admIniciar() {
@@ -3723,7 +3761,7 @@ function admAplicarFiltros() {
     admIniciar();
 }
 
-// ─── STATS ────────────────────────────────────────────
+//  STATS 
 function admActualizarStats() {
     const lista = admPedidosFiltrados();
     const g = id => document.getElementById(id);
@@ -3735,7 +3773,7 @@ function admActualizarStats() {
     g('adm-s-cash').innerText  = '$' + admPedidos.reduce((a, p) => a + (p.total || 0), 0).toLocaleString('es-AR');
 }
 
-// ─── FILTROS ──────────────────────────────────────────
+//  FILTROS 
 function admFiltroEstado(f, btn) {
     admFiltroEst = f;
     document.querySelectorAll('.adm-filter-btn[data-f]').forEach(b => b.classList.remove('active'));
@@ -3758,7 +3796,7 @@ function admPedidosFiltrados() {
     return lista;
 }
 
-// ─── RENDER ───────────────────────────────────────────
+//  RENDER 
 function admRenderPedidos() {
     const cont = document.getElementById('adm-orders');
     if (!cont) return;
@@ -3854,7 +3892,7 @@ function admToggle(id) {
     if (b) b.classList.toggle('open');
 }
 
-// ─── CAMBIAR ESTADO ───────────────────────────────────
+//  CAMBIAR ESTADO 
 async function admCambiarEstado(id, estado) {
     try {
         await db.collection("pedidos_v2").doc(id).update({ estado });
@@ -3865,7 +3903,7 @@ async function admCambiarEstado(id, estado) {
     catch (e) { alert("Error: " + e.message); }
 }
 
-// ─── ELIMINAR PEDIDO ──────────────────────────────────
+//  ELIMINAR PEDIDO 
 async function admEliminar(id) {
     const p = admPedidos.find(x => x.id === id);
     const nombre = p ? p.cliente : id;
@@ -3875,7 +3913,7 @@ async function admEliminar(id) {
     } catch (e) { alert("Error al eliminar: " + e.message); }
 }
 
-// ─── LIMPIAR DÍA ──────────────────────────────────────
+//  LIMPIAR DÍA 
 async function admLimpiarDia() {
     const rango = admGetFechaFiltro();
     const sucVal = document.getElementById('adm-suc-filtro')?.value || '';
@@ -3904,7 +3942,7 @@ async function admLimpiarDia() {
     } catch (e) { alert("Error: " + e.message); }
 }
 
-// ─── MOVER SUCURSAL ───────────────────────────────────
+//  MOVER SUCURSAL 
 async function admMover(id) {
     const sel = document.getElementById('adm-mover-' + id);
     if (!sel || !sel.value) return alert('Seleccioná una sucursal destino.');
@@ -3918,14 +3956,14 @@ async function admMover(id) {
     } catch (e) { alert("Error: " + e.message); }
 }
 
-// ════════════════════════════════════════════════════════════════
-// ── SISTEMA DE INTEGRACIÓN EXTERNA ──────────────────────────────
+// 
+//  SISTEMA DE INTEGRACIÓN EXTERNA 
 //    Conecta cada evento del sistema de pedidos con un servicio
 //    externo (POS, KDS, pantalla de cocina, Zapier, n8n, etc.)
 //    Configuración persistida en localStorage para sobrevivir recargas.
-// ════════════════════════════════════════════════════════════════
+// 
 
-// ── Configuración persistida ──────────────────────────────────
+//  Configuración persistida 
 const _INTEG_KEY = 'mf_integ_config_v1';
 
 function _integGetConfig() {
@@ -3935,7 +3973,7 @@ function _integSaveConfig(cfg) {
     try { localStorage.setItem(_INTEG_KEY, JSON.stringify(cfg)); } catch(e) {}
 }
 
-// ── Notificador principal ─────────────────────────────────────
+//  Notificador principal 
 // evento: 'nuevo_pedido' | 'estado_cambiado' | 'pedido_editado'
 // payload: objeto con los datos del pedido + evento
 async function _integNotificar(evento, pedido) {
@@ -3969,7 +4007,7 @@ async function _integNotificar(evento, pedido) {
         obs: pedido.obs || ''
     };
 
-    // ── Webhook HTTP ──────────────────────────────────────────
+    //  Webhook HTTP 
     if (cfg.webhookUrl) {
         try {
             const headers = { 'Content-Type': 'application/json' };
@@ -3980,23 +4018,45 @@ async function _integNotificar(evento, pedido) {
                 body: JSON.stringify(payload),
                 signal: AbortSignal.timeout(8000)
             });
-            _integLog(`✓ Webhook [${evento}] → ${resp.status}`);
+            _integLog(` Webhook [${evento}] → ${resp.status}`);
         } catch (err) {
-            _integLog(`✗ Webhook error [${evento}]: ${err.message}`);
+            _integLog(` Webhook error [${evento}]: ${err.message}`);
         }
     }
 
-    // ── Auto-imprimir al Aceptar ──────────────────────────────
+    //  Auto-imprimir al Aceptar 
     if (cfg.autoImprimir && evento === 'estado_cambiado' && pedido.estado === 'Aceptado') {
         setTimeout(() => admImprimir(pedido.id), 400);
     }
 
-    // ── Auto-WhatsApp al Aceptar ──────────────────────────────
+    //  Auto-WhatsApp al Aceptar 
     if (cfg.autoWsp && evento === 'estado_cambiado' && pedido.estado === 'Aceptado') {
         setTimeout(() => admWhatsapp(pedido.id), 800);
     }
 
-    // ── Notificación de sonido ────────────────────────────────
+    //  Sistema Propio: enviar tambien al endpoint propio si configurado 
+    if (cfg.propioUrl && (!cfg.propioSoloNuevos || evento === 'nuevo_pedido')) {
+        try {
+            const propioHeaders = { 'Content-Type': 'application/json' };
+            const authHeader = cfg.propioAuthHeader || 'X-Marvel-Secret';
+            if (cfg.propioSecret) {
+                propioHeaders[authHeader] = authHeader === 'Authorization'
+                    ? 'Bearer ' + cfg.propioSecret
+                    : cfg.propioSecret;
+            }
+            const propioResp = await fetch(cfg.propioUrl, {
+                method: 'POST',
+                headers: propioHeaders,
+                body: JSON.stringify(payload),
+                signal: AbortSignal.timeout(8000)
+            });
+            _integLog('Sistema propio [' + evento + '] -> ' + propioResp.status);
+        } catch (propioErr) {
+            _integLog('Sistema propio error [' + evento + ']: ' + propioErr.message);
+        }
+    }
+
+    //  Notificacion de sonido 
     if (cfg.sonido && evento === 'nuevo_pedido') {
         try {
             const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -4015,16 +4075,16 @@ async function _integNotificar(evento, pedido) {
     }
 }
 
-// ── Log circular para diagnóstico ────────────────────────────
+//  Log circular para diagnóstico 
 const _integLogs = [];
 function _integLog(msg) {
     _integLogs.unshift(`[${new Date().toLocaleTimeString('es-AR')}] ${msg}`);
     if (_integLogs.length > 50) _integLogs.pop();
     const el = document.getElementById('integ-log-body');
-    if (el) el.innerHTML = _integLogs.map(l => `<div style="font-size:11px;padding:3px 0;border-bottom:1px solid #222;color:${l.includes('✗')?'#ef4444':l.includes('✓')?'#10b981':'#9ca3af'}">${l}</div>`).join('');
+    if (el) el.innerHTML = _integLogs.map(l => `<div style="font-size:11px;padding:3px 0;border-bottom:1px solid #222;color:${l.includes('')?'#ef4444':l.includes('')?'#10b981':'#9ca3af'}">${l}</div>`).join('');
 }
 
-// ── Detector de pedidos NUEVOS en el snapshot ─────────────────
+//  Detector de pedidos NUEVOS en el snapshot 
 // Compara el snapshot anterior con el nuevo para disparar 'nuevo_pedido'
 let _integPedidosConocidos = new Set();
 function _integProcesarSnapshot(pedidos) {
@@ -4038,10 +4098,10 @@ function _integProcesarSnapshot(pedidos) {
     _integPedidosConocidos = new Set(pedidos.map(p => p.id));
 }
 
-// ── Exponer para que admIniciar lo llame ─────────────────────
+//  Exponer para que admIniciar lo llame 
 window._integProcesarSnapshot = _integProcesarSnapshot;
 
-// ─── UI: Tab "Integración" del panel admin ───────────────────
+//  UI: Tab "Integración" del panel admin 
 function _integRenderTab() {
     const cfg = _integGetConfig();
     const el = document.getElementById('adm-tab-integracion');
@@ -4049,7 +4109,22 @@ function _integRenderTab() {
     el.innerHTML = `
     <div style="padding:20px;">
         <h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">INTEGRACIÓN EXTERNA</h3>
-        <p style="color:#9ca3af;font-size:12px;margin-bottom:20px;">Conectá Marvel Food con sistemas externos: POS, KDS de cocina, Zapier, n8n, Make, Google Sheets, etc.</p>
+        <p style="color:#9ca3af;font-size:12px;margin-bottom:14px;">Conectá Marvel Food con sistemas externos: POS, KDS, Zapier, n8n, o tu propio sistema de gestión.</p>
+
+        <!-- Sub-tabs -->
+        <div style="display:flex;gap:8px;margin-bottom:18px;border-bottom:1px solid var(--border);padding-bottom:14px;">
+            <button id="integ-tab-webhook" onclick="integSwitchSubTab('webhook')"
+                style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--primary);background:rgba(245,158,11,.15);color:var(--primary);font-weight:800;font-size:12px;cursor:pointer;">
+                Webhook / API
+            </button>
+            <button id="integ-tab-propio" onclick="integSwitchSubTab('propio')"
+                style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--border);background:transparent;color:#9ca3af;font-weight:800;font-size:12px;cursor:pointer;">
+                Sistema Propio
+            </button>
+        </div>
+
+        <!-- Contenido Webhook -->
+        <div id="integ-panel-webhook">
 
         <!-- Estado -->
         <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:16px;">
@@ -4066,24 +4141,24 @@ function _integRenderTab() {
 
         <!-- Webhook -->
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
-            <div style="font-size:11px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:10px;">🔗 Webhook HTTP</div>
+            <div style="font-size:11px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:10px;"> Webhook HTTP</div>
             <div style="font-size:10px;color:#6b7280;margin-bottom:8px;">Cada pedido nuevo y cambio de estado enviará un POST con JSON al URL configurado.</div>
             <input id="integ-webhook-url" type="url" placeholder="https://hooks.zapier.com/hooks/catch/..." value="${cfg.webhookUrl||''}"
                 style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--white);font-size:12px;margin-bottom:8px;outline:none;">
             <input id="integ-webhook-secret" type="text" placeholder="Clave secreta (opcional, header X-Marvel-Secret)" value="${cfg.webhookSecret||''}"
                 style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--white);font-size:12px;margin-bottom:10px;outline:none;">
             <button onclick="_integTestWebhook()" style="background:rgba(59,130,246,.2);border:1px solid #3b82f6;color:#3b82f6;padding:8px 16px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;width:100%;">
-                ▶ PROBAR WEBHOOK AHORA
+                 PROBAR WEBHOOK AHORA
             </button>
         </div>
 
         <!-- Opciones de automatización -->
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
-            <div style="font-size:11px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">⚡ Automatizaciones</div>
+            <div style="font-size:11px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;"> Automatizaciones</div>
             ${[
-                ['integ-auto-imprimir', 'autoImprimir', '🖨️ Imprimir ticket automáticamente al Aceptar'],
-                ['integ-auto-wsp',      'autoWsp',      '💬 Enviar WhatsApp al cliente al Aceptar'],
-                ['integ-sonido',        'sonido',       '🔔 Sonido de alerta en pedidos nuevos'],
+                ['integ-auto-imprimir', 'autoImprimir', ' Imprimir ticket automáticamente al Aceptar'],
+                ['integ-auto-wsp',      'autoWsp',      ' Enviar WhatsApp al cliente al Aceptar'],
+                ['integ-sonido',        'sonido',       ' Sonido de alerta en pedidos nuevos'],
             ].map(([id, key, label]) => `
             <label style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;">
                 <input type="checkbox" id="${id}" ${cfg[key]?'checked':''} onchange="_integGuardar()" style="width:16px;height:16px;accent-color:var(--primary);">
@@ -4093,12 +4168,12 @@ function _integRenderTab() {
 
         <!-- Botón guardar -->
         <button onclick="_integGuardar(true)" style="width:100%;padding:14px;border-radius:12px;border:none;background:var(--primary);color:#000;font-weight:800;font-size:14px;cursor:pointer;margin-bottom:12px;">
-            💾 GUARDAR CONFIGURACIÓN
+             GUARDAR CONFIGURACIÓN
         </button>
 
         <!-- Payload de ejemplo -->
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
-            <div style="font-size:11px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:8px;">📋 Formato del payload JSON</div>
+            <div style="font-size:11px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:8px;"> Formato del payload JSON</div>
             <pre style="font-size:10px;color:#10b981;background:#0a0a0a;padding:10px;border-radius:8px;overflow-x:auto;line-height:1.5;">${JSON.stringify({
                 evento: "nuevo_pedido | estado_cambiado | pedido_editado",
                 source: "marvel_food",
@@ -4120,15 +4195,303 @@ function _integRenderTab() {
         <!-- Log -->
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                <div style="font-size:11px;color:#9ca3af;font-weight:700;text-transform:uppercase;">📡 Log de actividad</div>
+                <div style="font-size:11px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Log de actividad</div>
                 <button onclick="_integLogs.length=0;_integLog('Log limpiado')" style="background:transparent;border:1px solid #333;color:#9ca3af;padding:3px 8px;border-radius:6px;font-size:10px;cursor:pointer;">Limpiar</button>
             </div>
             <div id="integ-log-body" style="max-height:160px;overflow-y:auto;">
                 <div style="font-size:11px;color:#6b7280;">Sin actividad aún...</div>
             </div>
         </div>
+        </div><!-- /integ-panel-webhook -->
+
+        <!-- Panel Sistema Propio -->
+        <div id="integ-panel-propio" style="display:none;">
+            <div style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.3);border-radius:14px;padding:16px;margin-bottom:16px;">
+                <div style="font-size:13px;font-weight:800;color:#a78bfa;margin-bottom:6px;">VINCULACION CON TU SISTEMA PROPIO</div>
+                <p style="font-size:12px;color:#9ca3af;line-height:1.5;margin:0;">Si tenes un sistema de gestión desarrollado desde cero, podes recibir los pedidos automaticamente via endpoint HTTP. Tu sistema expone una ruta y Marvel Food la llama con cada pedido nuevo.</p>
+            </div>
+
+            <!-- Como funciona -->
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
+                <div style="font-size:11px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Como funciona</div>
+                <div style="display:flex;flex-direction:column;gap:12px;">
+                    <div style="display:flex;gap:12px;align-items:flex-start;">
+                        <div style="width:26px;height:26px;border-radius:50%;background:rgba(139,92,246,0.2);border:1px solid #a78bfa;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#a78bfa;flex-shrink:0;">1</div>
+                        <div><div style="font-size:13px;font-weight:700;color:var(--white);">Tu sistema expone un endpoint</div><div style="font-size:11px;color:#9ca3af;margin-top:2px;">Creá una ruta POST en tu servidor que reciba JSON. Ej: <code style="color:#a78bfa;background:#111;padding:1px 5px;border-radius:3px;">https://tu-sistema.com/api/pedidos/nuevo</code></div></div>
+                    </div>
+                    <div style="display:flex;gap:12px;align-items:flex-start;">
+                        <div style="width:26px;height:26px;border-radius:50%;background:rgba(139,92,246,0.2);border:1px solid #a78bfa;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#a78bfa;flex-shrink:0;">2</div>
+                        <div><div style="font-size:13px;font-weight:700;color:var(--white);">Configuras el URL aqui</div><div style="font-size:11px;color:#9ca3af;margin-top:2px;">Marvel Food llamara a ese endpoint con cada evento: nuevo pedido, cambio de estado, edicion.</div></div>
+                    </div>
+                    <div style="display:flex;gap:12px;align-items:flex-start;">
+                        <div style="width:26px;height:26px;border-radius:50%;background:rgba(139,92,246,0.2);border:1px solid #a78bfa;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#a78bfa;flex-shrink:0;">3</div>
+                        <div><div style="font-size:13px;font-weight:700;color:var(--white);">Tu sistema procesa el JSON</div><div style="font-size:11px;color:#9ca3af;margin-top:2px;">Recibis el payload completo con todos los datos del pedido y los cargás en tu base de datos o pantalla de cocina.</div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Config endpoint propio -->
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
+                <div style="font-size:11px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:10px;">Configuracion del endpoint</div>
+                <label style="display:block;font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:4px;">URL DE TU SISTEMA</label>
+                <input id="propio-url" type="url" placeholder="https://mi-sistema.com/api/pedidos/nuevo" value="${cfg.propioUrl||''}"
+                    style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--white);font-size:12px;margin-bottom:10px;outline:none;">
+                <label style="display:block;font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:4px;">CLAVE DE AUTENTICACION (opcional)</label>
+                <input id="propio-secret" type="text" placeholder="Bearer token o API key de tu sistema" value="${cfg.propioSecret||''}"
+                    style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--white);font-size:12px;margin-bottom:10px;outline:none;">
+                <label style="display:block;font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:4px;">HEADER DE AUTENTICACION</label>
+                <select id="propio-auth-header" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--white);font-size:12px;margin-bottom:10px;outline:none;">
+                    <option value="X-Marvel-Secret" ${(cfg.propioAuthHeader||'X-Marvel-Secret')==='X-Marvel-Secret'?'selected':''}>X-Marvel-Secret (default)</option>
+                    <option value="Authorization" ${cfg.propioAuthHeader==='Authorization'?'selected':''}>Authorization: Bearer</option>
+                    <option value="X-API-Key" ${cfg.propioAuthHeader==='X-API-Key'?'selected':''}>X-API-Key</option>
+                    <option value="X-Token" ${cfg.propioAuthHeader==='X-Token'?'selected':''}>X-Token</option>
+                </select>
+                <div style="display:flex;gap:8px;">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;flex:1;padding:8px;background:var(--bg);border-radius:8px;border:1px solid var(--border);">
+                        <input type="checkbox" id="propio-solo-nuevos" ${cfg.propioSoloNuevos?'checked':''} style="accent-color:#a78bfa;width:16px;height:16px;">
+                        <span style="font-size:12px;color:var(--white);">Solo pedidos nuevos</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;flex:1;padding:8px;background:var(--bg);border-radius:8px;border:1px solid var(--border);">
+                        <input type="checkbox" id="propio-estados" ${!cfg.propioSoloNuevos?'checked':''} style="accent-color:#a78bfa;width:16px;height:16px;">
+                        <span style="font-size:12px;color:var(--white);">Incluir cambios de estado</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Boton guardar + test -->
+            <div style="display:flex;gap:8px;margin-bottom:12px;">
+                <button onclick="_integGuardarPropio()" style="flex:1;padding:13px;border-radius:10px;border:none;background:#a78bfa;color:#000;font-weight:800;font-size:13px;cursor:pointer;">
+                    Guardar
+                </button>
+                <button onclick="_integTestPropio()" style="flex:1;padding:13px;border-radius:10px;background:rgba(139,92,246,.15);border:1px solid #a78bfa;color:#a78bfa;font-weight:800;font-size:13px;cursor:pointer;">
+                    Probar conexion
+                </button>
+            </div>
+
+            <!-- Payload de ejemplo para sistema propio -->
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
+                <div style="font-size:11px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:8px;">Estructura JSON que recibe tu sistema</div>
+                <pre style="font-size:10px;color:#a78bfa;background:#0a0a0a;padding:10px;border-radius:8px;overflow-x:auto;line-height:1.6;">${_propioPayloadEjemplo()}</pre>
+            </div>
+
+            <!-- Codigo de ejemplo para recibir el pedido -->
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
+                <div style="font-size:11px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:8px;">Ejemplo: recibir pedido en Node.js / Express</div>
+                <pre style="font-size:10px;color:#10b981;background:#0a0a0a;padding:10px;border-radius:8px;overflow-x:auto;line-height:1.6;">${_propioEjemploNode()}</pre>
+            </div>
+
+            <!-- Código de ejemplo PHP -->
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;">
+                <div style="font-size:11px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:8px;">Ejemplo: recibir pedido en PHP</div>
+                <pre style="font-size:10px;color:#60a5fa;background:#0a0a0a;padding:10px;border-radius:8px;overflow-x:auto;line-height:1.6;">${_propioEjemploPHP()}</pre>
+            </div>
+        </div><!-- /integ-panel-propio -->
+
     </div>`;
 }
+
+
+// ── Sub-tab switcher de integración ─────────────────────────
+window.integSwitchSubTab = function(tab) {
+    const panelWebhook = document.getElementById('integ-panel-webhook');
+    const panelPropio  = document.getElementById('integ-panel-propio');
+    const btnWebhook   = document.getElementById('integ-tab-webhook');
+    const btnPropio    = document.getElementById('integ-tab-propio');
+    if (!panelWebhook || !panelPropio) return;
+
+    const selStyle = 'border:1px solid var(--primary);background:rgba(245,158,11,.15);color:var(--primary);';
+    const defStyle = 'border:1px solid var(--border);background:transparent;color:#9ca3af;';
+
+    if (tab === 'webhook') {
+        panelWebhook.style.display = 'block';
+        panelPropio.style.display  = 'none';
+        if (btnWebhook) btnWebhook.style.cssText += selStyle;
+        if (btnPropio)  btnPropio.style.cssText  += defStyle;
+    } else {
+        panelWebhook.style.display = 'none';
+        panelPropio.style.display  = 'block';
+        if (btnWebhook) btnWebhook.style.cssText += defStyle;
+        if (btnPropio)  btnPropio.style.cssText  += selStyle;
+    }
+};
+
+// ── Payload de ejemplo para sistema propio ───────────────────
+function _propioPayloadEjemplo() {
+    return JSON.stringify({
+        evento: "nuevo_pedido",
+        source: "marvel_food",
+        timestamp: "2025-01-15T20:30:00.000Z",
+        pedido_id: "Kx9aB2mZ",
+        numero: "B2MZ",
+        cliente: "JUAN PEREZ",
+        tel: "3415001234",
+        sucursal: "PELLEGRINI 1149, Rosario Centro",
+        tipo: "Delivery",
+        estado: "Pendiente",
+        dir: "Laprida 1200",
+        loc: "Rosario",
+        piso: "2B",
+        gps: "-32.9442,-60.6505",
+        horario: "21:00 a 21:30",
+        pago: "Efectivo",
+        total: 18500,
+        subtotal: 16000,
+        envio: 2500,
+        descuento: 0,
+        items: [
+            { n: "HULK BURGER", cant: 1, totalItem: 10000 },
+            { n: "PAPAS GRANDES", cant: 1, totalItem: 4000 },
+            { n: "PEPSI 500CC", cant: 1, totalItem: 2000 }
+        ],
+        cupon: "Ninguno",
+        obs: "Sin cebolla en la burger"
+    }, null, 2);
+}
+
+function _propioEjemploNode() {
+    return `// Express.js — recibir pedido de Marvel Food
+const express = require('express');
+const app = express();
+app.use(express.json());
+
+app.post('/api/pedidos/nuevo', (req, res) => {
+    // Verificar autenticacion
+    const secret = req.headers['x-marvel-secret'];
+    if (secret !== process.env.MARVEL_SECRET) {
+        return res.status(401).json({ error: 'No autorizado' });
+    }
+    
+    const pedido = req.body;
+    
+    if (pedido.evento === 'nuevo_pedido') {
+        // Guardar en tu base de datos
+        db.pedidos.insert({
+            id:       pedido.pedido_id,
+            cliente:  pedido.cliente,
+            items:    pedido.items,
+            total:    pedido.total,
+            estado:   pedido.estado,
+            tipo:     pedido.tipo,
+            dir:      pedido.dir,
+            sucursal: pedido.sucursal,
+            hora:     pedido.horario
+        });
+        console.log('Pedido nuevo:', pedido.numero);
+    }
+    
+    if (pedido.evento === 'estado_cambiado') {
+        db.pedidos.update({ id: pedido.pedido_id },
+            { estado: pedido.estado });
+    }
+    
+    res.json({ ok: true, recibido: pedido.numero });
+});
+
+app.listen(3000);`;
+}
+
+function _propioEjemploPHP() {
+    return `<?php
+// recibir_pedido.php — Marvel Food webhook handler
+
+// Verificar autenticacion
+$secret = $_SERVER['HTTP_X_MARVEL_SECRET'] ?? '';
+if ($secret !== getenv('MARVEL_SECRET')) {
+    http_response_code(401);
+    die(json_encode(['error' => 'No autorizado']));
+}
+
+// Leer JSON del body
+$pedido = json_decode(file_get_contents('php://input'), true);
+if (!$pedido) { http_response_code(400); die(); }
+
+$evento = $pedido['evento'];
+
+if ($evento === 'nuevo_pedido') {
+    // Insertar en tu DB
+    $pdo->prepare("
+        INSERT INTO pedidos (id, cliente, total, estado, tipo, sucursal)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ")->execute([
+        $pedido['pedido_id'],
+        $pedido['cliente'],
+        $pedido['total'],
+        $pedido['estado'],
+        $pedido['tipo'],
+        $pedido['sucursal']
+    ]);
+
+    // Guardar items
+    foreach ($pedido['items'] as $item) {
+        $pdo->prepare("
+            INSERT INTO pedido_items (pedido_id, nombre, cant, precio)
+            VALUES (?, ?, ?, ?)
+        ")->execute([
+            $pedido['pedido_id'],
+            $item['n'], $item['cant'], $item['totalItem']
+        ]);
+    }
+}
+
+if ($evento === 'estado_cambiado') {
+    $pdo->prepare("UPDATE pedidos SET estado=? WHERE id=?")
+        ->execute([$pedido['estado'], $pedido['pedido_id']]);
+}
+
+echo json_encode(['ok' => true]);`;
+}
+
+// ── Guardar config sistema propio ────────────────────────────
+window._integGuardarPropio = function() {
+    const cfg = _integGetConfig();
+    cfg.propioUrl        = document.getElementById('propio-url')?.value.trim() || '';
+    cfg.propioSecret     = document.getElementById('propio-secret')?.value.trim() || '';
+    cfg.propioAuthHeader = document.getElementById('propio-auth-header')?.value || 'X-Marvel-Secret';
+    cfg.propioSoloNuevos = document.getElementById('propio-solo-nuevos')?.checked || false;
+    _integSaveConfig(cfg);
+    _integLog('Config sistema propio guardada');
+    // Toast visual
+    const btn = document.querySelector('#integ-panel-propio button[onclick="_integGuardarPropio()"]');
+    if (btn) {
+        const orig = btn.innerText;
+        btn.innerText = 'Guardado!';
+        btn.style.background = '#10b981';
+        setTimeout(() => { btn.innerText = orig; btn.style.background = '#a78bfa'; }, 1500);
+    }
+};
+
+// ── Probar conexion sistema propio ───────────────────────────
+window._integTestPropio = async function() {
+    const url = document.getElementById('propio-url')?.value.trim();
+    if (!url) return alert('Ingresa primero la URL de tu sistema.');
+    _integLog('Probando conexion con sistema propio...');
+    try {
+        const secret     = document.getElementById('propio-secret')?.value.trim();
+        const authHeader = document.getElementById('propio-auth-header')?.value || 'X-Marvel-Secret';
+        const headers    = { 'Content-Type': 'application/json' };
+        if (secret) headers[authHeader] = authHeader === 'Authorization' ? 'Bearer ' + secret : secret;
+        const resp = await fetch(url, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+                evento: 'test',
+                source: 'marvel_food',
+                timestamp: new Date().toISOString(),
+                mensaje: 'Prueba de conexion desde Marvel Food — Sistema Propio'
+            }),
+            signal: AbortSignal.timeout(8000)
+        });
+        _integLog('Conexion OK: HTTP ' + resp.status);
+        alert('Conexion exitosa! Tu sistema respondio con HTTP ' + resp.status);
+    } catch(err) {
+        _integLog('Error de conexion: ' + err.message);
+        alert('No se pudo conectar: ' + err.message + '\n\nVerifica que:\n- La URL sea correcta\n- Tu servidor este corriendo\n- CORS este habilitado en tu API');
+    }
+};
+
+// ── Hook _integNotificar: tambien enviar a sistema propio ────
+const _origIntegNotificar = window._integNotificar || function(){};
+// Override will be set after _integNotificar is defined below
 
 window._integGuardar = function(mostrarToast) {
     const cfg = {
@@ -4141,13 +4504,13 @@ window._integGuardar = function(mostrarToast) {
     };
     _integSaveConfig(cfg);
     _integRenderTab(); // Re-render para actualizar colores del toggle
-    if (mostrarToast) _integLog('✓ Configuración guardada');
+    if (mostrarToast) _integLog(' Configuración guardada');
 };
 
 window._integTestWebhook = async function() {
     const url = document.getElementById('integ-webhook-url')?.value.trim();
     if (!url) return alert('Ingresá una URL de webhook primero.');
-    _integLog('▶ Probando webhook...');
+    _integLog(' Probando webhook...');
     try {
         const secret = document.getElementById('integ-webhook-secret')?.value.trim();
         const headers = { 'Content-Type': 'application/json' };
@@ -4163,13 +4526,13 @@ window._integTestWebhook = async function() {
             }),
             signal: AbortSignal.timeout(8000)
         });
-        _integLog(`✓ Webhook respondió: HTTP ${resp.status}`);
+        _integLog(` Webhook respondió: HTTP ${resp.status}`);
     } catch(err) {
-        _integLog(`✗ Error: ${err.message}`);
+        _integLog(` Error: ${err.message}`);
     }
 };
 
-// ─── INIT: cargar config al abrir el admin ────────────────────
+//  INIT: cargar config al abrir el admin 
 document.addEventListener('firebase:ready', () => {
     const cfg = _integGetConfig();
     if (cfg.sonido === undefined) {
@@ -4178,8 +4541,8 @@ document.addEventListener('firebase:ready', () => {
     }
 });
 
-// ════════════════════════════════════════════════════════════════
-// ─── WHATSAPP ─────────────────────────────────────────
+// 
+//  WHATSAPP 
 function admWhatsapp(id) {
     const p = admPedidos.find(x => x.id === id);
     if (!p || !p.tel) return alert("No hay teléfono disponible.");
@@ -4187,7 +4550,7 @@ function admWhatsapp(id) {
     const num = tel.startsWith('54') ? tel : '549' + tel;
     const esDel = p.tipo === 'Delivery';
     let msg = `*¡Hola ${p.cliente}!  MARVEL FOOD*%0A`;
-    msg += `Tu pedido *#${admNumero(p.id)}* fue *ACEPTADO* ✓%0A`;
+    msg += `Tu pedido *#${admNumero(p.id)}* fue *ACEPTADO* %0A`;
     msg += esDel
         ? `*Franja de entrega:* ${p.horarioEstimado || '—'}%0A${p.dir || ''} ${p.piso || ''}`
         : `*Podés retirarlo a las:* ${p.horarioEstimado || '—'}`;
@@ -4195,7 +4558,7 @@ function admWhatsapp(id) {
     window.open(`https://wa.me/${num}?text=${msg}`, '_blank');
 }
 
-// ─── EDICIÓN ──────────────────────────────────────────
+//  EDICIÓN 
 function admEditar(id) {
     const p = admPedidos.find(x => x.id === id);
     if (!p) return;
@@ -4294,8 +4657,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (m) m.addEventListener('click', function(e) { if (e.target === this) admCloseModal(); });
 });
 
-// ─── IMPRIMIR ─────────────────────────────────────────
-// ─── IMPRIMIR ─────────────────────────────────────────
+//  IMPRIMIR 
+//  IMPRIMIR 
 function admImprimir(id) {
     const p = admPedidos.find(x => x.id === id);
     if (!p) return;
@@ -4307,9 +4670,9 @@ function admImprimir(id) {
     const SEP   = '_________________________________________________________';
     const items = (p.items || []);
 
-    // ── MAPA DE CÓDIGOS OFICIALES ──────────────────────────────────
+    //  MAPA DE CÓDIGOS OFICIALES 
     const CODIGOS_PROD = {
-        // ── Hamburguesas carne (códigos 1-20) ──
+        //  Hamburguesas carne (códigos 1-20) 
         'HULK BURGER':1,            'HULK':1,
         'NATASHA':2,
         'CAPITAN AMERICA':3,        'CAPITÁN AMÉRICA':3,
@@ -4323,12 +4686,12 @@ function admImprimir(id) {
         'LOKI':13,
         'WANDA':15,
         'VISION':16,
-        // ── Smash (17-20) ──
+        //  Smash (17-20) 
         'CHIS BURGER':17,           'CHISS BURGER':17,
         'PERFEKTA':18,              'PERFEKTA SMASH':18,
         'BIG MARVEL':19,
         'STACKER':20,               'STAKER BURGER':20,     'STACKER BURGER':20,
-        // ── Veggie remolacha (21-40) ──
+        //  Veggie remolacha (21-40) 
         'HULK SIMPLE VEGE':21,      'HULK VEGGIE':21,
         'NATASHA VEGGIE':22,        'NATASHA VEGE':22,
         'CAPITAN AMERICA VEGGIE':23,'CAPITÁN AMÉRICA VEGGIE':23,'CAPITAN AMERICA VEGE':23,
@@ -4341,7 +4704,7 @@ function admImprimir(id) {
         'WANDA VEGGIE':35,          'WANDA VEGE':35,
         'VISION VEGGIE':36,         'VISION VEGGE':36,
         'STAKER VEGE':40,
-        // ── Veggie choclo (41-61) ──
+        //  Veggie choclo (41-61) 
         'HULK SIMPLE CHOCLO':41,
         'NATASHA CHOCLO':42,
         'CAPITAN AMERICA CHOCLO':43,
@@ -4355,24 +4718,24 @@ function admImprimir(id) {
         'VISION CHOCLO':56,
         'VALKYRIA VEGAN':60,        'VEGAN VALKYRIA':60,
         'VALKYRIA CHOCLO':61,
-        // ── Sándwiches / otros ──
+        //  Sándwiches / otros 
         'SÁNDWICH LIBERTAD':67,     'SANDWICH LIBERTAD':67, 'LIBERTAD':67,
         'MENU INFANTIL':70,
-        // ── Papas (200-205) ──
+        //  Papas (200-205) 
         'PAPAS CHICAS':200,
         'PAPAS CHICAS CON CHEDDAR':201, 'PAPA CHICA CHEDDAR':201,
         'PAPAS CHICAS COMPLETAS':202,
         'PAPAS GRANDES':203,
         'PAPAS CHEDDAR GRANDES':204,    'PAPA GRANDE CHEDDAR':204,
         'PAPAS GR COMPLETAS':205,
-        // ── Acompañamientos (206-211) ──
+        //  Acompañamientos (206-211) 
         'AROS DE CEBOLLA (10 UNIDADES)':206, 'AROS DE CEBOLLA 10':206,
         'COMBO AROS':207,           'COMBO AROS DE CEBOLLA':207,
         'NUGGETS (10 UNIDADES)':208,'NUGGETS X10':208,
         'COMBO NUGGETS':209,
         'MARVEL BOX':210,
         'ENSALADA KANG':211,        'ENSALADA KANG SALAD':211,
-        // ── Bebidas (300-358) ──
+        //  Bebidas (300-358) 
         'PEPSI LATA 360':300,       'PEPSI 500CC':301,      'PEPSI 1500CC':302,
         'PEPSI BLACK LATA 360':303, 'PEPSI BLACK 1500CC':304,
         'SEVEN UP LATA 360':305,    'SEVEN UP 500CC':306,   'SEVEN UP 1500CC':307,
@@ -4383,7 +4746,7 @@ function admImprimir(id) {
         'STELLA 473CC':350,         'ANDES RUBIA 473CC':351,'ANDES ROJA 473CC':352,
         'ANDES IPA 473CC':353,      'QUILMES 473CC':354,    'BUDWEISER 473CC':355,
         'BRAHMA LATA':356,          'STELLA SIN ALCOHOL':358,
-        // ── Extras (700-715) ──
+        //  Extras (700-715) 
         'EXTRA CARNE':700,
         'EXTRA CHEDDAR':701,        'EXTRA CHEDDAR FETA':701,
         'EXTRA PANCETA':702,
@@ -4391,7 +4754,7 @@ function admImprimir(id) {
         'EXTRA DIP BARBACOA':712,   'EXTRA DIP PANCETA':713,
         'EXTRA CARNE SMASH':714,
         'EXTRA MEDALLÓN VEGGIE':715,'EXTRA MEDALLON VEGGIE':715,
-        // ── Promos del día (403-440) ──
+        //  Promos del día (403-440) 
         'PROMO LUNES CAPITÁN AMÉRICA':403,  'PROMO LUNES CAPITAN AMERICA':403,  'MARVEL LUNES CAP AMERICA':403,
         'PROMO MARTES PETER PARKER':405,    'MARVEL MARTES PETER':405,
         'PROMO MIÉRCOLES IRON MAN':404,     'MARVEL MIERC IRON':404,
@@ -4399,7 +4762,7 @@ function admImprimir(id) {
         'PROMO VIERNES LOKI':413,           'MARVEL VIERNES LOKI':413,
         'PROMO SÁBADO BLACK PANTHER':407,   'MARVEL SAB BLACK P':407,
         'PROMO DOMINGO CHISBURGER':417,     'MARVEL DOM CHISS':417,
-        // ── Promos compartir (501-525) ──
+        //  Promos compartir (501-525) 
         'COMPARTIR HULK':501,               'COMPARTI HULK':501,
         'COMPARTIR CAPITÁN AMÉRICA':503,    'COMPARTIR CAPITAN AMERICA':503,    'COMPARTI CAPITAN A':503,
         'COMPARTIR IRON MAN':504,           'COMPARTI IRON MAN':504,
@@ -4487,13 +4850,13 @@ function admImprimir(id) {
   .barcode { text-align:center; font-size:13px; font-weight:bold; letter-spacing:3px; margin:5px 0 2px; }
   .footer { text-align:center; font-size:10px; margin-top:6px; }
   .badge { font-size:10px; font-weight:bold; }
-</style></head><body><!-- ══════════ TICKET CLIENTE ══════════ --><div class="ticket"><div class="header-row"><strong>Ticket Cliente</strong><div class="logo-text"><div class="logo-marvel">MARVEL</div><div class="logo-food">Food</div></div></div><div class="sep">${SEP}</div><div class="info"><strong>Fecha : ${fecha} &nbsp;&nbsp; Número : ${num}</strong><br> Pedido para : ${p.cliente||'—'}<br> Teléfono : ${p.tel||'—'}<br> ${esDel
+</style></head><body><!--  TICKET CLIENTE  --><div class="ticket"><div class="header-row"><strong>Ticket Cliente</strong><div class="logo-text"><div class="logo-marvel">MARVEL</div><div class="logo-food">Food</div></div></div><div class="sep">${SEP}</div><div class="info"><strong>Fecha : ${fecha} &nbsp;&nbsp; Número : ${num}</strong><br> Pedido para : ${p.cliente||'—'}<br> Teléfono : ${p.tel||'—'}<br> ${esDel
       ? `Domicilio:${(p.dir||'').trim()}${p.piso&&p.piso.trim()?' '+p.piso.trim():''}<br>CP - Zona: ${p.loc||''}`
       : `Modalidad: RETIRO EN LOCAL`}
     ${p.horarioEstimado ? `<br>Horario : ${p.horarioEstimado}` : ''}
   </div><div class="sep">${SEP}</div><table><thead><tr><th>Código</th><th class="td-desc">Descripción</th><th class="td-c">Cant.</th><th class="td-r">Precio</th></tr></thead><tbody><tr><td colspan="4"><div class="sep">${SEP}</div></td></tr> ${filasCliente}
       <tr><td colspan="4"><div class="sep">${SEP}</div></td></tr> ${totalesCliente}
-    </tbody></table><div class="sep">${SEP}</div><div class="info">Pago : ${p.pago||'—'}${p.pago==='Efectivo'&&p.vuelto?`<br>Abona con: $${p.vuelto}`:''}</div><div class="footer">¡Gracias por elegirnos! </div><div class="sep">${SEP}</div></div><!-- ══════════ TICKET COCINA ══════════ --><div class="ticket"><div class="header-row"><strong>Ticket Interno</strong><span class="badge">${esDel ? 'ENVÍO' : 'RETIRO'}</span></div><div class="sep">${SEP}</div><div class="info"> Fecha : ${fecha} &nbsp;&nbsp; Número : ${num}<br> Cocción: ${p.horarioEstimado||'—'}<br> Pedido para : ${p.cliente||'—'}<br> Teléfono : ${p.tel||'—'}<br> ${esDel
+    </tbody></table><div class="sep">${SEP}</div><div class="info">Pago : ${p.pago||'—'}${p.pago==='Efectivo'&&p.vuelto?`<br>Abona con: $${p.vuelto}`:''}</div><div class="footer">¡Gracias por elegirnos! </div><div class="sep">${SEP}</div></div><!--  TICKET COCINA  --><div class="ticket"><div class="header-row"><strong>Ticket Interno</strong><span class="badge">${esDel ? 'ENVÍO' : 'RETIRO'}</span></div><div class="sep">${SEP}</div><div class="info"> Fecha : ${fecha} &nbsp;&nbsp; Número : ${num}<br> Cocción: ${p.horarioEstimado||'—'}<br> Pedido para : ${p.cliente||'—'}<br> Teléfono : ${p.tel||'—'}<br> ${esDel
       ? `Domicilio : ${(p.dir||'').trim()}${p.piso&&p.piso.trim()?' '+p.piso.trim():''}<br>CP - Zona: ${p.loc||''}`
       : `Retira en local`}
   </div><div class="sep">${SEP}</div><table><thead><tr><th>Código</th><th class="td-desc">Descripción</th><th class="td-c">Cantidad</th></tr></thead><tbody><tr><td colspan="3"><div class="sep">${SEP}</div></td></tr> ${filasCocina}
@@ -4525,7 +4888,7 @@ function admImprimir(id) {
 }
 
 
-// ═══ ADMIN TABS + DASHBOARD + MENU + RESENAS ═══════════════════
+//  ADMIN TABS + DASHBOARD + MENU + RESENAS 
 
 function admSwitchTab(tab, btn) {
     if (tab === 'integracion') { _integRenderTab(); }
@@ -4545,7 +4908,7 @@ function admSwitchTab(tab, btn) {
     if (tab === 'integracion') setTimeout(_integRenderTab, 50);
 }
 
-// ─── GESTIÓN DE PROMOS (CRUD COMPLETO) ────────────────
+//  GESTIÓN DE PROMOS (CRUD COMPLETO) 
 let admPromosData = [];
 let admPromoEditando = null; // null = nueva promo
 
@@ -4585,7 +4948,7 @@ function admRenderPromos() {
 
     let html = `
     <!-- Botón nueva promo --><button onclick="admAbrirFormPromo(null)"
-        style="width:100%;margin-bottom:16px;padding:12px;background:rgba(245,158,11,.12);border:2px dashed var(--primary);color:var(--primary);border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;"> ＋ AGREGAR NUEVA PROMO
+        style="width:100%;margin-bottom:16px;padding:12px;background:rgba(245,158,11,.12);border:2px dashed var(--primary);color:var(--primary);border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">  AGREGAR NUEVA PROMO
     </button><!-- Formulario inline (oculto por defecto) --><div id="adm-promo-form" style="display:none;background:#111;border:1px solid var(--primary);border-radius:14px;padding:16px;margin-bottom:18px;"><div style="font-size:13px;font-weight:800;color:var(--primary);margin-bottom:12px;" id="adm-promo-form-title">NUEVA PROMO</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;"><div style="grid-column:1/-1;"><div style="font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:4px;">NOMBRE DE LA PROMO *</div><input id="pf-nombre" type="text" placeholder="Ej: Compartir Hulk"
                     style="width:100%;padding:9px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;outline:none;"></div><div style="grid-column:1/-1;"><div style="font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:4px;">DESCRIPCIÓN</div><input id="pf-desc" type="text" placeholder="Descripción breve para el cliente"
                     style="width:100%;padding:9px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:13px;outline:none;"></div><div><div style="font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:4px;">PRECIO ORIGINAL $</div><input id="pf-porig" type="number" placeholder="15500"
@@ -4755,7 +5118,7 @@ window.admResetPromo = async (id) => {
     } catch(e) { alert('Error: ' + e.message); }
 };
 
-// ─── GESTIÓN DE CUPONES ────────────────────────────────
+//  GESTIÓN DE CUPONES 
 const DIAS_SEMANA = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 const TIPOS_CUPON = [
     { v: 'porcentaje',         l: '% Descuento sobre total' },
@@ -4792,7 +5155,7 @@ function admRenderCupones(ov) {
         const horario = c.horario || 'siempre';
         const activo  = over.activo !== false; // default true
         return `
-        <div style="background:var(--surface);border:1px solid ${activo ? 'var(--border)' : '#ef444455'};border-radius:12px;padding:14px;margin-bottom:10px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div style="font-size:13px;font-weight:800;color:var(--primary);">${DIAS_SEMANA[dia]}</div><div style="display:flex;align-items:center;gap:6px;"><span style="font-size:10px;color:${activo?'#10b981':'#ef4444'};font-weight:700;">${activo?'ACTIVO':'INACTIVO'}</span><label class="adm-toggle"><input type="checkbox" ${activo?'checked':''} onchange="admToggleCupon(${dia})"><span class="adm-toggle-slider"></span></label></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;"><div><div style="font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:4px;">TÍTULO</div><input id="cup-titulo-${dia}" type="text" value="${titulo}" placeholder="Ej: LUNES DE BURGER"
+        <div style="background:var(--surface);border:1px solid ${activo ? 'var(--border)' : '#ef444455'};border-radius:12px;padding:14px;margin-bottom:10px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div style="font-size:13px;font-weight:800;color:var(--primary);">${DIAS_SEMANA[dia]}</div><div style="display:flex;align-items:center;gap:6px;"><span id="cup-label-${dia}" style="font-size:10px;color:${activo?'#10b981':'#ef4444'};font-weight:700;">${activo?'ACTIVO':'INACTIVO'}</span><label class="adm-toggle"><input type="checkbox" id="cup-toggle-${dia}" ${activo?'checked':''} onchange="admToggleCupon(${dia})"><span class="adm-toggle-slider"></span></label></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;"><div><div style="font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:4px;">TÍTULO</div><input id="cup-titulo-${dia}" type="text" value="${titulo}" placeholder="Ej: LUNES DE BURGER"
                         style="width:100%;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:12px;outline:none;"></div><div><div style="font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:4px;">CÓDIGO</div><input id="cup-code-${dia}" type="text" value="${code}" placeholder="SIN ESPACIOS"
                         style="width:100%;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:12px;outline:none;text-transform:uppercase;"></div></div><div style="margin-bottom:8px;"><div style="font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:4px;">DESCRIPCIÓN</div><input id="cup-desc-${dia}" type="text" value="${desc}" placeholder="Descripción visible al cliente"
                     style="width:100%;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:12px;outline:none;"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;"><div><div style="font-size:10px;color:#9ca3af;font-weight:700;margin-bottom:4px;">TIPO</div><select id="cup-tipo-${dia}" style="width:100%;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-size:11px;outline:none;"> ${TIPOS_CUPON.map(t => `<option value="${t.v}" ${tipo===t.v?'selected':''}>${t.l}</option>`).join('')}
@@ -4804,15 +5167,30 @@ function admRenderCupones(ov) {
 }
 
 window.admToggleCupon = async (dia) => {
+    // Leer el estado ACTUAL del checkbox en el DOM (no releer de Firestore para evitar race condition)
+    const checkboxEl = document.getElementById('cup-toggle-' + dia);
+    const nuevoActivo = checkboxEl ? checkboxEl.checked : true;
     let ov = {};
-    try { const s = await db.collection('config_menu').doc('cupones_override').get(); if(s.exists) ov = s.data(); } catch(e) {}
+    try { const s = await db.collection('config_menu').doc('cupones_override').get(); if(s.exists) ov = s.data()||{}; } catch(e) {}
     const cur = ov[dia] || {};
-    const nuevoActivo = cur.activo === false ? true : false;
     const upd = {}; upd[dia] = { ...cur, activo: nuevoActivo };
     try {
         await db.collection('config_menu').doc('cupones_override').set(upd, { merge: true });
-        admCargarCupones();
-    } catch(e) { alert('Error: ' + e.message); }
+        // Actualizar visual sin re-renderizar todo
+        const labelEl = document.getElementById('cup-label-' + dia);
+        if (labelEl) {
+            labelEl.innerText = nuevoActivo ? 'Activo' : 'Inactivo';
+            labelEl.style.color = nuevoActivo ? '#10b981' : '#ef4444';
+        }
+        const cardEl = document.getElementById('cup-card-' + dia);
+        if (cardEl) cardEl.style.opacity = nuevoActivo ? '1' : '0.5';
+        const fb = document.getElementById('cup-feedback-' + dia);
+        if (fb) { fb.innerText = nuevoActivo ? 'Cupón activado' : 'Cupón desactivado'; setTimeout(() => { if(fb) fb.innerText = ''; }, 2000); }
+    } catch(e) {
+        // Revertir checkbox en caso de error
+        if (checkboxEl) checkboxEl.checked = !nuevoActivo;
+        alert('Error: ' + e.message);
+    }
 };
 
 window.admGuardarCupon = async (dia) => {
@@ -4834,13 +5212,13 @@ window.admGuardarCupon = async (dia) => {
         // Actualizar en memoria
         CUPONES_DEL_DIA[dia] = { titulo, code, desc, tipo, valor, horario };
         const fb = document.getElementById(`cup-feedback-${dia}`);
-        if (fb) { fb.innerText = '✓ Guardado'; setTimeout(() => { fb.innerText = ''; }, 2000); }
+        if (fb) { fb.innerText = ' Guardado'; setTimeout(() => { fb.innerText = ''; }, 2000); }
     } catch(e) { alert('Error: ' + e.message); }
 };
 
-// ════════════════════════════════════════════════════════════
+// 
 //  ADMIN — GESTIÓN DE CÓDIGOS DE DESCUENTO
-// ════════════════════════════════════════════════════════════
+// 
 async function admCargarCodigos() {
     const listaInt = document.getElementById('adm-codigos-internos-lista');
     const listaPro = document.getElementById('adm-codigos-promos-lista');
@@ -4932,8 +5310,13 @@ window.admToggleCodigo = async (tipo, cod, nuevoActivo) => {
     try {
         await db.collection('config_menu').doc('codigos_descuento').set(ov, { merge: true });
         window._codDescOverrides = ov;
+        // Pequeño delay para asegurar que Firestore procesó el write antes de releer
+        setTimeout(() => admCargarCodigos(), 400);
+    } catch(e) {
+        alert('Error: ' + e.message);
+        // Revertir UI en caso de error
         admCargarCodigos();
-    } catch(e) { alert('Error: ' + e.message); }
+    }
 };
 
 window.admAgregarCodigoInterno = async () => {
@@ -5099,7 +5482,7 @@ async function admCargarResenas() {
         rs.forEach(r=>{if(r[campoEst])dist[r[campoEst]]++;});
         const md=Math.max(...Object.values(dist),1);
         if(g('res-dist')) g('res-dist').innerHTML=[5,4,3,2,1].map(s=> '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">' +
-            '<span style="font-size:10px;color:#f59e0b;width:18px;">'+s+'★</span>' +
+            '<span style="font-size:10px;color:#f59e0b;width:18px;">'+s+'</span>' +
             '<div style="flex:1;height:8px;background:#333;border-radius:4px;"><div style="height:100%;width:'+Math.round(dist[s]/md*100)+'%;background:var(--primary);border-radius:4px;"></div></div>' +
             '<span style="font-size:10px;color:#9ca3af;width:16px;">'+dist[s]+'</span></div>'
         ).join('');
@@ -5112,7 +5495,7 @@ async function admCargarResenas() {
             g('adm-resenas-lista').innerHTML = rs.map(r => {
                 const f = r.fecha?(r.fecha.toDate?r.fecha.toDate():new Date(r.fecha)).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}):'--';
                 const est = r[campoEst] || 0;
-                const stars = '★'.repeat(est) + '☆'.repeat(5-est);
+                const stars = ''.repeat(est) + ''.repeat(5-est);
                 const nombre = r.nombre || r.cliente || 'Anónimo';
                 return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;"><div><div style="font-weight:800;color:var(--white);font-size:13px;">${nombre}</div><div style="color:#f59e0b;font-size:16px;letter-spacing:1px;">${stars}</div>${r.tel ? `<div style="font-size:11px;color:#60a5fa;font-weight:700;margin-top:3px;">Tel: ${r.tel}</div>` : ""}</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;"><span style="font-size:11px;color:#9ca3af;">${f}</span><button onclick="admEliminarOpinion('${r.id}','${col}')" style="background:rgba(239,68,68,.15);border:1px solid #ef4444;color:#ef4444;padding:4px 10px;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer;">Eliminar</button></div></div> ${r.comentario?`<p style="color:#d1d5db;font-size:13px;line-height:1.4;margin:0;padding-top:8px;border-top:1px solid var(--border);">"${r.comentario}"</p>`:''}
                 </div>`;
@@ -5136,9 +5519,9 @@ async function admEliminarOpinion(id, coleccion) {
 }
 
 
-// ══════════════════════════════════════════════════════════
+// 
 //  SECURITY — Admin entry gate, anti-tamper, discount guard
-// ══════════════════════════════════════════════════════════
+// 
 
 // 1. Admin panel only accessible via secret URL hash #mfadmin
 (function _adminGate() {
@@ -5228,7 +5611,7 @@ setInterval(() => {
 document.getElementById('admin-root') && document.getElementById('admin-root').addEventListener('contextmenu', e => e.preventDefault());
 
     </script><!-- BARRA SEGUIMIENTO PEDIDO --><div id="tracking-bar"></div>
-<!-- ══ BANNER INSTALAR PWA — notificación inferior ══════════ -->
+<!--  BANNER INSTALAR PWA — notificación inferior  -->
 <div id="pwa-install-banner">
     <div class="pwa-banner-stripe"></div>
     <div class="pwa-banner-body">
@@ -5241,15 +5624,16 @@ document.getElementById('admin-root') && document.getElementById('admin-root').a
             <div class="pwa-banner-tag">Gratis</div>
         </div>
         <button class="pwa-btn-install" id="pwa-btn-install" onclick="pwaTriggerInstall()">
-            ⬇ Instalar<br>
+             Instalar<br>
         </button>
     </div>
-    <button class="pwa-btn-dismiss" onclick="pwaDismissBanner()" title="Cerrar">✕</button>
+    <button class="pwa-btn-dismiss" onclick="pwaDismissBanner()" title="Cerrar"></button>
 </div><!-- MODAL SEGUIMIENTO --><div id="tracking-modal"><div class="tracking-sheet"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><h2 style="font-weight:800;font-size:18px;color:var(--primary);">TU PEDIDO</h2><button onclick="document.getElementById('tracking-modal').classList.remove('open')" style="background:rgba(255,255,255,0.1);border:none;color:var(--white);width:32px;height:32px;border-radius:50%;font-size:20px;cursor:pointer;font-weight:300;">×</button></div><div id="tracking-cliente" style="color:var(--text-light);font-size:13px;margin-bottom:4px;"></div><div id="tracking-sucursal" style="color:var(--text-light);font-size:12px;margin-bottom:16px;"></div><div class="tracking-progress" id="tracking-progress"></div><div id="tracking-items" style="background:var(--bg);border-radius:10px;padding:12px;margin-bottom:16px;"></div><div id="tracking-total" style="font-size:18px;font-weight:800;color:var(--primary);text-align:right;"></div><div id="tracking-cancel-container"></div>
-<button onclick="cerrarTracking()" style="width:100%;padding:12px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text-light);font-weight:700;margin-top:12px;cursor:pointer;">CERRAR</button></div></div><!-- MODAL RESEÑA --><div id="resena-modal"><div class="resena-sheet"><div style="font-size:40px;margin-bottom:8px;"></div><h3 style="font-weight:800;font-size:18px;color:var(--white);margin-bottom:6px;">¿Cómo estuvo tu pedido?</h3><p style="color:var(--text-light);font-size:13px;">Tu opinión nos ayuda a mejorar</p><div class="stars-row" id="stars-row"><span class="star-btn" data-v="1" onclick="setStars(1)">★</span><span class="star-btn" data-v="2" onclick="setStars(2)">★</span><span class="star-btn" data-v="3" onclick="setStars(3)">★</span><span class="star-btn" data-v="4" onclick="setStars(4)">★</span><span class="star-btn" data-v="5" onclick="setStars(5)">★</span></div><textarea id="resena-comentario" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--white);font-size:13px;resize:none;height:80px;margin-bottom:16px;" placeholder="Comentario opcional..."></textarea><button onclick="enviarResena()" id="resena-btn" style="width:100%;padding:14px;border-radius:10px;border:none;background:var(--primary);color:#000;font-weight:800;font-size:15px;cursor:pointer;">ENVIAR RESEÑA</button><button onclick="document.getElementById('resena-modal').classList.remove('open')" style="width:100%;padding:10px;border-radius:10px;border:none;background:transparent;color:var(--text-light);font-size:13px;margin-top:8px;cursor:pointer;">Ahora no</button></div></div><!-- ADMIN --><div id="admin-root" style="display:none;"><!-- LOGIN --><div id="adm-login-screen"><div class="adm-login-box"><div style="font-size:36px;margin-bottom:8px;"></div><h1>MARVEL FOOD</h1><p>Panel de administración</p><input class="adm-inp" type="password" id="adm-pin" placeholder="PIN de acceso" autocomplete="off"
+<button onclick="cerrarTracking()" style="width:100%;padding:12px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text-light);font-weight:700;margin-top:12px;cursor:pointer;">CERRAR</button>
+<div id="tracking-anulado-label" style="display:none;text-align:center;padding:10px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;margin-top:8px;"><span style="color:#ef4444;font-weight:800;font-size:14px;letter-spacing:1px;">ANULADO</span></div></div></div><!-- MODAL RESEÑA --><div id="resena-modal"><div class="resena-sheet"><div style="font-size:40px;margin-bottom:8px;"></div><h3 style="font-weight:800;font-size:18px;color:var(--white);margin-bottom:6px;">¿Cómo estuvo tu pedido?</h3><p style="color:var(--text-light);font-size:13px;">Tu opinión nos ayuda a mejorar</p><div class="stars-row" id="stars-row"><span class="star-btn" data-v="1" onclick="setStars(1)"></span><span class="star-btn" data-v="2" onclick="setStars(2)"></span><span class="star-btn" data-v="3" onclick="setStars(3)"></span><span class="star-btn" data-v="4" onclick="setStars(4)"></span><span class="star-btn" data-v="5" onclick="setStars(5)"></span></div><textarea id="resena-comentario" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--white);font-size:13px;resize:none;height:80px;margin-bottom:16px;" placeholder="Comentario opcional..."></textarea><button onclick="enviarResena()" id="resena-btn" style="width:100%;padding:14px;border-radius:10px;border:none;background:var(--primary);color:#000;font-weight:800;font-size:15px;cursor:pointer;">ENVIAR RESEÑA</button><button onclick="document.getElementById('resena-modal').classList.remove('open')" style="width:100%;padding:10px;border-radius:10px;border:none;background:transparent;color:var(--text-light);font-size:13px;margin-top:8px;cursor:pointer;">Ahora no</button></div></div><!-- ADMIN --><div id="admin-root" style="display:none;"><!-- LOGIN --><div id="adm-login-screen"><div class="adm-login-box"><div style="font-size:36px;margin-bottom:8px;"></div><h1>MARVEL FOOD</h1><p>Panel de administración</p><input class="adm-inp" type="password" id="adm-pin" placeholder="PIN de acceso" autocomplete="off"
                 onkeydown="if(event.key==='Enter') admCheckPin()">
 <div id="adm-pin-feedback" style="min-height:18px;font-size:12px;font-weight:700;margin:6px 0 2px;text-align:center;"></div>
-<button class="adm-btn-primary" onclick="admCheckPin()">INGRESAR</button></div></div><!-- PANEL PRINCIPAL --><div id="adm-app" style="display:none;"><!-- Header --><div class="adm-header"><h1>MARVEL <span>ADMIN</span></h1><div style="display:flex;align-items:center;gap:8px;"><span class="adm-badge-live">● EN VIVO</span><span style="color:#9ca3af;font-size:10px;" id="adm-last-update">—</span><button onclick="admLogout()" style="background:transparent;border:1px solid #333;color:#9ca3af;padding:5px 10px;border-radius:8px;font-size:10px;cursor:pointer;">SALIR</button></div></div><!-- Stats --><div class="adm-stats-bar"><div class="adm-stat"><span>Pendientes</span><span id="adm-s-pend">0</span></div><div class="adm-stat"><span>Aceptados</span><span id="adm-s-acep" style="color:#10b981">0</span></div><div class="adm-stat"><span>Listos</span><span id="adm-s-list" style="color:#3b82f6">0</span></div><div class="adm-stat"><span>Hoy</span><span id="adm-s-total" style="color:#fff">0</span></div><div class="adm-stat"><span>Recaudado</span><span id="adm-s-cash" style="color:#10b981">$0</span></div></div><!-- Barra de filtros --><!-- Tabs del admin --><div style="display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);overflow-x:auto;"><button class="adm-tab active" onclick="admSwitchTab('pedidos',this)">Pedidos</button><button class="adm-tab" onclick="admSwitchTab('dashboard',this)">Dashboard</button><button class="adm-tab" onclick="admSwitchTab('menu',this)">Menu</button><button class="adm-tab" onclick="admSwitchTab('promos',this)">Promos</button><button class="adm-tab" onclick="admSwitchTab('cupones',this)">Cupones</button><button class="adm-tab" onclick="admSwitchTab('codigos',this)">Codigos</button><button class="adm-tab" onclick="admSwitchTab('resenas',this)">Reseñas</button><button class="adm-tab" onclick="admSwitchTab('integracion',this)" style="color:#a78bfa;">⚡ Integración</button></div><!-- TAB PEDIDOS --><div id="adm-tab-pedidos"><div class="adm-filterbar"><!-- Fila 1: Fecha + Sucursal --><div class="adm-filterrow"><div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;"><span style="color:#9ca3af;font-size:11px;font-weight:700;white-space:nowrap;"> FECHA</span><input type="date" id="adm-fecha-filtro" class="adm-date-inp" onchange="admAplicarFiltros()"><button onclick="admFechaHoy()" class="adm-filter-btn" style="white-space:nowrap;padding:5px 10px;">Hoy</button><button onclick="admVerTodoHistorial()" id="btn-todo-historial" class="adm-filter-btn" style="white-space:nowrap;padding:5px 10px;background:rgba(99,102,241,0.15);border-color:#6366f1;color:#a5b4fc;">Todo</button></div><div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;"><span style="color:#9ca3af;font-size:11px;font-weight:700;white-space:nowrap;">SUCURSAL</span><select id="adm-suc-filtro" class="adm-date-inp" onchange="admAplicarFiltros()" style="flex:1;"><option value="">Todas</option><option value="PELLEGRINI">Centro</option><option value="Rondeau">Norte</option><option value="San Martin">Sur</option><option value="Funes">Funes</option></select></div></div><!-- Fila 2: Estado + Tipo + Limpiar --><div class="adm-filterrow" style="margin-top:8px;"><button class="adm-filter-btn active" data-f="Todos"    onclick="admFiltroEstado('Todos',this)">Todos</button><button class="adm-filter-btn"        data-f="Pendiente" onclick="admFiltroEstado('Pendiente',this)">Pendientes</button><button class="adm-filter-btn f-acep" data-f="Aceptado" onclick="admFiltroEstado('Aceptado',this)">Aceptados</button><button class="adm-filter-btn f-list" data-f="Listo"    onclick="admFiltroEstado('Listo',this)">Listos</button><button class="adm-filter-btn f-ent"  data-f="Entregado" onclick="admFiltroEstado('Entregado',this)">Entregados</button><button class="adm-filter-btn"        data-f="Delivery" onclick="admFiltroEstado('Delivery',this)">Delivery</button><button class="adm-filter-btn"        data-f="Retiro"   onclick="admFiltroEstado('Retiro',this)">Retiro</button><button onclick="admLimpiarDia()" style="margin-left:auto;background:rgba(239,68,68,.15);border:1px solid #ef4444;color:#ef4444;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">Limpiar día</button></div></div><!-- Lista pedidos --><div class="adm-orders" id="adm-orders"></div></div><!-- /adm-tab-pedidos --><!-- TAB DASHBOARD --><div id="adm-tab-dashboard" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:16px;">MÉTRICAS DEL DÍA</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;"><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Pedidos hoy</div><div id="dash-total" style="font-size:28px;font-weight:800;color:var(--primary);">0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Recaudado</div><div id="dash-cash" style="font-size:22px;font-weight:800;color:#10b981;">$0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Ticket promedio</div><div id="dash-ticket" style="font-size:22px;font-weight:800;color:#3b82f6;">$0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Delivery / Retiro</div><div id="dash-tipos" style="font-size:16px;font-weight:800;color:var(--white);">0 / 0</div></div></div><!-- Ventas por hora --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Ventas por hora</div><div id="dash-chart-horas" style="display:flex;align-items:flex-end;gap:4px;height:80px;"></div><div id="dash-chart-labels" style="display:flex;gap:4px;margin-top:4px;"></div></div><!-- Productos más pedidos --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Productos más pedidos hoy</div><div id="dash-top-prods"></div></div><!-- Mapa de calor de zonas --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Pedidos por zona</div><div id="dash-zonas"></div></div></div><!-- TAB MENÚ --><div id="adm-tab-menu" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:6px;"> GESTIÓN DE MENÚ</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Pausá productos o editá precios. Los cambios son inmediatos en la tienda.</p><div id="adm-menu-lista" style="display:flex;flex-direction:column;gap:8px;"></div></div><!-- TAB RESEÑAS / OPINIONES --><div id="adm-tab-resenas" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">OPINIONES DE CLIENTES</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Podés eliminar cualquier opinión que no corresponda. Los cambios son inmediatos.</p><div style="display:flex;gap:12px;margin-bottom:20px;"><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);flex:1;text-align:center;"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Promedio</div><div id="res-promedio" style="font-size:32px;font-weight:800;color:var(--primary);">—</div><div style="color:#9ca3af;font-size:11px;" id="res-count">0 reseñas</div></div><div id="res-dist" style="flex:2;background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);display:flex;flex-direction:column;gap:5px;justify-content:center;"></div></div><!-- Tabs internas: Pedido / Públicas --><div style="display:flex;gap:8px;margin-bottom:16px;"><button id="adm-res-tab-ped" onclick="admResTab('pedidos')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--primary);background:rgba(245,158,11,.15);color:var(--primary);font-weight:800;font-size:12px;cursor:pointer;">Desde pedido</button><button id="adm-res-tab-pub" onclick="admResTab('publicas')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--border);background:transparent;color:#9ca3af;font-weight:800;font-size:12px;cursor:pointer;">Opiniones públicas</button></div><div id="adm-resenas-lista" style="display:flex;flex-direction:column;gap:10px;"></div></div><!-- TAB INTEGRACIÓN --><div id="adm-tab-integracion" style="display:none;"></div><!-- TAB PROMOS --><div id="adm-tab-promos" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">GESTIÓN DE PROMOS</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Editá precios y el día de venta de cada promo. Los cambios se aplican en tiempo real en la tienda.</p><div id="adm-promos-lista"></div></div><!-- TAB CÓDIGOS DE DESCUENTO --><div id="adm-tab-codigos" style="display:none;padding:20px;">
+<button class="adm-btn-primary" onclick="admCheckPin()">INGRESAR</button></div></div><!-- PANEL PRINCIPAL --><div id="adm-app" style="display:none;"><!-- Header --><div class="adm-header"><h1>MARVEL <span>ADMIN</span></h1><div style="display:flex;align-items:center;gap:8px;"><span class="adm-badge-live"> EN VIVO</span><span style="color:#9ca3af;font-size:10px;" id="adm-last-update">—</span><button onclick="admLogout()" style="background:transparent;border:1px solid #333;color:#9ca3af;padding:5px 10px;border-radius:8px;font-size:10px;cursor:pointer;">SALIR</button></div></div><!-- Stats --><div class="adm-stats-bar"><div class="adm-stat"><span>Pendientes</span><span id="adm-s-pend">0</span></div><div class="adm-stat"><span>Aceptados</span><span id="adm-s-acep" style="color:#10b981">0</span></div><div class="adm-stat"><span>Listos</span><span id="adm-s-list" style="color:#3b82f6">0</span></div><div class="adm-stat"><span>Hoy</span><span id="adm-s-total" style="color:#fff">0</span></div><div class="adm-stat"><span>Recaudado</span><span id="adm-s-cash" style="color:#10b981">$0</span></div></div><!-- Barra de filtros --><!-- Tabs del admin --><div style="display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);overflow-x:auto;"><button class="adm-tab active" onclick="admSwitchTab('pedidos',this)">Pedidos</button><button class="adm-tab" onclick="admSwitchTab('dashboard',this)">Dashboard</button><button class="adm-tab" onclick="admSwitchTab('menu',this)">Menu</button><button class="adm-tab" onclick="admSwitchTab('promos',this)">Promos</button><button class="adm-tab" onclick="admSwitchTab('cupones',this)">Cupones</button><button class="adm-tab" onclick="admSwitchTab('codigos',this)">Codigos</button><button class="adm-tab" onclick="admSwitchTab('resenas',this)">Reseñas</button><button class="adm-tab" onclick="admSwitchTab('integracion',this)" style="color:#a78bfa;"> Integración</button></div><!-- TAB PEDIDOS --><div id="adm-tab-pedidos"><div class="adm-filterbar"><!-- Fila 1: Fecha + Sucursal --><div class="adm-filterrow"><div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;"><span style="color:#9ca3af;font-size:11px;font-weight:700;white-space:nowrap;"> FECHA</span><input type="date" id="adm-fecha-filtro" class="adm-date-inp" onchange="admAplicarFiltros()"><button onclick="admFechaHoy()" class="adm-filter-btn" style="white-space:nowrap;padding:5px 10px;">Hoy</button><button onclick="admVerTodoHistorial()" id="btn-todo-historial" class="adm-filter-btn" style="white-space:nowrap;padding:5px 10px;background:rgba(99,102,241,0.15);border-color:#6366f1;color:#a5b4fc;">Todo</button></div><div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;"><span style="color:#9ca3af;font-size:11px;font-weight:700;white-space:nowrap;">SUCURSAL</span><select id="adm-suc-filtro" class="adm-date-inp" onchange="admAplicarFiltros()" style="flex:1;"><option value="">Todas</option><option value="PELLEGRINI">Centro</option><option value="Rondeau">Norte</option><option value="San Martin">Sur</option><option value="Funes">Funes</option></select></div></div><!-- Fila 2: Estado + Tipo + Limpiar --><div class="adm-filterrow" style="margin-top:8px;"><button class="adm-filter-btn active" data-f="Todos"    onclick="admFiltroEstado('Todos',this)">Todos</button><button class="adm-filter-btn"        data-f="Pendiente" onclick="admFiltroEstado('Pendiente',this)">Pendientes</button><button class="adm-filter-btn f-acep" data-f="Aceptado" onclick="admFiltroEstado('Aceptado',this)">Aceptados</button><button class="adm-filter-btn f-list" data-f="Listo"    onclick="admFiltroEstado('Listo',this)">Listos</button><button class="adm-filter-btn f-ent"  data-f="Entregado" onclick="admFiltroEstado('Entregado',this)">Entregados</button><button class="adm-filter-btn"        data-f="Delivery" onclick="admFiltroEstado('Delivery',this)">Delivery</button><button class="adm-filter-btn"        data-f="Retiro"   onclick="admFiltroEstado('Retiro',this)">Retiro</button><button onclick="admLimpiarDia()" style="margin-left:auto;background:rgba(239,68,68,.15);border:1px solid #ef4444;color:#ef4444;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">Limpiar día</button></div></div><!-- Lista pedidos --><div class="adm-orders" id="adm-orders"></div></div><!-- /adm-tab-pedidos --><!-- TAB DASHBOARD --><div id="adm-tab-dashboard" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:16px;">MÉTRICAS DEL DÍA</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;"><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Pedidos hoy</div><div id="dash-total" style="font-size:28px;font-weight:800;color:var(--primary);">0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Recaudado</div><div id="dash-cash" style="font-size:22px;font-weight:800;color:#10b981;">$0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Ticket promedio</div><div id="dash-ticket" style="font-size:22px;font-weight:800;color:#3b82f6;">$0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Delivery / Retiro</div><div id="dash-tipos" style="font-size:16px;font-weight:800;color:var(--white);">0 / 0</div></div></div><!-- Ventas por hora --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Ventas por hora</div><div id="dash-chart-horas" style="display:flex;align-items:flex-end;gap:4px;height:80px;"></div><div id="dash-chart-labels" style="display:flex;gap:4px;margin-top:4px;"></div></div><!-- Productos más pedidos --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Productos más pedidos hoy</div><div id="dash-top-prods"></div></div><!-- Mapa de calor de zonas --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Pedidos por zona</div><div id="dash-zonas"></div></div></div><!-- TAB MENÚ --><div id="adm-tab-menu" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:6px;"> GESTIÓN DE MENÚ</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Pausá productos o editá precios. Los cambios son inmediatos en la tienda.</p><div id="adm-menu-lista" style="display:flex;flex-direction:column;gap:8px;"></div></div><!-- TAB RESEÑAS / OPINIONES --><div id="adm-tab-resenas" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">OPINIONES DE CLIENTES</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Podés eliminar cualquier opinión que no corresponda. Los cambios son inmediatos.</p><div style="display:flex;gap:12px;margin-bottom:20px;"><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);flex:1;text-align:center;"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Promedio</div><div id="res-promedio" style="font-size:32px;font-weight:800;color:var(--primary);">—</div><div style="color:#9ca3af;font-size:11px;" id="res-count">0 reseñas</div></div><div id="res-dist" style="flex:2;background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);display:flex;flex-direction:column;gap:5px;justify-content:center;"></div></div><!-- Tabs internas: Pedido / Públicas --><div style="display:flex;gap:8px;margin-bottom:16px;"><button id="adm-res-tab-ped" onclick="admResTab('pedidos')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--primary);background:rgba(245,158,11,.15);color:var(--primary);font-weight:800;font-size:12px;cursor:pointer;">Desde pedido</button><button id="adm-res-tab-pub" onclick="admResTab('publicas')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--border);background:transparent;color:#9ca3af;font-weight:800;font-size:12px;cursor:pointer;">Opiniones públicas</button></div><div id="adm-resenas-lista" style="display:flex;flex-direction:column;gap:10px;"></div></div><!-- TAB INTEGRACIÓN --><div id="adm-tab-integracion" style="display:none;"></div><!-- TAB PROMOS --><div id="adm-tab-promos" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">GESTIÓN DE PROMOS</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Editá precios y el día de venta de cada promo. Los cambios se aplican en tiempo real en la tienda.</p><div id="adm-promos-lista"></div></div><!-- TAB CÓDIGOS DE DESCUENTO --><div id="adm-tab-codigos" style="display:none;padding:20px;">
 <h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">CODIGOS DE DESCUENTO</h3>
 <p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Gestioná los códigos de uso interno del personal y los códigos promocionales. Podés activar, desactivar o agregar nuevos.</p>
 
@@ -5290,7 +5674,7 @@ document.getElementById('admin-root') && document.getElementById('admin-root').a
   <button onclick="admAgregarCodigoPromo()" style="width:100%;background:rgba(245,158,11,0.15);border:1px dashed var(--primary);color:var(--primary);padding:10px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;margin-top:10px;">+ AGREGAR CÓDIGO PROMO</button>
 </div>
 </div>
-<!-- TAB CUPONES --><div id="adm-tab-cupones" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">GESTIÓN DE CUPONES</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Editá el cupón de cada día de la semana. Podés cambiar título, descripción, tipo de beneficio, valor y horario activo.</p><div id="adm-cupones-lista"></div></div><!-- Modal edición --><div id="adm-modal-edit"><div class="adm-modal-sheet"><div class="adm-modal-title">EDITAR PEDIDO</div><div class="adm-mlabel">CLIENTE</div><input class="adm-minp" id="adm-e-cliente" type="text" placeholder="Nombre cliente"><div class="adm-mlabel">TELÉFONO</div><input class="adm-minp" id="adm-e-tel" type="text" placeholder="Teléfono"><div id="adm-e-dir-block"><div class="adm-mlabel">DIRECCIÓN</div><input class="adm-minp" id="adm-e-dir" type="text" placeholder="Dirección"></div><div class="adm-mlabel">SUCURSAL</div><select class="adm-minp" id="adm-e-sucursal"><option value="PELLEGRINI 1149, Rosario Centro">Centro — Pellegrini 1149</option><option value="Rondeau 2430, Rosario Norte">Norte — Rondeau 2430</option><option value="San Martin 1808, Rosario Sur">Sur — San Martin 1808</option><option value="RN9 972,Funes ">Funes — RN9 972</option></select><div class="adm-mlabel">ITEMS DEL PEDIDO</div><div id="adm-e-items"></div><div class="adm-mlabel" style="margin-top:4px;">COSTO ENVÍO <span id="adm-e-envio-hint" style="display:none;background:#f59e0b;color:#000;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;">⚠ SIN ASIGNAR</span></div><input class="adm-minp" id="adm-e-envio" type="number" placeholder="Ingresá el costo de envío..." oninput="admRecalc()"><div class="adm-mlabel">DESCUENTO</div><input class="adm-minp" id="adm-e-desc" type="number" placeholder="0" oninput="admRecalc()"><div class="adm-mlabel">OBSERVACIONES</div><input class="adm-minp" id="adm-e-obs" type="text" placeholder="Notas adicionales"><div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:#111;border-radius:10px;margin-top:4px;"><span style="color:#9ca3af;font-size:13px;">TOTAL CALCULADO</span><span id="adm-e-total" style="color:var(--primary);font-size:20px;font-weight:800;">$0</span></div><div class="adm-mactions"><button class="adm-mcancel" onclick="admCloseModal()">Cancelar</button><button class="adm-msave"   onclick="admGuardar()">GUARDAR CAMBIOS</button></div></div></div></div><!-- /adm-app --><!-- Área impresión --><div id="adm-print-area"></div></div><!-- ════════════════ FIN ADMIN ════════════════ --><!-- ════════════════ SISTEMA DE VERIFICACIÓN DE ZONA ════════════════ --><div id="zona-alert" style="
+<!-- TAB CUPONES --><div id="adm-tab-cupones" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">GESTIÓN DE CUPONES</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Editá el cupón de cada día de la semana. Podés cambiar título, descripción, tipo de beneficio, valor y horario activo.</p><div id="adm-cupones-lista"></div></div><!-- Modal edición --><div id="adm-modal-edit"><div class="adm-modal-sheet"><div class="adm-modal-title">EDITAR PEDIDO</div><div class="adm-mlabel">CLIENTE</div><input class="adm-minp" id="adm-e-cliente" type="text" placeholder="Nombre cliente"><div class="adm-mlabel">TELÉFONO</div><input class="adm-minp" id="adm-e-tel" type="text" placeholder="Teléfono"><div id="adm-e-dir-block"><div class="adm-mlabel">DIRECCIÓN</div><input class="adm-minp" id="adm-e-dir" type="text" placeholder="Dirección"></div><div class="adm-mlabel">SUCURSAL</div><select class="adm-minp" id="adm-e-sucursal"><option value="PELLEGRINI 1149, Rosario Centro">Centro — Pellegrini 1149</option><option value="Rondeau 2430, Rosario Norte">Norte — Rondeau 2430</option><option value="San Martin 1808, Rosario Sur">Sur — San Martin 1808</option><option value="RN9 972,Funes ">Funes — RN9 972</option></select><div class="adm-mlabel">ITEMS DEL PEDIDO</div><div id="adm-e-items"></div><div class="adm-mlabel" style="margin-top:4px;">COSTO ENVÍO <span id="adm-e-envio-hint" style="display:none;background:#f59e0b;color:#000;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;"> SIN ASIGNAR</span></div><input class="adm-minp" id="adm-e-envio" type="number" placeholder="Ingresá el costo de envío..." oninput="admRecalc()"><div class="adm-mlabel">DESCUENTO</div><input class="adm-minp" id="adm-e-desc" type="number" placeholder="0" oninput="admRecalc()"><div class="adm-mlabel">OBSERVACIONES</div><input class="adm-minp" id="adm-e-obs" type="text" placeholder="Notas adicionales"><div style="display:flex;justify-content:space-between;align-items:center;padding:11px;background:#111;border-radius:10px;margin-top:4px;"><span style="color:#9ca3af;font-size:13px;">TOTAL CALCULADO</span><span id="adm-e-total" style="color:var(--primary);font-size:20px;font-weight:800;">$0</span></div><div class="adm-mactions"><button class="adm-mcancel" onclick="admCloseModal()">Cancelar</button><button class="adm-msave"   onclick="admGuardar()">GUARDAR CAMBIOS</button></div></div></div></div><!-- /adm-app --><!-- Área impresión --><div id="adm-print-area"></div></div><!--  FIN ADMIN  --><!--  SISTEMA DE VERIFICACIÓN DE ZONA  --><div id="zona-alert" style="
     display:none; position:fixed; bottom:90px; left:12px; right:12px;
     background:#1e1e1e; border:2px solid #f59e0b; border-radius:16px;
     padding:16px; z-index:4500; box-shadow:0 8px 32px rgba(0,0,0,0.7);
@@ -5308,14 +5692,14 @@ document.getElementById('admin-root') && document.getElementById('admin-root').a
         #zona-alert .za-link { display:block; text-align:center; margin-top:8px; font-size:12px; color:#9ca3af; cursor:pointer; text-decoration:underline; }
     </style><button class="za-close" onclick="cerrarZonaAlert()">×</button><div class="za-title" id="za-title">Dirección fuera de cobertura</div><div class="za-body"  id="za-body">Tu dirección está fuera del área de entrega de esta sucursal.</div><div class="za-suc" id="za-suc-info" style="display:none;"><div class="za-suc-name" id="za-suc-name"></div><div class="za-suc-addr" id="za-suc-addr"></div></div><button class="za-btn" id="za-btn-cambiar" onclick="aplicarSucursalSugerida()" style="display:none;"> Cambiar a esta sucursal
     </button><span class="za-link" onclick="cerrarZonaAlert()">Continuar de todas formas</span></div><script>
-// ════════════════════════════════════════════════════════════
+// 
 //  POLÍGONOS DE COBERTURA — Marvel Food Rosario
 //  Definidos como arrays de [lat, lng] en sentido horario
 //  Basados en los mapas de Google My Maps de cada sucursal
-// ════════════════════════════════════════════════════════════
+// 
 
 const ZONA_POLIGONOS = {
-    // ── CENTRO (Pellegrini 1149) ──────────────────────────────
+    //  CENTRO (Pellegrini 1149) 
     // Límites exactos trazados en geojson.io — centro-pellegrini
     Centro: [
         [-32.980846, -60.636222],
@@ -5334,7 +5718,7 @@ const ZONA_POLIGONOS = {
         [-32.980846, -60.636222]
     ],
 
-    // ── NORTE (Rondeau 2430) ──────────────────────────────────
+    //  NORTE (Rondeau 2430) 
     // Límites exactos trazados en geojson.io — norte baigorria
     Norte: [
         [-32.927201, -60.660902],
@@ -5358,7 +5742,7 @@ const ZONA_POLIGONOS = {
         [-32.927201, -60.660902]
     ],
 
-    // ── SUR (San Martin 1808) ─────────────────────────────────
+    //  SUR (San Martin 1808) 
     // Límites exactos trazados en geojson.io — vgg zona sur
     Sur: [
         [-32.974884, -60.669437],
@@ -5382,7 +5766,7 @@ const ZONA_POLIGONOS = {
         [-32.974884, -60.669437]
     ],
 
-    // ── FUNES-FISHERTON (RN9 972) ─────────────────────────────
+    //  FUNES-FISHERTON (RN9 972) 
     // Límites exactos trazados en geojson.io — funes fisherton
     // Incluye: Funes, Fisherton, barrios privados (Kentucky, San Marino, etc.)
     Funes: [
@@ -5424,7 +5808,7 @@ const ZONA_INFO_UI = {
     Funes:  { label: "Funes — Fisherton", direccion: "RN9 972, Funes" }
 };
 
-// ── Ray-casting para punto en polígono ────────────────────
+//  Ray-casting para punto en polígono 
 function puntoDentroDePoligono(lat, lng, poly) {
     let inside = false;
     for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
@@ -5437,7 +5821,7 @@ function puntoDentroDePoligono(lat, lng, poly) {
     return inside;
 }
 
-// ── Encontrar sucursal que cubre un punto ─────────────────
+//  Encontrar sucursal que cubre un punto 
 function sucursalParaPunto(lat, lng) {
     for (const key of Object.keys(ZONA_POLIGONOS)) {
         if (puntoDentroDePoligono(lat, lng, ZONA_POLIGONOS[key])) return key;
@@ -5445,7 +5829,7 @@ function sucursalParaPunto(lat, lng) {
     return null;
 }
 
-// ── Distancia al centroide del polígono (para el fallback) ─
+//  Distancia al centroide del polígono (para el fallback) 
 function distanciaAlCentro(lat, lng, poly) {
     const cLat = poly.reduce((s, p) => s + p[0], 0) / poly.length;
     const cLng = poly.reduce((s, p) => s + p[1], 0) / poly.length;
@@ -5461,7 +5845,7 @@ function sucursalMasCercana(lat, lng) {
     return mejor;
 }
 
-// ── Estado interno ────────────────────────────────────────
+//  Estado interno 
 let _zonaVerifTimeout = null;
 let _sucursalSugerida = null;
 let _coordsVerificadas = null; // { lat, lng }
@@ -5489,14 +5873,112 @@ window.aplicarSucursalSugerida = () => {
     }
 };
 
-// ── Geocodificación + verificación ────────────────────────
-// ── Geocodificación con múltiples proveedores (CORS abierto) ──
-async function _geocodificar(direccion) {
-    const q = encodeURIComponent(direccion + ' Rosario Santa Fe Argentina');
+// ================================================================
+//  DETECCIÓN DE ZONA — v2
+//  Tres capas de detección, en orden de prioridad:
+//  1. Tabla de localidades conocidas (instantáneo, sin red)
+//  2. Geocodificación usando localidad + dirección real
+//  3. Fallback: geocodificar solo la dirección con contexto amplio
+// ================================================================
 
-    // Proveedor 1: Photon (Komoot) — GeoJSON, CORS abierto
+// Mapa de localidades conocidas → sucursal correcta
+// Clave: texto normalizado (sin tildes, minúsculas)
+// Valor: key de SUC_MAP ('Centro', 'Norte', 'Sur', 'Funes')
+const LOCALIDAD_A_SUCURSAL = {
+    // ── Rosario Zona Sur / V.G.Gálvez ──────────────────────
+    'villa gobernador galvez': 'Sur',
+    'villa gdor galvez':       'Sur',
+    'villa gdor. galvez':      'Sur',
+    'v.g.galvez':              'Sur',
+    'vgg':                     'Sur',
+    'galvez':                  'Sur',
+    'rosario sur':             'Sur',
+    'villa del parque':        'Sur',
+    'coronel bogado':          'Sur',
+
+    // ── Rosario Norte / Baigorria ───────────────────────────
+    'granadero baigorria':     'Norte',
+    'baigorria':               'Norte',
+    'rosario norte':           'Norte',
+    'pueblo esther':           'Norte',
+    'fray luis beltran':       'Norte',
+    'beltran':                 'Norte',
+
+    // ── Funes / Fisherton ──────────────────────────────────
+    'funes':                   'Funes',
+    'fisherton':               'Funes',
+    'barrio kentucky':         'Funes',
+    'kentucky':                'Funes',
+    'barrio palvear':          'Funes',
+    'barrio lagoon':           'Funes',
+    'barrio vida':             'Funes',
+    'palos verdes':            'Funes',
+    'san marino':              'Funes',
+
+    // ── Rosario Centro / Capital ────────────────────────────
+    'rosario':                 'Centro',
+    'rosario centro':          'Centro',
+    'rosario capital':         'Centro',
+};
+
+// Contexto geográfico por sucursal para geocodificación precisa
+const GEO_CONTEXTO = {
+    Centro: 'Rosario Santa Fe Argentina',
+    Norte:  'Rosario Norte Santa Fe Argentina',
+    Sur:    'Villa Gobernador Galvez Santa Fe Argentina',
+    Funes:  'Funes Santa Fe Argentina',
+};
+
+/**
+ * Normaliza un texto: minúsculas, sin tildes, sin puntos
+ */
+function _normalizarTexto(txt) {
+    return txt.toLowerCase()
+        .normalize('NFD').replace(/[̀-ͯ]/g, '')  // quitar tildes
+        .replace(/\./g, '')
+        .trim();
+}
+
+/**
+ * Capa 1: Detectar sucursal por el texto de localidad.
+ * Devuelve la key de SUC_MAP o null si no se reconoce.
+ */
+function _sucursalPorLocalidad(localidad) {
+    if (!localidad) return null;
+    const norm = _normalizarTexto(localidad);
+
+    // Coincidencia exacta
+    if (LOCALIDAD_A_SUCURSAL[norm]) return LOCALIDAD_A_SUCURSAL[norm];
+
+    // Coincidencia parcial (el input contiene una de las keys)
+    for (const [key, suc] of Object.entries(LOCALIDAD_A_SUCURSAL)) {
+        if (norm.includes(key) || key.includes(norm)) return suc;
+    }
+    return null;
+}
+
+/**
+ * Capa 2+3: Geocodificar dirección + localidad con múltiples proveedores.
+ * Usa la localidad real para el contexto geográfico.
+ */
+async function _geocodificar(direccion, localidad) {
+    // Construir query con localidad si está disponible
+    const contexto = localidad
+        ? localidad + ' Santa Fe Argentina'
+        : 'Rosario Santa Fe Argentina';
+
+    const q = encodeURIComponent(direccion + ' ' + contexto);
+
+    // Bounding box ampliado para cubrir toda la zona de entrega
+    // latmin,lonmin,latmax,lonmax → Rosario + Funes + VGG + Baigorria
+    const bbox = '-61.3,-33.25,-60.2,-32.7';
+
+    // Proveedor 1: Photon (Komoot)
     try {
-        const r = await fetch(`https://photon.komoot.io/api/?q=${q}&limit=1&bbox=-61.2,-33.2,-60.2,-32.7`, { signal: AbortSignal.timeout(5000) });
+        const r = await fetch(
+            `https://photon.komoot.io/api/?q=${q}&limit=1&bbox=${bbox}`,
+            { signal: AbortSignal.timeout(5000) }
+        );
         if (r.ok) {
             const d = await r.json();
             if (d.features && d.features.length) {
@@ -5506,9 +5988,12 @@ async function _geocodificar(direccion) {
         }
     } catch(e) { /* intentar siguiente */ }
 
-    // Proveedor 2: geocode.maps.co — CORS abierto, sin key para uso básico
+    // Proveedor 2: geocode.maps.co
     try {
-        const r = await fetch(`https://geocode.maps.co/search?q=${q}&countrycodes=ar&limit=1`, { signal: AbortSignal.timeout(5000) });
+        const r = await fetch(
+            `https://geocode.maps.co/search?q=${q}&countrycodes=ar&limit=1`,
+            { signal: AbortSignal.timeout(5000) }
+        );
         if (r.ok) {
             const d = await r.json();
             if (d && d.length) return { lat: parseFloat(d[0].lat), lng: parseFloat(d[0].lon) };
@@ -5518,104 +6003,167 @@ async function _geocodificar(direccion) {
     return null;
 }
 
-async function verificarDireccion(direccion) {
+/**
+ * Muestra el banner de zona sugerida.
+ */
+function _mostrarAlertaZona(sucSugerida, textoDir, sucActualId, razon) {
+    _sucursalSugerida = sucSugerida;
+
+    const zaTitle   = document.getElementById('za-title');
+    const zaBody    = document.getElementById('za-body');
+    const zaSucInfo = document.getElementById('za-suc-info');
+    const zaSucName = document.getElementById('za-suc-name');
+    const zaSucAddr = document.getElementById('za-suc-addr');
+    const zaBtn     = document.getElementById('za-btn-cambiar');
+    const alertEl   = document.getElementById('zona-alert');
+    if (!alertEl) return;
+
+    const sucActualInfo = ZONA_INFO_UI[sucActualId] || { label: sucActualId };
+    const sucSugInfo    = ZONA_INFO_UI[sucSugerida]  || { label: sucSugerida, direccion: '' };
+
+    zaTitle.textContent = 'Sucursal incorrecta detectada';
+    zaBody.innerHTML    = `<strong style="color:#fff;">${textoDir}</strong> corresponde a la zona de <strong style="color:#f59e0b;">${sucSugInfo.label}</strong>, no a <em>${sucActualInfo.label}</em>.${razon ? '<br><small style="color:#9ca3af;font-size:11px;">' + razon + '</small>' : ''}`;
+    zaSucName.textContent = sucSugInfo.label;
+    zaSucAddr.textContent = sucSugInfo.direccion;
+    zaSucInfo.style.display = 'block';
+    zaBtn.style.display     = 'block';
+    zaBtn.textContent       = 'Cambiar a ' + sucSugInfo.label;
+    alertEl.style.display   = 'block';
+}
+
+/**
+ * Verificación principal: combina localidad (texto) + geocodificación GPS.
+ * Se llama tanto al tipear dirección COMO al tipear localidad.
+ */
+async function verificarDireccion(direccion, localidadOverride) {
     const sucId = document.getElementById('main-sucursal')?.value;
-    if (!sucId || !direccion || direccion.length < 6) return;
+    if (!sucId) return;
+
+    const localidad = localidadOverride
+        || (document.getElementById('c-loc')?.value || '').trim();
+
+    // ── CAPA 1: detección instantánea por texto de localidad ──────────────
+    if (localidad && localidad.length >= 3) {
+        const sucPorLoc = _sucursalPorLocalidad(localidad);
+        if (sucPorLoc && sucPorLoc !== sucId) {
+            _mostrarAlertaZona(
+                sucPorLoc,
+                localidad,
+                sucId,
+                'Detectado por localidad ingresada'
+            );
+            return; // Ya encontramos, no hace falta geocodificar
+        }
+        if (sucPorLoc && sucPorLoc === sucId) {
+            cerrarZonaAlert(); // Localidad coincide con sucursal seleccionada
+            // Igual geocodificamos para verificar la calle exacta
+        }
+    }
+
+    // ── CAPA 2: Geocodificación con contexto de localidad ─────────────────
+    if (!direccion || direccion.length < 4) return;
 
     try {
-        const coords = await _geocodificar(direccion);
-        if (!coords) return; // sin resultados, no molestar
+        const coords = await _geocodificar(direccion, localidad);
+        if (!coords) return; // Sin resultados, no molestar al usuario
 
-        const lat = coords.lat;
-        const lng = coords.lng;
+        const { lat, lng } = coords;
         _coordsVerificadas = { lat, lng };
 
-        const sucubrePunto = puntoDentroDePoligono(lat, lng, ZONA_POLIGONOS[sucId]);
-
-        if (sucubrePunto) {
-            // ✓ Está en zona — ocultar cualquier alerta anterior
+        // ¿La dirección geocodificada está en el polígono de la sucursal seleccionada?
+        const enZonaActual = puntoDentroDePoligono(lat, lng, ZONA_POLIGONOS[sucId]);
+        if (enZonaActual) {
             cerrarZonaAlert();
             return;
         }
 
-        // — Fuera de zona — buscar cuál sucursal lo cubre
-        const sucCubre = sucursalParaPunto(lat, lng);
+        // ¿En qué sucursal está realmente?
+        const sucCubre   = sucursalParaPunto(lat, lng);
         const sucSugerida = sucCubre || sucursalMasCercana(lat, lng);
-        _sucursalSugerida = sucSugerida;
 
-        // Armar el mensaje de la alerta
-        const zaTitle  = document.getElementById('za-title');
-        const zaBody   = document.getElementById('za-body');
-        const zaSucInfo= document.getElementById('za-suc-info');
-        const zaSucName= document.getElementById('za-suc-name');
-        const zaSucAddr= document.getElementById('za-suc-addr');
-        const zaBtn    = document.getElementById('za-btn-cambiar');
-        const alert    = document.getElementById('zona-alert');
-
-        const sucActualInfo = ZONA_INFO_UI[sucId];
-        const sucSugInfo    = ZONA_INFO_UI[sucSugerida];
-
-        zaTitle.textContent = 'Dirección fuera de cobertura';
-
-        if (sucCubre) {
-            zaBody.innerHTML = `<strong style="color:#fff;">${direccion}</strong> está fuera del rango de entrega de <em>${sucActualInfo.label}</em>.<br>Pero la sucursal <strong style="color:#f59e0b;">${sucSugInfo.label}</strong> sí llega ahí:`;
-        } else {
-            zaBody.innerHTML = `<strong style="color:#fff;">${direccion}</strong> queda fuera del área de entrega de <em>${sucActualInfo.label}</em>.<br>La sucursal más cercana que podría llegar es <strong style="color:#f59e0b;">${sucSugInfo.label}</strong>:`;
+        // Si la sucursal sugerida coincide con la seleccionada, no hay error
+        if (sucSugerida === sucId) {
+            cerrarZonaAlert();
+            return;
         }
 
-        zaSucName.textContent = '' + sucSugInfo.label;
-        zaSucAddr.textContent = sucSugInfo.direccion;
-        zaSucInfo.style.display = 'block';
-        zaBtn.style.display = 'block';
-        zaBtn.textContent = `Cambiar a sucursal ${sucSugInfo.label}`;
-
-        alert.style.display = 'block';
+        _mostrarAlertaZona(
+            sucSugerida,
+            [direccion, localidad].filter(Boolean).join(', '),
+            sucId,
+            sucCubre ? 'La sucursal correcta cubre ese punto' : 'Sucursal mas cercana al punto'
+        );
 
     } catch(e) {
-        // Si falla la geocodificación simplemente no mostramos nada
-        console.warn('[ZonaCheck] Error geocodificando:', e.message);
+        console.warn('[ZonaCheck] Error:', e.message);
     }
 }
 
-// ── Hook en el campo de dirección ─────────────────────────
-(function hookDireccionInput() {
-    const MAX_WAIT = 1200; // ms de debounce
+// ── Hooks en los campos de dirección Y localidad ─────────────────────────
+(function hookInputsZona() {
+    const MAX_WAIT = 900; // debounce en ms
 
-    function attachHook() {
+    function attachHooks() {
         const cDir = document.getElementById('c-dir');
-        if (!cDir) return setTimeout(attachHook, 500);
+        const cLoc = document.getElementById('c-loc');
 
-        cDir.addEventListener('input', () => {
+        if (!cDir) return setTimeout(attachHooks, 500);
+
+        // Hook dirección
+        const onDirChange = () => {
             clearTimeout(_zonaVerifTimeout);
             _zonaVerifTimeout = setTimeout(() => {
                 verificarDireccion(cDir.value.trim());
             }, MAX_WAIT);
-        });
-
+        };
+        cDir.addEventListener('input', onDirChange);
         cDir.addEventListener('blur', () => {
             clearTimeout(_zonaVerifTimeout);
             const val = cDir.value.trim();
-            if (val.length >= 6) verificarDireccion(val);
+            if (val.length >= 4) verificarDireccion(val);
         });
+
+        // Hook localidad — reaccionar inmediatamente (sin delay largo)
+        // porque la capa 1 no necesita red
+        if (cLoc) {
+            cLoc.addEventListener('input', () => {
+                clearTimeout(_zonaVerifTimeout);
+                const locVal = cLoc.value.trim();
+                const dirVal = cDir.value.trim();
+                // Capa 1 inmediata si la localidad tiene suficiente texto
+                if (locVal.length >= 3) {
+                    _zonaVerifTimeout = setTimeout(() => {
+                        verificarDireccion(dirVal, locVal);
+                    }, 600);
+                }
+            });
+            cLoc.addEventListener('blur', () => {
+                clearTimeout(_zonaVerifTimeout);
+                const locVal = cLoc.value.trim();
+                const dirVal = cDir.value.trim();
+                if (locVal.length >= 2) verificarDireccion(dirVal, locVal);
+            });
+        }
     }
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', attachHook);
+        document.addEventListener('DOMContentLoaded', attachHooks);
     } else {
-        attachHook();
+        attachHooks();
     }
 })();
 
-// ── También re-verificar cuando cambia la sucursal ────────
+// ── Re-verificar cuando cambia la sucursal manualmente ───────────────────
 (function hookSucursalChange() {
     function attach() {
         const sel = document.getElementById('main-sucursal');
         if (!sel) return setTimeout(attach, 500);
         sel.addEventListener('change', () => {
+            cerrarZonaAlert();
             const dir = document.getElementById('c-dir')?.value?.trim();
-            if (dir && dir.length >= 6) {
-                cerrarZonaAlert();
-                setTimeout(() => verificarDireccion(dir), 300);
+            const loc = document.getElementById('c-loc')?.value?.trim();
+            if (dir || loc) {
+                setTimeout(() => verificarDireccion(dir || '', loc || ''), 300);
             }
         });
     }
@@ -5625,10 +6173,10 @@ async function verificarDireccion(direccion) {
         attach();
     }
 })();
-</script><!-- ════════════════ FIN VERIFICACIÓN DE ZONA ════════════════ --><script>
-// ════════════════════════════════════════════════════════════
+</script><!--  FIN VERIFICACIÓN DE ZONA  --><script>
+// 
 //  HERO SLIDER MEJORADO — dots + ken burns reinicio
-// ════════════════════════════════════════════════════════════
+// 
 (function patchSlider() {
     function init() {
         const slider = document.getElementById('hero-slider');
@@ -5673,9 +6221,9 @@ async function verificarDireccion(direccion) {
     else init();
 })();
 
-// ════════════════════════════════════════════════════════════
+// 
 //  SISTEMA DE OPINIONES PÚBLICAS
-// ════════════════════════════════════════════════════════════
+// 
 let _opPuntuacion = 0;
 
 window.opLimpiarError = (el) => {
@@ -5758,7 +6306,7 @@ window.opSetStar = (v) => {
 window.enviarOpinion = async () => {
     if (!_opPuntuacion) return alert('Seleccioná al menos 1 estrella.');
 
-    // ── Validar campos obligatorios ──
+    //  Validar campos obligatorios 
     const inpNombre = document.getElementById('op-nombre');
     const inpTel    = document.getElementById('op-tel');
     const errDiv    = document.getElementById('op-error');
@@ -5867,7 +6415,7 @@ async function cargarOpinionesPub() {
             const fecha = d.fecha?.toDate
                 ? d.fecha.toDate().toLocaleDateString('es-AR', { day:'2-digit', month:'short', year:'numeric' })
                 : '';
-            const stars = '★'.repeat(d.estrellas) + '☆'.repeat(5 - d.estrellas);
+            const stars = ''.repeat(d.estrellas) + ''.repeat(5 - d.estrellas);
             const color = d.estrellas >= 4 ? '#f59e0b' : d.estrellas === 3 ? '#9ca3af' : '#ef4444';
             const nombre = d.nombre || 'Anónimo';
             // Capitalizar correctamente si viene en mayúsculas de un pedido
@@ -5898,14 +6446,14 @@ function actualizarResumenOp(docs) {
     if (!prom) return;
 
     if (!docs.length) {
-        prom.textContent = '—'; starsAvg.textContent = '☆☆☆☆☆'; count.textContent = '0 reseñas';
+        prom.textContent = '—'; starsAvg.textContent = ''; count.textContent = '0 reseñas';
         if (bars) bars.innerHTML = '';
         return;
     }
     const avg = docs.reduce((s, d) => s + (d.estrellas || 0), 0) / docs.length;
     prom.textContent = avg.toFixed(1);
     const fullStars = Math.round(avg);
-    starsAvg.textContent = '★'.repeat(fullStars) + '☆'.repeat(5 - fullStars);
+    starsAvg.textContent = ''.repeat(fullStars) + ''.repeat(5 - fullStars);
     count.textContent = docs.length + ' reseña' + (docs.length !== 1 ? 's' : '');
 
     if (bars) {
@@ -5914,15 +6462,15 @@ function actualizarResumenOp(docs) {
             const n = docs.filter(d => d.estrellas === s).length;
             const pct = docs.length ? Math.round(n / docs.length * 100) : 0;
             html += `
-            <div style="display:flex;align-items:center;gap:7px;"><span style="color:#f59e0b;font-size:12px;white-space:nowrap;">${s}★</span><div style="flex:1;height:6px;background:#333;border-radius:3px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:var(--primary);border-radius:3px;transition:width .6s;"></div></div><span style="color:var(--text-light);font-size:11px;width:22px;text-align:right;">${n}</span></div>`;
+            <div style="display:flex;align-items:center;gap:7px;"><span style="color:#f59e0b;font-size:12px;white-space:nowrap;">${s}</span><div style="flex:1;height:6px;background:#333;border-radius:3px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:var(--primary);border-radius:3px;transition:width .6s;"></div></div><span style="color:var(--text-light);font-size:11px;width:22px;text-align:right;">${n}</span></div>`;
         }
         bars.innerHTML = html;
     }
 }
 
-// ════════════════════════════════════════════════════════════
+// 
 //  PANTALLA DE BIENVENIDA — lógica
-// ════════════════════════════════════════════════════════════
+// 
 
 let _wsGPS = null;            // { lat, lng } si se obtuvo GPS
 let _wsSucursalDetectada = null;
@@ -5947,7 +6495,7 @@ function welcomeSkip() {
     setTimeout(() => { ws.style.display = 'none'; }, 360);
 }
 
-// ── Selector Retiro / Envío ──────────────────────────────
+//  Selector Retiro / Envío 
 window.wsTipoSeleccionar = function(tipo) {
     _wsTipo = tipo;
     const btnEnvio  = document.getElementById('ws-btn-envio');
@@ -6089,9 +6637,24 @@ function welcomeDirInput() {
 
     _wsDirVerifyTimeout = setTimeout(async () => {
         try {
-            const coords = await _geocodificar(val);
+            const locVal = (document.getElementById('ws-loc-input')?.value || '').trim();
+
+            // Capa 1: detección rápida por localidad
+            if (locVal.length >= 3) {
+                const sucPorLoc = _sucursalPorLocalidad(locVal);
+                if (sucPorLoc) {
+                    _wsSucursalDetectada = sucPorLoc;
+                    welcomeMostrarResultado(sucPorLoc, locVal, true);
+                    _wsVerificarContinuar();
+                    return;
+                }
+            }
+
+            // Capa 2: geocodificar con localidad real
+            const coords = await _geocodificar(val, locVal);
             if (!coords) {
-                result.innerHTML = '<div style="color:#f59e0b;font-size:13px;text-align:center;padding:6px 0;"> No encontramos esa dirección en Rosario</div>';
+                result.innerHTML = '<div style="color:#f59e0b;font-size:13px;text-align:center;padding:6px 0;">No encontramos esa dirección — verificá localidad y calle</div>';
+                _wsVerificarContinuar();
                 return;
             }
 
@@ -6100,7 +6663,7 @@ function welcomeDirInput() {
             _wsSucursalDetectada = sucSug;
             _wsGPS = coords;
 
-            welcomeMostrarResultado(sucSug, val, sucCubre !== null);
+            welcomeMostrarResultado(sucSug, [val, locVal].filter(Boolean).join(', '), sucCubre !== null);
         } catch(e) {
             result.innerHTML = '<div style="color:#6b7280;font-size:13px;text-align:center;padding:6px 0;">No se pudo verificar — podés continuar igual</div>';
             _wsSucursalDetectada = null;
@@ -6109,8 +6672,39 @@ function welcomeDirInput() {
     }, 900);
 }
 
+// Re-detectar sucursal cuando cambia la localidad en la pantalla de bienvenida
 window.welcomeLocInput = function() {
     _wsVerificarContinuar();
+    clearTimeout(_wsDirVerifyTimeout);
+    const locVal = (document.getElementById('ws-loc-input')?.value || '').trim();
+    const dirVal = (document.getElementById('ws-dir-input')?.value || '').trim();
+
+    if (locVal.length >= 3) {
+        _wsDirVerifyTimeout = setTimeout(() => {
+            const sucPorLoc = _sucursalPorLocalidad(locVal);
+            if (sucPorLoc) {
+                _wsSucursalDetectada = sucPorLoc;
+                const result = document.getElementById('ws-zona-result');
+                if (result) welcomeMostrarResultado(sucPorLoc, locVal, true);
+                _wsVerificarContinuar();
+            } else if (dirVal.length >= 5) {
+                // Si hay dirección también, geocodificar con la localidad nueva
+                const result = document.getElementById('ws-zona-result');
+                if (result) {
+                    result.style.display = 'block';
+                    result.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:8px 0;">Verificando zona...</div>';
+                }
+                _geocodificar(dirVal, locVal).then(coords => {
+                    if (!coords) return;
+                    const sucCubre = sucursalParaPunto(coords.lat, coords.lng);
+                    const sucSug = sucCubre || sucursalMasCercana(coords.lat, coords.lng);
+                    _wsSucursalDetectada = sucSug;
+                    welcomeMostrarResultado(sucSug, locVal, sucCubre !== null);
+                    _wsVerificarContinuar();
+                });
+            }
+        }, 500);
+    }
 };
 
 function welcomeMostrarResultado(sucId, dir, exacta) {
@@ -6192,9 +6786,9 @@ function welcomeContinuar() {
 }
 </script>
 <script>
-// ════════════════════════════════════════════════════════════
+// 
 //  TOP PRODUCTOS — calcula top 5 desde pedidos_v2 de Firebase
-// ════════════════════════════════════════════════════════════
+// 
 async function cargarTopProductos() {
     if (!window.db) return;
     try {
@@ -6225,9 +6819,9 @@ async function cargarTopProductos() {
     } catch(e) {}
 }
 
-// ════════════════════════════════════════════════════════════
+// 
 //  RESUMEN OPINIONES EN INICIO
-// ════════════════════════════════════════════════════════════
+// 
 async function cargarResumenOpinionesInicio() {
     if (!window.db) return;
     try {
@@ -6243,7 +6837,7 @@ async function cargarResumenOpinionesInicio() {
         const prevEl  = document.getElementById('inicio-op-preview');
         const sec     = document.getElementById('section-resumen-opiniones');
         if (promEl)  promEl.textContent  = avg.toFixed(1);
-        if (starsEl) starsEl.textContent = '★'.repeat(fullS) + '☆'.repeat(5-fullS);
+        if (starsEl) starsEl.textContent = ''.repeat(fullS) + ''.repeat(5-fullS);
         const conCom = docs.find(d => d.comentario && d.comentario.trim());
         if (prevEl && conCom) {
             const n = (conCom.nombre||'Cliente');
@@ -6256,9 +6850,9 @@ async function cargarResumenOpinionesInicio() {
     } catch(e) {}
 }
 
-// ════════════════════════════════════════════════════════════
+// 
 //  BADGE EN TAB PROMOS
-// ════════════════════════════════════════════════════════════
+// 
 function actualizarBadgePromos() {
     const badge = document.getElementById('badge-promos');
     if (!badge) return;
@@ -6268,9 +6862,9 @@ function actualizarBadgePromos() {
     badge.style.display = hay ? 'block' : 'none';
 }
 
-// ════════════════════════════════════════════════════════════
+// 
 //  CART-FLOAT — ocultar con input enfocado dentro del carrito
-// ════════════════════════════════════════════════════════════
+// 
 (function setupCartFloatHide() {
     function apply() {
         const cartView = document.getElementById('cart-view');
@@ -6285,9 +6879,9 @@ function actualizarBadgePromos() {
     else apply();
 })();
 
-// ════════════════════════════════════════════════════════════
+// 
 //  ARRANCAR TODO AL CARGAR
-// ════════════════════════════════════════════════════════════
+// 
 (function initMejoras() {
     function run(t) {
         t = t||0;
@@ -6300,21 +6894,21 @@ function actualizarBadgePromos() {
     else run();
 })();
 </script>
-<!-- ══ Registro del Service Worker (PWA) ════════════════════ -->
+<!--  Registro del Service Worker (PWA)  -->
 <script>
-// ════════════════════════════════════════════════════════════
+// 
 //  PWA INSTALL BANNER — Sistema completo
-// ════════════════════════════════════════════════════════════
+// 
 let _pwaPrompt = null;
 
-// ── Verificar si ya está corriendo como app instalada ──────
+//  Verificar si ya está corriendo como app instalada 
 function _pwaEsInstalada() {
     return window.matchMedia('(display-mode: standalone)').matches
         || window.navigator.standalone === true
         || document.referrer.includes('android-app://');
 }
 
-// ── Mostrar / ocultar banner ───────────────────────────────
+//  Mostrar / ocultar banner 
 function _pwaBannerHeight() {
     const b = document.getElementById('pwa-install-banner');
     return (b && b.classList.contains('visible')) ? b.offsetHeight : 0;
@@ -6333,7 +6927,7 @@ function _pwaOcultarBanner() {
     banner.classList.remove('visible');
 }
 
-// ── Toast de progreso (descargando / completado) ───────────
+//  Toast de progreso (descargando / completado) 
 function _pwaToast(msg, tipo) {
     let el = document.getElementById('pwa-progress-toast');
     if (!el) {
@@ -6359,7 +6953,7 @@ function _pwaToastHide() {
     if (el) { el.style.opacity='0'; el.style.transform='translateX(-50%) translateY(20px)'; }
 }
 
-// ── Evento: el navegador dice que se puede instalar ────────
+//  Evento: el navegador dice que se puede instalar 
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     _pwaPrompt = e;
@@ -6367,7 +6961,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
     setTimeout(_pwaMostrarBanner, 2000);
 });
 
-// ── Evento: se abre el carrito → mostrar banner también ───
+//  Evento: se abre el carrito → mostrar banner también 
 // Parchamos toggleCart para mostrar el banner al abrir el carrito
 (function() {
     function patchToggleCart() {
@@ -6386,7 +6980,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
     else patchToggleCart();
 })();
 
-// ── Se completó la instalación ────────────────────────────
+//  Se completó la instalación 
 window.addEventListener('appinstalled', () => {
     _pwaPrompt = null;
     _pwaOcultarBanner();
@@ -6395,11 +6989,11 @@ window.addEventListener('appinstalled', () => {
     localStorage.setItem('pwa_installed', '1');
 });
 
-// ── Botón "Instalar" del banner ───────────────────────────
+//  Botón "Instalar" del banner 
 window.pwaTriggerInstall = async () => {
     if (!_pwaPrompt) {
         // Sin prompt nativo (iOS / ya instalada / etc), mostrar instrucciones
-        _pwaToast('📲 Tocá el menú del navegador → "Agregar a pantalla de inicio"', 'info');
+        _pwaToast(' Tocá el menú del navegador → "Agregar a pantalla de inicio"', 'info');
         setTimeout(() => _pwaToastHide(), 5000);
         return;
     }
@@ -6414,15 +7008,15 @@ window.pwaTriggerInstall = async () => {
     _pwaPrompt = null;
 };
 
-// ── Botón cerrar (X) del banner ───────────────────────────
+//  Botón cerrar (X) del banner 
 window.pwaDismissBanner = () => {
     _pwaOcultarBanner();
     // No guardamos en localStorage → reaparece en la próxima sesión
 };
 
-// ── Registro del Service Worker ───────────────────────────
-// ── Ocultar splash cuando la página esté lista ────────────
-// ── OPTIMIZACIÓN: Splash se oculta cuando el contenido está REALMENTE listo ──
+//  Registro del Service Worker 
+//  Ocultar splash cuando la página esté lista 
+//  OPTIMIZACIÓN: Splash se oculta cuando el contenido está REALMENTE listo 
 (function() {
     let _splashHidden = false;
 
@@ -6470,8 +7064,8 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// ── Nav-cats: ocultar al bajar, mostrar al subir ──────────
-// ── OPTIMIZACIÓN: nav-cats cacheada fuera del scroll para no consultar DOM cientos de veces/seg ──
+//  Nav-cats: ocultar al bajar, mostrar al subir 
+//  OPTIMIZACIÓN: nav-cats cacheada fuera del scroll para no consultar DOM cientos de veces/seg 
 (function() {
     // Cachear el elemento UNA SOLA VEZ al iniciar
     let navCats = null;
@@ -6506,5 +7100,5 @@ if ('serviceWorker' in navigator) {
     }
 })();
 </script>
-<!-- ════════════════════════════════════════════════════════ -->
+<!--  -->
 </body></html>

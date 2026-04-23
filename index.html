@@ -1359,31 +1359,15 @@ try {
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     padding:28px 24px;
     font-family:'Montserrat','Open Sans',sans-serif;
-"><!-- Logo + marca --><div style="text-align:center;margin-bottom:32px;"><img src="./icon-192x192.png" alt="Marvel Food" loading="lazy" decoding="async" style="width:110px;height:110px;object-fit:contain;margin:0 auto 14px;display:block;filter:drop-shadow(0 0 28px rgba(123,47,190,0.55));"><h1 style="font-size:26px;font-weight:800;color:#fff;margin:0 0 6px;">MARVEL FOOD</h1><p style="color:#9ca3af;font-size:14px;margin:0;">¿A dónde te enviamos el pedido?</p></div><!-- Card principal --><div style="width:100%;max-width:400px;background:#1e1e1e;border:1px solid #333;border-radius:20px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,0.6);"><!-- Botón GPS --><button id="ws-btn-gps" onclick="welcomeUsarGPS()" style="
-            width:100%;padding:16px;border-radius:14px;border:2px solid #10b981;
-            background:rgba(16,185,129,0.08);color:#10b981;
-            font-weight:800;font-size:15px;cursor:pointer;
-            display:flex;align-items:center;justify-content:center;gap:10px;
-            margin-bottom:14px;transition:.2s;
-        "><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span id="ws-gps-txt">Usar mi ubicación actual</span></button><div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;"><div style="flex:1;height:1px;background:#333;"></div><span style="color:#6b7280;font-size:12px;font-weight:700;">O ESCRIBÍ TU DIRECCIÓN</span><div style="flex:1;height:1px;background:#333;"></div></div><!-- Input dirección --><div style="position:relative;margin-bottom:10px;"><input id="ws-dir-input" type="text" placeholder="Ej: Pellegrini 1149"
+"><!-- Titulo sin logo --><div style="text-align:center;margin-bottom:24px;"><p style="color:#f59e0b;font-size:22px;font-weight:900;margin:0 0 6px;letter-spacing:-0.5px;">¿A dónde te enviamos el pedido?</p><p style="color:#9ca3af;font-size:13px;margin:0;">Seleccioná cómo querés recibir tu pedido</p></div><!-- Card principal --><div style="width:100%;max-width:400px;background:#1e1e1e;border:1px solid #333;border-radius:20px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,0.6);"><!-- Selector Retiro / Envío --><div style="display:flex;gap:10px;margin-bottom:20px;" id="ws-tipo-selector"><button id="ws-btn-envio" onclick="wsTipoSeleccionar('envio')" style="flex:1;padding:14px 10px;border-radius:14px;border:2px solid #f59e0b;background:rgba(245,158,11,0.12);color:#f59e0b;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:.2s;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/><rect x="9" y="11" width="14" height="10" rx="1"/><circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/></svg>Envío</button><button id="ws-btn-retiro" onclick="wsTipoSeleccionar('retiro')" style="flex:1;padding:14px 10px;border-radius:14px;border:2px solid #333;background:transparent;color:#9ca3af;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:.2s;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Retiro</button></div><!-- Sección ENVÍO --><div id="ws-seccion-envio"><!-- Botón GPS --><button id="ws-btn-gps" onclick="welcomeUsarGPS()" style="width:100%;padding:14px;border-radius:14px;border:2px solid #10b981;background:rgba(16,185,129,0.08);color:#10b981;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px;transition:.2s;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span id="ws-gps-txt">Usar mi ubicación (ayuda a verificar zona)</span></button><div style="position:relative;margin-bottom:6px;"><input id="ws-dir-input" type="text" placeholder="Calle y número (Ej: Pellegrini 1149)"
                 style="width:100%;padding:14px 14px 14px 42px;border-radius:12px;border:1px solid #444;
                 background:#121212;color:#fff;font-size:14px;font-weight:500;outline:none;box-sizing:border-box;"
                 oninput="welcomeDirInput()"
-            /><svg style="position:absolute;left:13px;top:50%;transform:translateY(-50%);opacity:.5;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div><p style="color:#6b7280;font-size:11px;margin:0 0 14px;text-align:center;">Rosario y alrededores</p><!-- Resultado zona --><div id="ws-zona-result" style="display:none;border-radius:12px;padding:14px;margin-bottom:14px;"></div><!-- Botón continuar --><button id="ws-btn-continuar" onclick="welcomeContinuar()" disabled style="
-            width:100%;padding:16px;border-radius:14px;border:none;
-            background:#444;color:#888;
-            font-weight:800;font-size:15px;cursor:not-allowed;
-            transition:.3s;
-        ">Continuar →</button><!-- Saltar --><button onclick="welcomeSkip()" style="
-            width:100%;padding:10px;background:transparent;border:none;
-            color:#6b7280;font-size:13px;cursor:pointer;margin-top:8px;
-        ">Saltar por ahora</button></div></div><!-- ════ FIN PANTALLA DE BIENVENIDA ════ --><!-- ══ SPLASH DE CARGA ══════════════════════════════════════ -->
-<div id="app-splash">
-    <img src="./icon-192x192.png" alt="Marvel Food" class="splash-logo" loading="eager" decoding="async" fetchpriority="high" onerror="this.style.display='none'">
-    <div class="splash-title">MARVEL <span>FOOD</span></div>
-    <div class="splash-bar-wrap"><div class="splash-bar"></div></div>
-    <div class="splash-sub">Cargando tu menú...</div>
-</div>
+            /><svg style="position:absolute;left:13px;top:50%;transform:translateY(-50%);opacity:.5;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div><input id="ws-loc-input" type="text" placeholder="Localidad (Ej: Rosario, Funes, Galvez...)"
+                style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid #444;background:#121212;color:#fff;font-size:13px;font-weight:500;outline:none;box-sizing:border-box;margin-bottom:6px;"
+                oninput="welcomeLocInput()"
+            /><p style="color:#f59e0b;font-size:11px;font-weight:700;margin:0 0 12px;text-align:center;letter-spacing:.3px;">Ingresá dirección y localidad para continuar</p><!-- Resultado zona --><div id="ws-zona-result" style="display:none;border-radius:12px;padding:14px;margin-bottom:14px;"></div></div><!-- Sección RETIRO --><div id="ws-seccion-retiro" style="display:none;"><p style="color:#d1d5db;font-size:13px;margin:0 0 12px;font-weight:600;">Seleccioná el local de retiro:</p><select id="ws-sucursal-retiro" onchange="wsRetiroSucursalChange()" style="width:100%;padding:14px;border-radius:12px;border:1px solid #444;background:#1a1a1a;color:#fff;font-size:14px;font-weight:600;outline:none;margin-bottom:12px;"><option value="" disabled selected>Elegí tu sucursal...</option><option value="Centro">(Pellegrini 1149) Rosario, Centro</option><option value="Norte">(Rondeau 2430) Rosario, Norte — Baigorria</option><option value="Sur">(San Martin 1808) Rosario Sur / V.G.Gálvez</option><option value="Funes">(RN9 972) Funes — Fisherton</option></select><div id="ws-retiro-info" style="display:none;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:12px;padding:12px;margin-bottom:14px;"><div style="font-weight:800;color:#f59e0b;font-size:13px;" id="ws-retiro-nombre"></div><div style="color:#9ca3af;font-size:12px;margin-top:3px;" id="ws-retiro-addr"></div></div></div><!-- Botón continuar --><button id="ws-btn-continuar" onclick="welcomeContinuar()" disabled style="width:100%;padding:16px;border-radius:14px;border:none;background:#444;color:#888;font-weight:800;font-size:15px;cursor:not-allowed;transition:.3s;">Continuar →</button></div></div><!-- ════ FIN PANTALLA DE BIENVENIDA ════ --><!-- ══ SPLASH DE CARGA ══════════════════════════════════════ -->
+<div id="app-splash" style="display:none;"></div>
 <!-- ════════════════════════════════════════════════════════ -->
 <div class="hero-slider" id="hero-slider"><!-- SLIDE 1: Hulk --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/CsY32Zpc/Hulk-6.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> DESTACADO DEL MENÚ</div><h1 class="hero-title">LA MEJOR<br>DE LA CARTA<br><span>Nuestra Hulk</span></h1><p class="hero-subtitle">Doble carne, cheddar, panceta, cebolla caramelizada y bbq.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Pedir Ahora</button><button class="hero-btn-secondary" onclick="scrollToMenu()">Ver Menú</button></div></div></div><!-- SLIDE 2: Compartir --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/sp9f92tD/DSC04607.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> ESPECIAL</div><h1 class="hero-title">COMPARTIR<br><span>Una Marvel</span></h1><p class="hero-subtitle">¡No hay 1 sin 2! Invitá a alguien y disfrutá juntos.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Aprovechar</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);})()">Ver Promos</button></div></div></div><!-- SLIDE 3: Combo --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/gLZH7hJW/DSC04609.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> COMBOS</div><h1 class="hero-title">ARMÁ TU<br><span>Combo Perfecto</span></h1><p class="hero-subtitle">¿Papas, Nuggets o Aros de cebolla? Elegí lo tuyo.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Pedir Combo</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);})()">Ver Promos</button></div></div></div><!-- SLIDE 4: Promos --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/wNQdcXh6/Dr-Strange-8.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> OFERTAS ACTIVAS</div><h1 class="hero-title">PROMOS<br><span>Para Vos</span></h1><p class="hero-subtitle">Las mejores promos del momento. ¡No te las pierdas!</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);scrollToMenu&&scrollToMenu();})()">Ver Promos</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-perfil]');if(n)switchTab('tab-perfil',n);})()">Cupones</button></div></div></div><!-- SLIDE 5: Smash --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/hRgTKHLs/DSC-4850.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> LÍNEA SMASH</div><h1 class="hero-title">¿NOCHE<br>DE SMASH?<br><span>Línea Flama</span></h1><p class="hero-subtitle">Probá nuestra línea smashed y dejanos tu opinión.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Ver Smash</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('#nav-pedidos');if(n)switchTab('tab-pedidos',n);})()">Mis Pedidos</button></div></div></div><!-- SLIDE 6: Brand --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/4B4ZCwF/DSC-4842.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> GRACIAS POR ELEGIRNOS</div><h1 class="hero-title">MARVEL<br>FOOD<br><span>Más que una Burger</span></h1><p class="hero-subtitle">Dejanos tu opinión y ayudá a otros a elegir mejor.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Pedir Ahora</button><button class="hero-btn-secondary" onclick="abrirModalOpinion()">Dejar Opinión</button></div></div></div><!-- Dots indicadores --><div class="hero-dots" id="hero-dots"></div><div class="scroll-indicator" onclick="scrollToMenu()"><span style="font-size: 12px; font-weight: 700; letter-spacing: 2px; margin-bottom: 5px;">MENÚ</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></div></div><div class="main-content"><div id="tab-inicio" class="tab-page"><div id="store-status-banner"></div><div id="cart-restore-banner"></div><div class="nav-cats" id="cat-list"></div><!-- TOP PRODUCTOS — alimentado por Firebase -->
 <div id="section-top-prods" style="margin-bottom:24px;padding:0 20px;display:none;">
@@ -1489,9 +1473,9 @@ try {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
         Locales
     </div>
-</nav><div class="modal" id="m-prod"><div class="modal-sheet"><div class="m-close" onclick="closeModal()">×</div><div class="m-hero" id="m-img"></div><div class="m-content"><h2 id="m-title" style="font-weight: 800; font-size: 24px; color: var(--white);"></h2><p id="m-desc" style="color: var(--text-light); margin-top: 8px; font-size: 14px; line-height: 1.5;"></p><div id="m-sec-ings"><div class="m-section">QUITAR INGREDIENTES</div><div id="m-list-ings"></div></div><div id="m-sec-extras"><div class="m-section">AGREGAR EXTRAS</div><div id="m-list-extras"></div></div><div class="m-section">OBSERVACIONES</div><textarea id="m-obs" class="ui-input" style="height: 80px; resize: none;" placeholder="Ej: Sin sal en las papas..."></textarea></div><div style="padding: 15px 20px; border-top: 1px solid var(--border); background: var(--surface); position: sticky; bottom: 0; z-index: 10; display: flex; gap: 15px; align-items: center;"><div style="display: flex; align-items: center; border: 1px solid var(--border); border-radius: 12px; height: 50px; background: var(--bg);"><button onclick="updateMQty(-1)" style="width: 40px; height: 100%; border: none; background: transparent; font-size: 20px; color: var(--white); cursor: pointer;">-</button><span id="m-qty" style="width: 30px; text-align: center; font-weight: 800; color: var(--white);">1</span><button onclick="updateMQty(1)" style="width: 40px; height: 100%; border: none; background: transparent; font-size: 20px; color: var(--white); cursor: pointer;">+</button></div><button class="btn-action" id="m-btn-add" onclick="confirmAdd()">Agregar</button></div></div></div><div class="modal" id="m-info"><div class="modal-sheet" style="height: auto; max-height: 85vh;"><div class="m-close" onclick="document.getElementById('m-info').style.display='none'">×</div><div class="m-content"><h2 id="m-info-title" style="font-weight: 800; font-size: 20px; color: var(--primary); margin-bottom: 15px; text-transform: uppercase;"></h2><div id="m-info-body" style="color: var(--white); font-size: 14px; line-height: 1.5;"></div></div></div></div><div id="cart-view"><div onclick="toggleCart()" style="padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--surface); cursor: pointer;"><h2 style="font-weight: 800; font-size: 20px; color: var(--white); margin: 0; pointer-events: none;">TU ORDEN</h2><button style="background: rgba(255,255,255,0.1); border: none; font-size: 16px; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--white); pointer-events: none;">×</button></div><div id="cart-items-list" style="flex: 1; overflow-y: auto; padding: 20px; background: var(--bg);"></div><div style="padding: 20px; background: var(--surface); border-top: 1px solid var(--border); overflow-y:auto; max-height: 50vh;"><div id="checkout-form"><!-- SUCURSAL Y TIPO DE PEDIDO --><div class="m-section" style="margin-top: 0;">SUCURSAL Y TIPO DE PEDIDO</div><div class="address-bar" style="margin: 0 0 12px; border-radius: 10px;"><select id="main-sucursal" onchange="cambiarSucursalPrincipal()" style="padding: 14px 15px; border: none; outline: none; font-weight: 600; font-size: 14px; color: var(--white); background: transparent; cursor: pointer; width: 100%;"><option value="" disabled selected>Seleccioná tu sucursal más cercana...</option><option value="Centro">(Pellegrini 1149) Rosario, Centro - Sur</option><option value="Norte">(Rondeau 2430) Rosario, Zona Norte - Baigorria</option><option value="Sur">(San Martin 1808) Rosario, Zona Sur / VGG</option><option value="Funes">(RN9 972) Funes - Fisherton</option></select></div><div class="type-toggle" style="padding: 0 0 15px;"><button id="btn-tipo-del" class="type-btn active" onclick="setGeneralDelivery(true)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/><rect x="9" y="11" width="14" height="10" rx="1"/><circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/></svg> Delivery
+</nav><div class="modal" id="m-prod"><div class="modal-sheet"><div class="m-close" onclick="closeModal()">×</div><div class="m-hero" id="m-img"></div><div class="m-content"><h2 id="m-title" style="font-weight: 800; font-size: 24px; color: var(--white);"></h2><p id="m-desc" style="color: var(--text-light); margin-top: 8px; font-size: 14px; line-height: 1.5;"></p><div id="m-sec-ings"><div class="m-section">QUITAR INGREDIENTES</div><div id="m-list-ings"></div></div><div id="m-sec-extras"><div class="m-section">AGREGAR EXTRAS</div><div id="m-list-extras"></div></div><div class="m-section">OBSERVACIONES</div><textarea id="m-obs" class="ui-input" style="height: 80px; resize: none;" placeholder="Ej: Sin sal en las papas..."></textarea></div><div style="padding: 15px 20px; border-top: 1px solid var(--border); background: var(--surface); position: sticky; bottom: 0; z-index: 10; display: flex; gap: 15px; align-items: center;"><div style="display: flex; align-items: center; border: 1px solid var(--border); border-radius: 12px; height: 50px; background: var(--bg);"><button onclick="updateMQty(-1)" style="width: 40px; height: 100%; border: none; background: transparent; font-size: 20px; color: var(--white); cursor: pointer;">-</button><span id="m-qty" style="width: 30px; text-align: center; font-weight: 800; color: var(--white);">1</span><button onclick="updateMQty(1)" style="width: 40px; height: 100%; border: none; background: transparent; font-size: 20px; color: var(--white); cursor: pointer;">+</button></div><button class="btn-action" id="m-btn-add" onclick="confirmAdd()">Agregar</button></div></div></div><div class="modal" id="m-info"><div class="modal-sheet" style="height: auto; max-height: 85vh;"><div class="m-close" onclick="document.getElementById('m-info').style.display='none'">×</div><div class="m-content"><h2 id="m-info-title" style="font-weight: 800; font-size: 20px; color: var(--primary); margin-bottom: 15px; text-transform: uppercase;"></h2><div id="m-info-body" style="color: var(--white); font-size: 14px; line-height: 1.5;"></div></div></div></div><div id="cart-view"><div onclick="toggleCart()" style="padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--surface); cursor: pointer;"><h2 style="font-weight: 800; font-size: 20px; color: var(--white); margin: 0; pointer-events: none;">TU ORDEN</h2><button style="background: rgba(255,255,255,0.1); border: none; font-size: 16px; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--white); pointer-events: none;">×</button></div><div id="cart-items-list" style="flex: 1; overflow-y: auto; padding: 20px; background: var(--bg);"></div><div style="padding: 20px; background: var(--surface); border-top: 1px solid var(--border); overflow-y:auto; max-height: 50vh;"><div id="cart-address-summary" style="display:none;"></div><div id="checkout-form"><!-- SUCURSAL Y TIPO DE PEDIDO --><div class="m-section" style="margin-top: 0;">SUCURSAL Y TIPO DE PEDIDO</div><div class="address-bar" style="margin: 0 0 12px; border-radius: 10px;"><select id="main-sucursal" onchange="cambiarSucursalPrincipal()" style="padding: 14px 15px; border: none; outline: none; font-weight: 600; font-size: 14px; color: var(--white); background: transparent; cursor: pointer; width: 100%;"><option value="" disabled selected>Seleccioná tu sucursal más cercana...</option><option value="Centro">(Pellegrini 1149) Rosario, Centro - Sur</option><option value="Norte">(Rondeau 2430) Rosario, Zona Norte - Baigorria</option><option value="Sur">(San Martin 1808) Rosario, Zona Sur / VGG</option><option value="Funes">(RN9 972) Funes - Fisherton</option></select></div><div class="type-toggle" style="padding: 0 0 15px;"><button id="btn-tipo-del" class="type-btn active" onclick="setGeneralDelivery(true)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/><rect x="9" y="11" width="14" height="10" rx="1"/><circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/></svg> Delivery
                     </button><button id="btn-tipo-ret" class="type-btn" onclick="setGeneralDelivery(false)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> TakeAway
-                    </button></div><div class="m-section" style="margin-top: 0;">DATOS DEL CLIENTE</div><input type="text" id="c-nombre" class="ui-input" placeholder="Nombre completo"><input type="number" id="c-tel" class="ui-input" placeholder="WhatsApp (Ej: 3416107498)"><div id="box-envio-checkout"><div class="m-section">DATOS DE ENVÍO</div><button type="button" class="btn-gps" onclick="obtenerUbicacion()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg><span id="loc-status">Enviar mi ubicación exacta</span></button><input type="text" id="c-loc" class="ui-input" style="margin-bottom:10px;" placeholder="Barrio / Localidad (Ej: Rosario Norte, Funes...)"><input type="text" id="c-dir" class="ui-input" placeholder="Calle y Altura (Obligatorio)"><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"><input type="text" id="c-piso" class="ui-input" placeholder="Piso (Opc.)"><input type="text" id="c-depto" class="ui-input" placeholder="Depto (Opc.)"></div></div><div class="m-section">MÉTODO DE PAGO</div><select id="p-metodo" class="ui-input" onchange="toggleVuelto()"><option value="Efectivo">Efectivo</option><option value="Transferencia">Transferencia bancaria</option><option value="Mercado Pago">Mercado Pago</option></select><div id="vuelto-box"><input type="number" id="p-vuelto" class="ui-input" placeholder="¿Con cuánto abonás? (Ej: 20000)"></div><div style="border-top: 1px dashed var(--border); margin: 20px 0; padding-top: 15px;"><div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: var(--text-light);"><span>Subtotal</span><span id="res-sub">$ 0</span></div><div style="display: flex; justify-content: space-between; margin-bottom: 15px; color: var(--text-light);"><span id="txt-envio-tipo">Envío</span><span id="res-envio">$ 0</span></div><div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>Horario estimado:</span><strong id="res-horario" style="color: var(--primary);">--:--</strong></div><div style="display: flex; justify-content: space-between; font-size: 22px; font-weight: 800; color: var(--primary);"><span>Total</span><span id="res-total">$ 0</span></div></div><div id="box-cod-descuento" style="display:none;">
+                    </button></div><div class="m-section" style="margin-top: 0;">DATOS DEL CLIENTE</div><input type="text" id="c-nombre" class="ui-input" placeholder="Nombre completo"><input type="number" id="c-tel" class="ui-input" placeholder="WhatsApp (Ej: 3416107498)"><div id="box-envio-checkout"><div class="m-section">DATOS DE ENVÍO</div><button type="button" class="btn-gps" onclick="obtenerUbicacion()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg><span id="loc-status">Enviar mi ubicación exacta</span></button><input type="text" id="c-loc" class="ui-input" style="margin-bottom:10px;" placeholder="Localidad: Rosario, Funes, Gálvez..." oninput="renderCartItems()"><input type="text" id="c-dir" class="ui-input" placeholder="Calle y Número (Ej: Pellegrini 1149)" oninput="renderCartItems()"><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"><input type="text" id="c-piso" class="ui-input" placeholder="Piso (Opc.)"><input type="text" id="c-depto" class="ui-input" placeholder="Depto (Opc.)"></div></div><div class="m-section">MÉTODO DE PAGO</div><select id="p-metodo" class="ui-input" onchange="toggleVuelto()"><option value="Efectivo">Efectivo</option><option value="Transferencia">Transferencia bancaria</option><option value="Mercado Pago">Mercado Pago</option></select><div id="vuelto-box"><input type="number" id="p-vuelto" class="ui-input" placeholder="¿Con cuánto abonás? (Ej: 20000)"></div><div style="border-top: 1px dashed var(--border); margin: 20px 0; padding-top: 15px;"><div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: var(--text-light);"><span>Subtotal</span><span id="res-sub">$ 0</span></div><div style="display: flex; justify-content: space-between; margin-bottom: 15px; color: var(--text-light);"><span id="txt-envio-tipo">Envío</span><span id="res-envio">$ 0</span></div><div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>Horario estimado:</span><strong id="res-horario" style="color: var(--primary);">--:--</strong></div><div style="display: flex; justify-content: space-between; font-size: 22px; font-weight: 800; color: var(--primary);"><span>Total</span><span id="res-total">$ 0</span></div></div><div id="box-cod-descuento" style="display:none;">
 <div class="m-section" style="margin-top:0;">CÓDIGO DE DESCUENTO</div>
 <div style="display:flex;gap:8px;margin-bottom:15px;">
   <input type="text" id="cod-descuento-inp" class="ui-input" placeholder="Ej: EFECTV10 o código interno" style="margin-bottom:0;text-transform:uppercase;flex:1;" oninput="this.value=this.value.toUpperCase()">
@@ -2412,7 +2396,41 @@ function renderCartItems() {
         }).join('');
     }
 
+    // Mostrar resumen de dirección si hay datos
     const sucId = document.getElementById('main-sucursal').value;
+    const dirVal = (document.getElementById('c-dir')?.value || '').trim();
+    const locVal = (document.getElementById('c-loc')?.value || '').trim();
+    const resumenDirBox = document.getElementById('cart-address-summary');
+    if (resumenDirBox) {
+        if (isDelivery && (dirVal || locVal) && sucId) {
+            const sucInfo = typeof ZONA_INFO_UI !== 'undefined' && ZONA_INFO_UI[sucId];
+            resumenDirBox.innerHTML = `
+                <div style="background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.3);border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:flex-start;gap:10px;">
+                    <span style="font-size:20px;flex-shrink:0;margin-top:2px;">📍</span>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-size:10px;font-weight:800;color:#f59e0b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">DIRECCIÓN DE ENVÍO</div>
+                        <div style="font-size:13px;font-weight:700;color:#fff;">${dirVal || '—'}</div>
+                        <div style="font-size:12px;color:#9ca3af;margin-top:2px;">${locVal || 'Sin localidad'} · Sucursal: ${sucInfo ? sucInfo.label : sucId}</div>
+                    </div>
+                </div>`;
+            resumenDirBox.style.display = 'block';
+        } else if (!isDelivery && sucId) {
+            const sucInfo = typeof ZONA_INFO_UI !== 'undefined' && ZONA_INFO_UI[sucId];
+            resumenDirBox.innerHTML = `
+                <div style="background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.3);border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:flex-start;gap:10px;">
+                    <span style="font-size:20px;flex-shrink:0;margin-top:2px;">🏪</span>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-size:10px;font-weight:800;color:#10b981;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">RETIRÁS EN LOCAL</div>
+                        <div style="font-size:13px;font-weight:700;color:#fff;">${sucInfo ? sucInfo.label : sucId}</div>
+                        <div style="font-size:12px;color:#9ca3af;margin-top:2px;">${sucInfo ? sucInfo.direccion : ''}</div>
+                    </div>
+                </div>`;
+            resumenDirBox.style.display = 'block';
+        } else {
+            resumenDirBox.style.display = 'none';
+        }
+    }
+
     // El costo de envío lo confirma el local: se muestra "A confirmar" en el resumen
     let costoEnvio = 0;
 
@@ -2500,7 +2518,8 @@ window.procesarPedido = async () => {
 
     const loc = (document.getElementById('c-loc')?.value || '').trim();
     const dir = document.getElementById('c-dir').value;
-    if(isDelivery && !dir) return alert("Completá la dirección para el envío.");
+    if(isDelivery && !dir) return alert("Completá la dirección (calle y número) para el envío.");
+    if(isDelivery && !loc) return alert("Completá la localidad (Rosario, Funes, Gálvez...) para el envío.");
 
     const pago = document.getElementById('p-metodo').value;
     const vuelto = parseFloat(document.getElementById('p-vuelto').value) || 0;
@@ -2623,7 +2642,8 @@ window.procesarPedido = async () => {
 
         if (isDelivery) {
             t += `*Dirección:* ${dir}${ordenDatos.piso ? ' ' + ordenDatos.piso.trim() : ''}%0A`;
-            t += `*Localidad:* ${loc}%0A`;
+            t += `*Localidad:* ${loc || 'Rosario'}%0A`;
+            t += `*Sucursal asignada:* ${ordenDatos.sucursal}%0A`;
             if (ordenDatos.gps !== 'No provisto') t += `*Ubicación GPS:* http://maps.google.com/maps?q=${ordenDatos.gps}%0A`;
         }
 
@@ -4509,19 +4529,20 @@ function admImprimir(id) {
 
 function admSwitchTab(tab, btn) {
     if (tab === 'integracion') { _integRenderTab(); }
-    ['pedidos','dashboard','menu','resenas','promos','cupones'].forEach(t => {
+    ['pedidos','dashboard','menu','resenas','promos','cupones','integracion','codigos'].forEach(t => {
         const el = document.getElementById('adm-tab-' + t);
         if (el) el.style.display = t === tab ? 'block' : 'none';
     });
     document.querySelectorAll('.adm-tab').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
     // Cargar datos de cada tab
-    if (tab === 'dashboard') setTimeout(admCargarDashboard, 50);
-    if (tab === 'menu')      setTimeout(admCargarMenuGestion, 50);
-    if (tab === 'resenas')   setTimeout(admCargarResenas, 50);
-    if (tab === 'promos')    setTimeout(admCargarPromos, 50);
-    if (tab === 'cupones')   setTimeout(admCargarCupones, 50);
-    if (tab === 'codigos')   setTimeout(admCargarCodigos, 300);
+    if (tab === 'dashboard')   setTimeout(admCargarDashboard, 50);
+    if (tab === 'menu')        setTimeout(admCargarMenuGestion, 50);
+    if (tab === 'resenas')     setTimeout(admCargarResenas, 50);
+    if (tab === 'promos')      setTimeout(admCargarPromos, 50);
+    if (tab === 'cupones')     setTimeout(admCargarCupones, 50);
+    if (tab === 'codigos')     setTimeout(admCargarCodigos, 300);
+    if (tab === 'integracion') setTimeout(_integRenderTab, 50);
 }
 
 // ─── GESTIÓN DE PROMOS (CRUD COMPLETO) ────────────────
@@ -5906,6 +5927,9 @@ function actualizarResumenOp(docs) {
 let _wsGPS = null;            // { lat, lng } si se obtuvo GPS
 let _wsSucursalDetectada = null;
 let _wsDirTimeout = null;
+let _wsTipo = 'envio';        // 'envio' | 'retiro'
+let _wsLocOk = false;
+let _wsDirOk = false;
 
 // Ver si ya se visitó antes (no mostrar de nuevo en la misma sesión)
 (function checkWelcome() {
@@ -5921,6 +5945,81 @@ function welcomeSkip() {
     ws.style.opacity = '0';
     ws.style.transition = 'opacity .35s';
     setTimeout(() => { ws.style.display = 'none'; }, 360);
+}
+
+// ── Selector Retiro / Envío ──────────────────────────────
+window.wsTipoSeleccionar = function(tipo) {
+    _wsTipo = tipo;
+    const btnEnvio  = document.getElementById('ws-btn-envio');
+    const btnRetiro = document.getElementById('ws-btn-retiro');
+    const secEnvio  = document.getElementById('ws-seccion-envio');
+    const secRetiro = document.getElementById('ws-seccion-retiro');
+
+    if (tipo === 'envio') {
+        btnEnvio.style.borderColor  = '#f59e0b';
+        btnEnvio.style.background   = 'rgba(245,158,11,0.12)';
+        btnEnvio.style.color        = '#f59e0b';
+        btnRetiro.style.borderColor = '#333';
+        btnRetiro.style.background  = 'transparent';
+        btnRetiro.style.color       = '#9ca3af';
+        secEnvio.style.display  = 'block';
+        secRetiro.style.display = 'none';
+    } else {
+        btnRetiro.style.borderColor = '#f59e0b';
+        btnRetiro.style.background  = 'rgba(245,158,11,0.12)';
+        btnRetiro.style.color       = '#f59e0b';
+        btnEnvio.style.borderColor  = '#333';
+        btnEnvio.style.background   = 'transparent';
+        btnEnvio.style.color        = '#9ca3af';
+        secEnvio.style.display  = 'none';
+        secRetiro.style.display = 'block';
+    }
+    _wsVerificarContinuar();
+};
+
+window.wsRetiroSucursalChange = function() {
+    const sel  = document.getElementById('ws-sucursal-retiro');
+    const info = document.getElementById('ws-retiro-info');
+    const nom  = document.getElementById('ws-retiro-nombre');
+    const addr = document.getElementById('ws-retiro-addr');
+    const sucId = sel.value;
+    if (sucId && ZONA_INFO_UI[sucId]) {
+        const z = ZONA_INFO_UI[sucId];
+        nom.textContent  = z.label;
+        addr.textContent = z.direccion;
+        info.style.display = 'block';
+        _wsSucursalDetectada = sucId;
+    } else {
+        info.style.display = 'none';
+        _wsSucursalDetectada = null;
+    }
+    _wsVerificarContinuar();
+};
+
+function _wsVerificarContinuar() {
+    const btn = document.getElementById('ws-btn-continuar');
+    let ok = false;
+
+    if (_wsTipo === 'retiro') {
+        ok = !!_wsSucursalDetectada;
+    } else {
+        // envio: necesita dirección Y localidad
+        const dir = (document.getElementById('ws-dir-input')?.value || '').trim();
+        const loc = (document.getElementById('ws-loc-input')?.value || '').trim();
+        ok = dir.length >= 5 && loc.length >= 3;
+    }
+
+    if (ok) {
+        btn.disabled = false;
+        btn.style.background = 'var(--primary, #f59e0b)';
+        btn.style.color = '#000';
+        btn.style.cursor = 'pointer';
+    } else {
+        btn.disabled = true;
+        btn.style.background = '#444';
+        btn.style.color = '#888';
+        btn.style.cursor = 'not-allowed';
+    }
 }
 
 function welcomeUsarGPS() {
@@ -5946,15 +6045,17 @@ function welcomeUsarGPS() {
             // Guardar coords en coordenadasGPS global para el checkout
             window.coordenadasGPS = lat + ',' + lng;
 
-            txt.textContent = 'Ubicación obtenida';
+            txt.textContent = 'Ubicación obtenida — ahora escribí tu dirección';
             btn.style.borderColor = '#10b981';
             btn.style.background = 'rgba(16,185,129,0.2)';
+            btn.disabled = false;
 
             const sucCubre = sucursalParaPunto(lat, lng);
             const sucSug = sucCubre || sucursalMasCercana(lat, lng);
             _wsSucursalDetectada = sucSug;
 
-            welcomeMostrarResultado(sucSug, null, sucCubre !== null);
+            // No habilitamos continuar solo por GPS — usuario DEBE escribir dirección
+            _wsVerificarContinuar();
         },
         () => {
             txt.textContent = 'No se pudo obtener la ubicación';
@@ -5971,22 +6072,18 @@ function welcomeDirInput() {
     clearTimeout(_wsDirVerifyTimeout);
     const val = document.getElementById('ws-dir-input').value.trim();
     const result = document.getElementById('ws-zona-result');
-    const btn = document.getElementById('ws-btn-continuar');
 
-    // Limpiar resultado si borra
+    _wsVerificarContinuar();
+
     if (val.length < 5) {
         result.style.display = 'none';
-        btn.disabled = true;
-        btn.style.background = '#444';
-        btn.style.color = '#888';
-        btn.style.cursor = 'not-allowed';
-        _wsSucursalDetectada = null;
+        _wsSucursalDetectada = _wsGPS ? _wsSucursalDetectada : null;
         return;
     }
 
     // Mostrar spinner
     result.style.display = 'block';
-    result.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:8px 0;">Buscando zona...</div>';
+    result.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:8px 0;">Verificando zona...</div>';
     result.style.background = 'rgba(255,255,255,0.04)';
     result.style.border = '1px solid #333';
 
@@ -6007,55 +6104,67 @@ function welcomeDirInput() {
         } catch(e) {
             result.innerHTML = '<div style="color:#6b7280;font-size:13px;text-align:center;padding:6px 0;">No se pudo verificar — podés continuar igual</div>';
             _wsSucursalDetectada = null;
-            // Habilitar continuar de todas formas
-            btn.disabled = false;
-            btn.style.background = 'var(--primary)';
-            btn.style.color = '#000';
-            btn.style.cursor = 'pointer';
         }
+        _wsVerificarContinuar();
     }, 900);
 }
 
+window.welcomeLocInput = function() {
+    _wsVerificarContinuar();
+};
+
 function welcomeMostrarResultado(sucId, dir, exacta) {
     const result = document.getElementById('ws-zona-result');
-    const btn = document.getElementById('ws-btn-continuar');
     const info = ZONA_INFO_UI[sucId];
 
     if (exacta) {
         result.style.background = 'rgba(16,185,129,0.08)';
         result.style.border = '1px solid rgba(16,185,129,0.35)';
         result.innerHTML = `
-            <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:24px;color:#10b981;font-weight:800;">OK</span><div><div style="font-weight:800;color:#10b981;font-size:14px;">¡Llegamos a tu zona!</div><div style="color:#d1d5db;font-size:12px;margin-top:2px;">Sucursal asignada: <strong style="color:#fff;">${info.label}</strong></div><div style="color:#9ca3af;font-size:11px;">${info.direccion}</div></div></div>`;
+            <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:22px;color:#10b981;font-weight:800;">OK</span><div><div style="font-weight:800;color:#10b981;font-size:13px;">¡Llegamos a tu zona!</div><div style="color:#d1d5db;font-size:12px;margin-top:2px;">Sucursal: <strong style="color:#fff;">${info.label}</strong></div><div style="color:#9ca3af;font-size:11px;">${info.direccion}</div></div></div>`;
     } else {
         result.style.background = 'rgba(245,158,11,0.06)';
         result.style.border = '1px solid rgba(245,158,11,0.3)';
         result.innerHTML = `
-            <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:24px;"></span><div><div style="font-weight:800;color:#f59e0b;font-size:14px;">Sucursal más cercana</div><div style="color:#d1d5db;font-size:12px;margin-top:2px;"><strong style="color:#fff;">${info.label}</strong></div><div style="color:#9ca3af;font-size:11px;">${info.direccion}</div></div></div>`;
+            <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:22px;"></span><div><div style="font-weight:800;color:#f59e0b;font-size:13px;">Sucursal más cercana</div><div style="color:#d1d5db;font-size:12px;margin-top:2px;"><strong style="color:#fff;">${info.label}</strong></div><div style="color:#9ca3af;font-size:11px;">${info.direccion}</div></div></div>`;
     }
 
     result.style.display = 'block';
-    btn.disabled = false;
-    btn.style.background = 'var(--primary)';
-    btn.style.color = '#000';
-    btn.style.cursor = 'pointer';
 }
 
 function welcomeContinuar() {
-    // Si detectamos sucursal, pre-seleccionarla
-    if (_wsSucursalDetectada) {
-        const sel = document.getElementById('main-sucursal');
-        if (sel) {
-            sel.value = _wsSucursalDetectada;
-            if (typeof window.cambiarSucursalPrincipal === 'function') {
-                window.cambiarSucursalPrincipal();
+    const tipoEntrega = _wsTipo; // 'envio' | 'retiro'
+
+    // Guardar tipo de entrega para pre-seleccionar en el carrito
+    if (typeof window.setGeneralDelivery === 'function') {
+        window.setGeneralDelivery(tipoEntrega === 'envio');
+    }
+
+    if (_wsTipo === 'retiro') {
+        // Retiro: pre-seleccionar sucursal
+        if (_wsSucursalDetectada) {
+            const sel = document.getElementById('main-sucursal');
+            if (sel) {
+                sel.value = _wsSucursalDetectada;
+                if (typeof window.cambiarSucursalPrincipal === 'function') {
+                    window.cambiarSucursalPrincipal();
+                }
             }
         }
-        // Si escribió una dirección, pre-cargarla en el checkout
+    } else {
+        // Envío: pre-cargar dirección Y localidad en el checkout
         const wsDir = document.getElementById('ws-dir-input').value.trim();
+        const wsLoc = document.getElementById('ws-loc-input').value.trim();
+
         if (wsDir) {
             const cDir = document.getElementById('c-dir');
             if (cDir) cDir.value = wsDir;
         }
+        if (wsLoc) {
+            const cLoc = document.getElementById('c-loc');
+            if (cLoc) cLoc.value = wsLoc;
+        }
+
         // GPS al checkout
         if (_wsGPS) {
             window.coordenadasGPS = _wsGPS.lat + ',' + _wsGPS.lng;
@@ -6065,6 +6174,17 @@ function welcomeContinuar() {
                 locStat.parentElement.style.background = 'rgba(16,185,129,0.2)';
                 locStat.parentElement.style.border = '1px solid #10b981';
                 locStat.style.color = '#10b981';
+            }
+        }
+
+        // Si detectamos sucursal, pre-seleccionarla
+        if (_wsSucursalDetectada) {
+            const sel = document.getElementById('main-sucursal');
+            if (sel) {
+                sel.value = _wsSucursalDetectada;
+                if (typeof window.cambiarSucursalPrincipal === 'function') {
+                    window.cambiarSucursalPrincipal();
+                }
             }
         }
     }

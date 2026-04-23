@@ -1490,15 +1490,15 @@ let codigoInternoAplicado = null; // { nombre, tipo:'interno'|'promo', descuento
 // 
 const CODIGOS_INTERNOS_BASE = {
     // Uso interno personal — 100% descuento en productos (envío se mantiene)
-    "LUCAS-LEYRIA":  { nombre: "Lucas Leyria",   tipo: "interno", descPct: 100, activo: true },
-    "LUCIO-LEYRIA":  { nombre: "Lucio Leyria",   tipo: "interno", descPct: 100, activo: true },
-    "ROMAN-ANFFOSI": { nombre: "Roman Anffosi",  tipo: "interno", descPct: 100, activo: true },
-    "LUCAS-BERTON":  { nombre: "Lucas Berton",   tipo: "interno", descPct: 100, activo: true },
-    "SEIDY-LOPEZ":   { nombre: "Seidy Lopez",    tipo: "interno", descPct: 100, activo: true },
+    "LUCAS-LEYRIA":  { nombre: "Lucas Leyria",   tipo: "interno", descPct: 100, activo: false },
+    "LUCIO-LEYRIA":  { nombre: "Lucio Leyria",   tipo: "interno", descPct: 100, activo: false },
+    "ROMAN-ANFFOSI": { nombre: "Roman Anffosi",  tipo: "interno", descPct: 100, activo: false },
+    "LUCAS-BERTON":  { nombre: "Lucas Berton",   tipo: "interno", descPct: 100, activo: false },
+    "SEIDY-LOPEZ":   { nombre: "Seidy Lopez",    tipo: "interno", descPct: 100, activo: false },
 };
 const CODIGOS_PROMO_BASE = {
     // Codigos promocionales configurables
-    "EFECTV10": { titulo: "10% OFF en Efectivo", tipo: "promo_pct", descPct: 10, soloEfectivo: true, activo: true },
+    "EFECTV10": { titulo: "10% OFF en Efectivo", tipo: "promo_pct", descPct: 10, soloEfectivo: true, activo: false },
 };
 // Se mergeará con overrides de Firebase al cargar
 window._codDescOverrides = {};

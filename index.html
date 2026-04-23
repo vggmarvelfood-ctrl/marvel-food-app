@@ -1143,7 +1143,7 @@ try {
         }
         .star-btn {
             font-size: 40px;
-            color: rgba(245,158,11,0.3);
+            color: rgba(245,158,11,0.55);
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             user-select: none;
@@ -1296,6 +1296,7 @@ try {
 .u-aic{align-items:center}.u-jcsb{justify-content:space-between}.u-jcc{justify-content:center}
 .u-sh0{flex-shrink:0}.u-g8{gap:8px}.u-g10{gap:10px}.u-g12{gap:12px}
 .u-brd{border:1px solid var(--border)}.u-surf{background:var(--surface)}
+@keyframes peoSpin { to { transform: rotate(360deg); } }
 </style></head><body>
 <div id="offline-banner"> Sin conexión — algunos datos pueden estar desactualizados</div>
 <script>
@@ -2624,7 +2625,16 @@ window.procesarPedido = async () => {
 
         // Limpiar cupón y carrito persistente
         cuponAplicado = null;
+        carrito = [];
         localStorage.removeItem('mf_carrito');
+        updateCartUI();
+        renderCartItems();
+        // Cerrar el carrito
+        const _cartView = document.getElementById('cart-view');
+        if (_cartView) _cartView.classList.remove('open');
+        // Ocultar banner de carrito guardado
+        const _restoreBanner = document.getElementById('cart-restore-banner');
+        if (_restoreBanner) _restoreBanner.style.display = 'none';
 
         // Iniciar seguimiento
         iniciarSeguimiento(pedidoId);
@@ -2685,7 +2695,14 @@ window.procesarPedido = async () => {
         t += `%0A*TOTAL FINAL: $${total.toLocaleString('es-AR')}*%0A`;
 
         document.body.style.cursor = 'default';
-        window.location.href = `https://wa.me/${SUC_MAP[sucId].wsp}?text=${t}`;
+
+        // ── MERCADO PAGO ──────────────────────────────────────────
+        if (pago === 'Mercado Pago') {
+            mostrarSucesoPedido('mercadopago', `https://wa.me/${SUC_MAP[sucId].wsp}?text=${t}`, total);
+        } else {
+            // Efectivo / Transferencia → pantalla verde → WhatsApp
+            mostrarSucesoPedido('whatsapp', `https://wa.me/${SUC_MAP[sucId].wsp}?text=${t}`, total);
+        }
 
     } catch (e) {
         document.body.style.cursor = 'default';
@@ -2693,6 +2710,76 @@ window.procesarPedido = async () => {
         alert("Error al guardar el pedido: " + e.message);
     }
 };
+
+// ────────────────────────────────────────────────────────────────────────────
+//  PANTALLA DE ÉXITO — se muestra al finalizar un pedido
+// ────────────────────────────────────────────────────────────────────────────
+async function mostrarSucesoPedido(tipo, waUrl, total) {
+    let overlay = document.getElementById('pedido-exito-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'pedido-exito-overlay';
+        overlay.innerHTML = `
+            <div id="peo-card">
+                <div id="peo-check">✓</div>
+                <div id="peo-title">¡Pedido enviado al local!</div>
+                <div id="peo-sub">Gracias por preferirnos</div>
+                <div id="peo-msg">Tu pedido está en marcha 🚀</div>
+                <div id="peo-redirect-msg"></div>
+                <div id="peo-spinner"></div>
+            </div>`;
+        document.body.appendChild(overlay);
+    }
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99998;background:linear-gradient(135deg,#064e3b 0%,#065f46 50%,#047857 100%);display:flex;align-items:center;justify-content:center;padding:24px;';
+    const card = document.getElementById('peo-card');
+    card.style.cssText = 'text-align:center;max-width:380px;width:100%;';
+    document.getElementById('peo-check').style.cssText = 'font-size:80px;display:block;margin:0 auto 16px;color:#bbf7d0;';
+    document.getElementById('peo-title').style.cssText = 'font-size:26px;font-weight:800;color:#fff;margin-bottom:8px;';
+    document.getElementById('peo-sub').style.cssText = 'font-size:16px;color:rgba(255,255,255,.85);margin-bottom:6px;';
+    document.getElementById('peo-msg').style.cssText = 'font-size:17px;font-weight:700;color:#d1fae5;margin-bottom:24px;';
+    const redirMsg = document.getElementById('peo-redirect-msg');
+    const spinner  = document.getElementById('peo-spinner');
+    redirMsg.style.cssText = 'color:rgba(255,255,255,.8);font-size:13px;margin-bottom:14px;';
+    spinner.style.cssText = 'width:26px;height:26px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:peoSpin 1s linear infinite;margin:0 auto;';
+
+    if (tipo === 'mercadopago') {
+        redirMsg.innerHTML = '⏳ Generando link de Mercado Pago...';
+        try {
+            const mpSnap = await window.db.collection('config_menu').doc('mercadopago').get();
+            if (!mpSnap.exists || !mpSnap.data()?.accessToken) throw new Error('no_token');
+            const mpToken = mpSnap.data().accessToken;
+            const prefRes = await fetch('https://api.mercadopago.com/checkout/preferences', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + mpToken },
+                body: JSON.stringify({
+                    items: [{ title: 'Pedido Marvel Food', quantity: 1, unit_price: total, currency_id: 'ARS' }],
+                    back_urls: { success: waUrl, failure: waUrl, pending: waUrl },
+                    auto_return: 'approved',
+                    statement_descriptor: 'Marvel Food'
+                })
+            });
+            if (!prefRes.ok) throw new Error('mp_api_' + prefRes.status);
+            const prefData = await prefRes.json();
+            redirMsg.innerHTML = '✅ Link generado · Abriendo Mercado Pago...';
+            spinner.style.display = 'none';
+            setTimeout(() => _peoCerrarYRedirigir(overlay, prefData.init_point), 1800);
+        } catch(err) {
+            console.warn('[MP]', err.message);
+            redirMsg.innerHTML = '⚠️ No se pudo generar el link MP.<br><span style="font-size:12px;">Pedido guardado. Redirigiendo al WhatsApp...</span>';
+            spinner.style.display = 'none';
+            setTimeout(() => _peoCerrarYRedirigir(overlay, waUrl), 2500);
+        }
+    } else {
+        redirMsg.innerHTML = '📲 Abriendo WhatsApp...';
+        setTimeout(() => _peoCerrarYRedirigir(overlay, waUrl), 2200);
+    }
+}
+
+function _peoCerrarYRedirigir(overlay, url) {
+    overlay.style.transition = 'opacity .3s';
+    overlay.style.opacity = '0';
+    setTimeout(() => { overlay.style.display = 'none'; window.location.href = url; }, 300);
+}
 
         window.switchTab = (tabId, element) => {
             document.querySelectorAll('.tab-page').forEach(page => page.classList.add('hidden'));
@@ -3501,7 +3588,7 @@ window.setStars = (v) => {
         const activo = i < v;
         s.classList.toggle('active', activo);
         // Forzar color inline como fallback si el CSS no aplica
-        s.style.color = activo ? '#f59e0b' : 'rgba(245,158,11,0.3)';
+        s.style.color = activo ? '#f59e0b' : 'rgba(245,158,11,0.55)';
         s.style.transform = activo ? 'scale(1.1)' : 'scale(1)';
     });
 };
@@ -4894,7 +4981,8 @@ function admImprimir(id) {
 
 function admSwitchTab(tab, btn) {
     if (tab === 'integracion') { _integRenderTab(); }
-    ['pedidos','dashboard','menu','resenas','promos','cupones','integracion','codigos'].forEach(t => {
+    if (tab === 'mercadopago') { admCargarMercadoPago(); }
+    ['pedidos','dashboard','menu','resenas','promos','cupones','integracion','codigos','mercadopago'].forEach(t => {
         const el = document.getElementById('adm-tab-' + t);
         if (el) el.style.display = t === tab ? 'block' : 'none';
     });
@@ -4909,6 +4997,91 @@ function admSwitchTab(tab, btn) {
     if (tab === 'codigos')     setTimeout(admCargarCodigos, 300);
     if (tab === 'integracion') setTimeout(_integRenderTab, 50);
 }
+
+// ────────────────────────────────────────────────────────────────────────────
+//  ADMIN — MERCADO PAGO
+// ────────────────────────────────────────────────────────────────────────────
+async function admCargarMercadoPago() {
+    const inp = document.getElementById('adm-mp-token-inp');
+    const dot = document.getElementById('adm-mp-status-dot');
+    const txt = document.getElementById('adm-mp-status-txt');
+    const sub = document.getElementById('adm-mp-status-sub');
+    if (!inp) return;
+    try {
+        const snap = await window.db.collection('config_menu').doc('mercadopago').get();
+        if (snap.exists && snap.data()?.accessToken) {
+            const tk = snap.data().accessToken;
+            // Mostrar solo los últimos 6 chars del token
+            inp.value = '•'.repeat(20) + tk.slice(-6);
+            inp.dataset.saved = '1';
+            if (dot) { dot.style.background = '#10b981'; }
+            if (txt) txt.textContent = 'Mercado Pago activo ✓';
+            if (sub) sub.textContent = 'Los pagos online están habilitados para los clientes';
+        } else {
+            if (dot) dot.style.background = '#6b7280';
+            if (txt) txt.textContent = 'No configurado';
+            if (sub) sub.textContent = 'Ingresá tu Access Token para activar los pagos online';
+        }
+    } catch(e) { console.warn('[MP Admin]', e); }
+}
+
+window.admMpToggleToken = function() {
+    const inp = document.getElementById('adm-mp-token-inp');
+    const btn = document.getElementById('adm-mp-eye-btn');
+    if (!inp) return;
+    if (inp.type === 'password') {
+        inp.type = 'text';
+        if (inp.dataset.saved === '1') { inp.value = ''; inp.dataset.saved = '0'; inp.placeholder = 'Pegá el nuevo Access Token...'; }
+        if (btn) btn.textContent = 'Ocultar';
+    } else {
+        inp.type = 'password';
+        if (btn) btn.textContent = 'Ver';
+    }
+};
+
+window.admMpGuardar = async function() {
+    const inp = document.getElementById('adm-mp-token-inp');
+    const fb  = document.getElementById('adm-mp-feedback');
+    if (!inp || !fb) return;
+    const token = inp.value.trim();
+    if (!token || token.includes('•')) {
+        fb.style.display = 'block';
+        fb.style.background = 'rgba(239,68,68,0.15)';
+        fb.style.border = '1px solid #ef4444';
+        fb.style.color = '#ef4444';
+        fb.textContent = 'Pegá un Access Token válido primero.';
+        return;
+    }
+    fb.style.display = 'block';
+    fb.style.background = 'rgba(245,158,11,0.1)';
+    fb.style.border = '1px solid var(--primary)';
+    fb.style.color = 'var(--primary)';
+    fb.textContent = 'Guardando...';
+    try {
+        await window.db.collection('config_menu').doc('mercadopago').set({ accessToken: token }, { merge: true });
+        inp.value = '•'.repeat(20) + token.slice(-6);
+        inp.dataset.saved = '1';
+        inp.type = 'password';
+        const btn = document.getElementById('adm-mp-eye-btn');
+        if (btn) btn.textContent = 'Ver';
+        fb.style.background = 'rgba(16,185,129,0.15)';
+        fb.style.border = '1px solid #10b981';
+        fb.style.color = '#10b981';
+        fb.textContent = '✓ Access Token guardado. Mercado Pago está activo.';
+        const dot = document.getElementById('adm-mp-status-dot');
+        const txt = document.getElementById('adm-mp-status-txt');
+        const sub = document.getElementById('adm-mp-status-sub');
+        if (dot) dot.style.background = '#10b981';
+        if (txt) txt.textContent = 'Mercado Pago activo ✓';
+        if (sub) sub.textContent = 'Los pagos online están habilitados para los clientes';
+        setTimeout(() => { fb.style.display = 'none'; }, 4000);
+    } catch(e) {
+        fb.style.background = 'rgba(239,68,68,0.15)';
+        fb.style.border = '1px solid #ef4444';
+        fb.style.color = '#ef4444';
+        fb.textContent = 'Error al guardar: ' + e.message;
+    }
+};
 
 //  GESTIÓN DE PROMOS (CRUD COMPLETO) 
 let admPromosData = [];
@@ -5637,10 +5810,10 @@ document.getElementById('admin-root') && document.getElementById('admin-root').a
     <button class="pwa-btn-dismiss" onclick="pwaDismissBanner()" title="Cerrar"></button>
 </div><!-- MODAL SEGUIMIENTO --><div id="tracking-modal"><div class="tracking-sheet"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><h2 style="font-weight:800;font-size:18px;color:var(--primary);">TU PEDIDO</h2><button onclick="document.getElementById('tracking-modal').classList.remove('open')" style="background:rgba(255,255,255,0.1);border:none;color:var(--white);width:32px;height:32px;border-radius:50%;font-size:20px;cursor:pointer;font-weight:300;">×</button></div><div id="tracking-cliente" style="color:var(--text-light);font-size:13px;margin-bottom:4px;"></div><div id="tracking-sucursal" style="color:var(--text-light);font-size:12px;margin-bottom:16px;"></div><div class="tracking-progress" id="tracking-progress"></div><div id="tracking-items" style="background:var(--bg);border-radius:10px;padding:12px;margin-bottom:16px;"></div><div id="tracking-total" style="font-size:18px;font-weight:800;color:var(--primary);text-align:right;"></div><div id="tracking-cancel-container"></div>
 <button onclick="cerrarTracking()" style="width:100%;padding:12px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text-light);font-weight:700;margin-top:12px;cursor:pointer;">CERRAR</button>
-<div id="tracking-anulado-label" style="display:none;text-align:center;padding:10px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;margin-top:8px;"><span style="color:#ef4444;font-weight:800;font-size:14px;letter-spacing:1px;">ANULADO</span></div></div></div><!-- MODAL RESEÑA --><div id="resena-modal"><div class="resena-sheet"><div style="font-size:40px;margin-bottom:8px;"></div><h3 style="font-weight:800;font-size:18px;color:var(--white);margin-bottom:6px;">¿Cómo estuvo tu pedido?</h3><p style="color:var(--text-light);font-size:13px;">Tu opinión nos ayuda a mejorar</p><div class="stars-row" id="stars-row"><span class="star-btn" data-v="1" onclick="setStars(1)" style="color:rgba(245,158,11,0.35);font-size:40px;">★</span><span class="star-btn" data-v="2" onclick="setStars(2)" style="color:rgba(245,158,11,0.35);font-size:40px;">★</span><span class="star-btn" data-v="3" onclick="setStars(3)" style="color:rgba(245,158,11,0.35);font-size:40px;">★</span><span class="star-btn" data-v="4" onclick="setStars(4)" style="color:rgba(245,158,11,0.35);font-size:40px;">★</span><span class="star-btn" data-v="5" onclick="setStars(5)" style="color:rgba(245,158,11,0.35);font-size:40px;">★</span></div><textarea id="resena-comentario" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--white);font-size:13px;resize:none;height:80px;margin-bottom:16px;" placeholder="Comentario opcional..."></textarea><button onclick="enviarResena()" id="resena-btn" style="width:100%;padding:14px;border-radius:10px;border:none;background:var(--primary);color:#000;font-weight:800;font-size:15px;cursor:pointer;">ENVIAR RESEÑA</button><button onclick="document.getElementById('resena-modal').classList.remove('open')" style="width:100%;padding:10px;border-radius:10px;border:none;background:transparent;color:var(--text-light);font-size:13px;margin-top:8px;cursor:pointer;">Ahora no</button></div></div><!-- ADMIN --><div id="admin-root" style="display:none;"><!-- LOGIN --><div id="adm-login-screen"><div class="adm-login-box"><div style="font-size:36px;margin-bottom:8px;"></div><h1>MARVEL FOOD</h1><p>Panel de administración</p><input class="adm-inp" type="password" id="adm-pin" placeholder="PIN de acceso" autocomplete="off"
+<div id="tracking-anulado-label" style="display:none;text-align:center;padding:10px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;margin-top:8px;"><span style="color:#ef4444;font-weight:800;font-size:14px;letter-spacing:1px;">ANULADO</span></div></div></div><!-- MODAL RESEÑA --><div id="resena-modal"><div class="resena-sheet"><div style="font-size:40px;margin-bottom:8px;"></div><h3 style="font-weight:800;font-size:18px;color:var(--white);margin-bottom:6px;">¿Cómo estuvo tu pedido?</h3><p style="color:var(--text-light);font-size:13px;">Tu opinión nos ayuda a mejorar</p><div class="stars-row" id="stars-row"><span class="star-btn" data-v="1" onclick="setStars(1)">★</span><span class="star-btn" data-v="2" onclick="setStars(2)">★</span><span class="star-btn" data-v="3" onclick="setStars(3)">★</span><span class="star-btn" data-v="4" onclick="setStars(4)">★</span><span class="star-btn" data-v="5" onclick="setStars(5)">★</span></div><textarea id="resena-comentario" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--white);font-size:13px;resize:none;height:80px;margin-bottom:16px;" placeholder="Comentario opcional..."></textarea><button onclick="enviarResena()" id="resena-btn" style="width:100%;padding:14px;border-radius:10px;border:none;background:var(--primary);color:#000;font-weight:800;font-size:15px;cursor:pointer;">ENVIAR RESEÑA</button><button onclick="document.getElementById('resena-modal').classList.remove('open')" style="width:100%;padding:10px;border-radius:10px;border:none;background:transparent;color:var(--text-light);font-size:13px;margin-top:8px;cursor:pointer;">Ahora no</button></div></div><!-- ADMIN --><div id="admin-root" style="display:none;"><!-- LOGIN --><div id="adm-login-screen"><div class="adm-login-box"><div style="font-size:36px;margin-bottom:8px;"></div><h1>MARVEL FOOD</h1><p>Panel de administración</p><input class="adm-inp" type="password" id="adm-pin" placeholder="PIN de acceso" autocomplete="off"
                 onkeydown="if(event.key==='Enter') admCheckPin()">
 <div id="adm-pin-feedback" style="min-height:18px;font-size:12px;font-weight:700;margin:6px 0 2px;text-align:center;"></div>
-<button class="adm-btn-primary" onclick="admCheckPin()">INGRESAR</button></div></div><!-- PANEL PRINCIPAL --><div id="adm-app" style="display:none;"><!-- Header --><div class="adm-header"><h1>MARVEL <span>ADMIN</span></h1><div style="display:flex;align-items:center;gap:8px;"><span class="adm-badge-live"> EN VIVO</span><span style="color:#9ca3af;font-size:10px;" id="adm-last-update">—</span><button onclick="admLogout()" style="background:transparent;border:1px solid #333;color:#9ca3af;padding:5px 10px;border-radius:8px;font-size:10px;cursor:pointer;">SALIR</button></div></div><!-- Stats --><div class="adm-stats-bar"><div class="adm-stat"><span>Pendientes</span><span id="adm-s-pend">0</span></div><div class="adm-stat"><span>Aceptados</span><span id="adm-s-acep" style="color:#10b981">0</span></div><div class="adm-stat"><span>Listos</span><span id="adm-s-list" style="color:#3b82f6">0</span></div><div class="adm-stat"><span>Hoy</span><span id="adm-s-total" style="color:#fff">0</span></div><div class="adm-stat"><span>Recaudado</span><span id="adm-s-cash" style="color:#10b981">$0</span></div></div><!-- Barra de filtros --><!-- Tabs del admin --><div style="display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);overflow-x:auto;"><button class="adm-tab active" onclick="admSwitchTab('pedidos',this)">Pedidos</button><button class="adm-tab" onclick="admSwitchTab('dashboard',this)">Dashboard</button><button class="adm-tab" onclick="admSwitchTab('menu',this)">Menu</button><button class="adm-tab" onclick="admSwitchTab('promos',this)">Promos</button><button class="adm-tab" onclick="admSwitchTab('cupones',this)">Cupones</button><button class="adm-tab" onclick="admSwitchTab('codigos',this)">Codigos</button><button class="adm-tab" onclick="admSwitchTab('resenas',this)">Reseñas</button><button class="adm-tab" onclick="admSwitchTab('integracion',this)" style="color:#a78bfa;"> Integración</button></div><!-- TAB PEDIDOS --><div id="adm-tab-pedidos"><div class="adm-filterbar"><!-- Fila 1: Fecha + Sucursal --><div class="adm-filterrow"><div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;"><span style="color:#9ca3af;font-size:11px;font-weight:700;white-space:nowrap;"> FECHA</span><input type="date" id="adm-fecha-filtro" class="adm-date-inp" onchange="admAplicarFiltros()"><button onclick="admFechaHoy()" class="adm-filter-btn" style="white-space:nowrap;padding:5px 10px;">Hoy</button><button onclick="admVerTodoHistorial()" id="btn-todo-historial" class="adm-filter-btn" style="white-space:nowrap;padding:5px 10px;background:rgba(99,102,241,0.15);border-color:#6366f1;color:#a5b4fc;">Todo</button></div><div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;"><span style="color:#9ca3af;font-size:11px;font-weight:700;white-space:nowrap;">SUCURSAL</span><select id="adm-suc-filtro" class="adm-date-inp" onchange="admAplicarFiltros()" style="flex:1;"><option value="">Todas</option><option value="PELLEGRINI">Centro</option><option value="Rondeau">Norte</option><option value="San Martin">Sur</option><option value="Funes">Funes</option></select></div></div><!-- Fila 2: Estado + Tipo + Limpiar --><div class="adm-filterrow" style="margin-top:8px;"><button class="adm-filter-btn active" data-f="Todos"    onclick="admFiltroEstado('Todos',this)">Todos</button><button class="adm-filter-btn"        data-f="Pendiente" onclick="admFiltroEstado('Pendiente',this)">Pendientes</button><button class="adm-filter-btn f-acep" data-f="Aceptado" onclick="admFiltroEstado('Aceptado',this)">Aceptados</button><button class="adm-filter-btn f-list" data-f="Listo"    onclick="admFiltroEstado('Listo',this)">Listos</button><button class="adm-filter-btn f-ent"  data-f="Entregado" onclick="admFiltroEstado('Entregado',this)">Entregados</button><button class="adm-filter-btn"        data-f="Delivery" onclick="admFiltroEstado('Delivery',this)">Delivery</button><button class="adm-filter-btn"        data-f="Retiro"   onclick="admFiltroEstado('Retiro',this)">Retiro</button><button onclick="admLimpiarDia()" style="margin-left:auto;background:rgba(239,68,68,.15);border:1px solid #ef4444;color:#ef4444;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">Limpiar día</button></div></div><!-- Lista pedidos --><div class="adm-orders" id="adm-orders"></div></div><!-- /adm-tab-pedidos --><!-- TAB DASHBOARD --><div id="adm-tab-dashboard" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:16px;">MÉTRICAS DEL DÍA</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;"><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Pedidos hoy</div><div id="dash-total" style="font-size:28px;font-weight:800;color:var(--primary);">0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Recaudado</div><div id="dash-cash" style="font-size:22px;font-weight:800;color:#10b981;">$0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Ticket promedio</div><div id="dash-ticket" style="font-size:22px;font-weight:800;color:#3b82f6;">$0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Delivery / Retiro</div><div id="dash-tipos" style="font-size:16px;font-weight:800;color:var(--white);">0 / 0</div></div></div><!-- Ventas por hora --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Ventas por hora</div><div id="dash-chart-horas" style="display:flex;align-items:flex-end;gap:4px;height:80px;"></div><div id="dash-chart-labels" style="display:flex;gap:4px;margin-top:4px;"></div></div><!-- Productos más pedidos --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Productos más pedidos hoy</div><div id="dash-top-prods"></div></div><!-- Mapa de calor de zonas --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Pedidos por zona</div><div id="dash-zonas"></div></div></div><!-- TAB MENÚ --><div id="adm-tab-menu" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:6px;"> GESTIÓN DE MENÚ</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Pausá productos o editá precios. Los cambios son inmediatos en la tienda.</p><div id="adm-menu-lista" style="display:flex;flex-direction:column;gap:8px;"></div></div><!-- TAB RESEÑAS / OPINIONES --><div id="adm-tab-resenas" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">OPINIONES DE CLIENTES</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Podés eliminar cualquier opinión que no corresponda. Los cambios son inmediatos.</p><div style="display:flex;gap:12px;margin-bottom:20px;"><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);flex:1;text-align:center;"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Promedio</div><div id="res-promedio" style="font-size:32px;font-weight:800;color:var(--primary);">—</div><div style="color:#9ca3af;font-size:11px;" id="res-count">0 reseñas</div></div><div id="res-dist" style="flex:2;background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);display:flex;flex-direction:column;gap:5px;justify-content:center;"></div></div><!-- Tabs internas: Pedido / Públicas --><div style="display:flex;gap:8px;margin-bottom:16px;"><button id="adm-res-tab-ped" onclick="admResTab('pedidos')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--primary);background:rgba(245,158,11,.15);color:var(--primary);font-weight:800;font-size:12px;cursor:pointer;">Desde pedido</button><button id="adm-res-tab-pub" onclick="admResTab('publicas')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--border);background:transparent;color:#9ca3af;font-weight:800;font-size:12px;cursor:pointer;">Opiniones públicas</button></div><div id="adm-resenas-lista" style="display:flex;flex-direction:column;gap:10px;"></div></div><!-- TAB INTEGRACIÓN --><div id="adm-tab-integracion" style="display:none;"></div><!-- TAB PROMOS --><div id="adm-tab-promos" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">GESTIÓN DE PROMOS</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Editá precios y el día de venta de cada promo. Los cambios se aplican en tiempo real en la tienda.</p><div id="adm-promos-lista"></div></div><!-- TAB CÓDIGOS DE DESCUENTO --><div id="adm-tab-codigos" style="display:none;padding:20px;">
+<button class="adm-btn-primary" onclick="admCheckPin()">INGRESAR</button></div></div><!-- PANEL PRINCIPAL --><div id="adm-app" style="display:none;"><!-- Header --><div class="adm-header"><h1>MARVEL <span>ADMIN</span></h1><div style="display:flex;align-items:center;gap:8px;"><span class="adm-badge-live"> EN VIVO</span><span style="color:#9ca3af;font-size:10px;" id="adm-last-update">—</span><button onclick="admLogout()" style="background:transparent;border:1px solid #333;color:#9ca3af;padding:5px 10px;border-radius:8px;font-size:10px;cursor:pointer;">SALIR</button></div></div><!-- Stats --><div class="adm-stats-bar"><div class="adm-stat"><span>Pendientes</span><span id="adm-s-pend">0</span></div><div class="adm-stat"><span>Aceptados</span><span id="adm-s-acep" style="color:#10b981">0</span></div><div class="adm-stat"><span>Listos</span><span id="adm-s-list" style="color:#3b82f6">0</span></div><div class="adm-stat"><span>Hoy</span><span id="adm-s-total" style="color:#fff">0</span></div><div class="adm-stat"><span>Recaudado</span><span id="adm-s-cash" style="color:#10b981">$0</span></div></div><!-- Barra de filtros --><!-- Tabs del admin --><div style="display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);overflow-x:auto;"><button class="adm-tab active" onclick="admSwitchTab('pedidos',this)">Pedidos</button><button class="adm-tab" onclick="admSwitchTab('dashboard',this)">Dashboard</button><button class="adm-tab" onclick="admSwitchTab('menu',this)">Menu</button><button class="adm-tab" onclick="admSwitchTab('promos',this)">Promos</button><button class="adm-tab" onclick="admSwitchTab('cupones',this)">Cupones</button><button class="adm-tab" onclick="admSwitchTab('codigos',this)">Codigos</button><button class="adm-tab" onclick="admSwitchTab('resenas',this)">Reseñas</button><button class="adm-tab" onclick="admSwitchTab('integracion',this)" style="color:#a78bfa;"> Integración</button><button class="adm-tab" onclick="admSwitchTab('mercadopago',this)" style="color:#00b1ea;"> Mercado Pago</button></div><!-- TAB PEDIDOS --><div id="adm-tab-pedidos"><div class="adm-filterbar"><!-- Fila 1: Fecha + Sucursal --><div class="adm-filterrow"><div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;"><span style="color:#9ca3af;font-size:11px;font-weight:700;white-space:nowrap;"> FECHA</span><input type="date" id="adm-fecha-filtro" class="adm-date-inp" onchange="admAplicarFiltros()"><button onclick="admFechaHoy()" class="adm-filter-btn" style="white-space:nowrap;padding:5px 10px;">Hoy</button><button onclick="admVerTodoHistorial()" id="btn-todo-historial" class="adm-filter-btn" style="white-space:nowrap;padding:5px 10px;background:rgba(99,102,241,0.15);border-color:#6366f1;color:#a5b4fc;">Todo</button></div><div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;"><span style="color:#9ca3af;font-size:11px;font-weight:700;white-space:nowrap;">SUCURSAL</span><select id="adm-suc-filtro" class="adm-date-inp" onchange="admAplicarFiltros()" style="flex:1;"><option value="">Todas</option><option value="PELLEGRINI">Centro</option><option value="Rondeau">Norte</option><option value="San Martin">Sur</option><option value="Funes">Funes</option></select></div></div><!-- Fila 2: Estado + Tipo + Limpiar --><div class="adm-filterrow" style="margin-top:8px;"><button class="adm-filter-btn active" data-f="Todos"    onclick="admFiltroEstado('Todos',this)">Todos</button><button class="adm-filter-btn"        data-f="Pendiente" onclick="admFiltroEstado('Pendiente',this)">Pendientes</button><button class="adm-filter-btn f-acep" data-f="Aceptado" onclick="admFiltroEstado('Aceptado',this)">Aceptados</button><button class="adm-filter-btn f-list" data-f="Listo"    onclick="admFiltroEstado('Listo',this)">Listos</button><button class="adm-filter-btn f-ent"  data-f="Entregado" onclick="admFiltroEstado('Entregado',this)">Entregados</button><button class="adm-filter-btn"        data-f="Delivery" onclick="admFiltroEstado('Delivery',this)">Delivery</button><button class="adm-filter-btn"        data-f="Retiro"   onclick="admFiltroEstado('Retiro',this)">Retiro</button><button onclick="admLimpiarDia()" style="margin-left:auto;background:rgba(239,68,68,.15);border:1px solid #ef4444;color:#ef4444;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">Limpiar día</button></div></div><!-- Lista pedidos --><div class="adm-orders" id="adm-orders"></div></div><!-- /adm-tab-pedidos --><!-- TAB DASHBOARD --><div id="adm-tab-dashboard" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:16px;">MÉTRICAS DEL DÍA</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;"><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Pedidos hoy</div><div id="dash-total" style="font-size:28px;font-weight:800;color:var(--primary);">0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Recaudado</div><div id="dash-cash" style="font-size:22px;font-weight:800;color:#10b981;">$0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Ticket promedio</div><div id="dash-ticket" style="font-size:22px;font-weight:800;color:#3b82f6;">$0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Delivery / Retiro</div><div id="dash-tipos" style="font-size:16px;font-weight:800;color:var(--white);">0 / 0</div></div></div><!-- Ventas por hora --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Ventas por hora</div><div id="dash-chart-horas" style="display:flex;align-items:flex-end;gap:4px;height:80px;"></div><div id="dash-chart-labels" style="display:flex;gap:4px;margin-top:4px;"></div></div><!-- Productos más pedidos --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Productos más pedidos hoy</div><div id="dash-top-prods"></div></div><!-- Mapa de calor de zonas --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Pedidos por zona</div><div id="dash-zonas"></div></div></div><!-- TAB MENÚ --><div id="adm-tab-menu" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:6px;"> GESTIÓN DE MENÚ</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Pausá productos o editá precios. Los cambios son inmediatos en la tienda.</p><div id="adm-menu-lista" style="display:flex;flex-direction:column;gap:8px;"></div></div><!-- TAB RESEÑAS / OPINIONES --><div id="adm-tab-resenas" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">OPINIONES DE CLIENTES</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Podés eliminar cualquier opinión que no corresponda. Los cambios son inmediatos.</p><div style="display:flex;gap:12px;margin-bottom:20px;"><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);flex:1;text-align:center;"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Promedio</div><div id="res-promedio" style="font-size:32px;font-weight:800;color:var(--primary);">—</div><div style="color:#9ca3af;font-size:11px;" id="res-count">0 reseñas</div></div><div id="res-dist" style="flex:2;background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);display:flex;flex-direction:column;gap:5px;justify-content:center;"></div></div><!-- Tabs internas: Pedido / Públicas --><div style="display:flex;gap:8px;margin-bottom:16px;"><button id="adm-res-tab-ped" onclick="admResTab('pedidos')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--primary);background:rgba(245,158,11,.15);color:var(--primary);font-weight:800;font-size:12px;cursor:pointer;">Desde pedido</button><button id="adm-res-tab-pub" onclick="admResTab('publicas')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--border);background:transparent;color:#9ca3af;font-weight:800;font-size:12px;cursor:pointer;">Opiniones públicas</button></div><div id="adm-resenas-lista" style="display:flex;flex-direction:column;gap:10px;"></div></div><!-- TAB INTEGRACIÓN --><div id="adm-tab-integracion" style="display:none;"></div><!-- TAB MERCADO PAGO --><div id="adm-tab-mercadopago" style="display:none;padding:20px;"><h3 style="color:#00b1ea;font-weight:800;font-size:16px;margin-bottom:4px;">MERCADO PAGO</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:20px;">Conectá tu cuenta de Mercado Pago para generar links de pago automáticos cuando el cliente elija ese método.</p><!-- Estado de conexión --><div id="adm-mp-status-card" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px;display:flex;align-items:center;gap:12px;"><div id="adm-mp-status-dot" style="width:12px;height:12px;border-radius:50%;background:#6b7280;flex-shrink:0;"></div><div style="flex:1;"><div style="font-size:14px;font-weight:800;color:var(--white);" id="adm-mp-status-txt">No configurado</div><div style="font-size:11px;color:#9ca3af;margin-top:2px;" id="adm-mp-status-sub">Ingresá tu Access Token para activar los pagos online</div></div></div><!-- Formulario Access Token --><div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px;"><div style="font-size:11px;color:#9ca3af;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Access Token de Producción</div><div style="display:flex;gap:8px;"><input type="password" id="adm-mp-token-inp" class="adm-minp" placeholder="APP_USR-XXXX..." style="flex:1;margin-bottom:0;" autocomplete="off"><button onclick="admMpToggleToken()" style="background:rgba(255,255,255,.07);border:1px solid var(--border);color:#9ca3af;padding:0 12px;border-radius:9px;font-size:12px;cursor:pointer;white-space:nowrap;" id="adm-mp-eye-btn">Ver</button></div><p style="font-size:11px;color:#6b7280;margin-top:8px;line-height:1.5;">Encontrá tu token en <strong style="color:#9ca3af;">mercadopago.com.ar → Tu Negocio → Credenciales</strong>. Usá el token de <em>producción</em>.</p><button onclick="admMpGuardar()" style="width:100%;margin-top:14px;padding:12px;background:#00b1ea;border:none;color:#000;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;">GUARDAR Y ACTIVAR</button><div id="adm-mp-feedback" style="display:none;margin-top:10px;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:700;text-align:center;"></div></div><!-- Info --><div style="background:rgba(0,177,234,0.06);border:1px solid rgba(0,177,234,0.25);border-radius:12px;padding:14px;"><div style="font-size:12px;font-weight:800;color:#00b1ea;margin-bottom:8px;">¿Cómo funciona?</div><ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:7px;"><li style="display:flex;gap:8px;font-size:12px;color:#9ca3af;"><span style="color:#00b1ea;font-weight:800;flex-shrink:0;">1.</span>El cliente elige "Mercado Pago" al hacer su pedido</li><li style="display:flex;gap:8px;font-size:12px;color:#9ca3af;"><span style="color:#00b1ea;font-weight:800;flex-shrink:0;">2.</span>El sistema crea un link de pago por el monto exacto del pedido</li><li style="display:flex;gap:8px;font-size:12px;color:#9ca3af;"><span style="color:#00b1ea;font-weight:800;flex-shrink:0;">3.</span>El cliente es redirigido al checkout de MP para pagar</li><li style="display:flex;gap:8px;font-size:12px;color:#9ca3af;"><span style="color:#00b1ea;font-weight:800;flex-shrink:0;">4.</span>Luego se abre WhatsApp con los datos del pedido</li></ul></div></div><!-- TAB PROMOS --><div id="adm-tab-promos" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">GESTIÓN DE PROMOS</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Editá precios y el día de venta de cada promo. Los cambios se aplican en tiempo real en la tienda.</p><div id="adm-promos-lista"></div></div><!-- TAB CÓDIGOS DE DESCUENTO --><div id="adm-tab-codigos" style="display:none;padding:20px;">
 <h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">CODIGOS DE DESCUENTO</h3>
 <p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Gestioná los códigos de uso interno del personal y los códigos promocionales. Podés activar, desactivar o agregar nuevos.</p>
 

@@ -107,3 +107,12 @@ self.addEventListener('fetch', event => {
     })
   );
 });
+
+importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js');
+firebase.initializeApp({ /* tu _fbConfig aquí */ });
+const messaging = firebase.messaging();
+messaging.onBackgroundMessage((payload) => {
+  const { title, body } = payload.notification || {};
+  self.registration.showNotification(title || 'Marvel Food', { body, icon: '/icon-192.png' });
+});

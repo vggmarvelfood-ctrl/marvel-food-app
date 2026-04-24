@@ -5035,7 +5035,7 @@ function admImprimir(id) {
         'ANDES IPA 473CC':353,      'QUILMES 473CC':354,    'BUDWEISER 473CC':355,
         'BRAHMA LATA':356,          'STELLA SIN ALCOHOL':358,
         //  Extras (700-715) 
-        'EXTRA CARNE':700,
+        'EXTRA CARNE':700,          'EXTRA MEDALLON':700,
         'EXTRA CHEDDAR':701,        'EXTRA CHEDDAR FETA':701,
         'EXTRA PANCETA':702,
         'EXTRA DIP VERDEO':710,     'EXTRA DIP CHEDDAR':711,
@@ -5085,40 +5085,54 @@ function admImprimir(id) {
         ? `Domicilio:${(p.dir||'').trim()}${p.piso&&p.piso.trim()?' '+p.piso.trim():''}\nCP - Zona: ${p.loc||''}`
         : `Modalidad: RETIRO EN LOCAL`;
 
-    // Filas tabla cliente
+    // Filas tabla cliente — cada extra genera su propio <tr>
     const filasCliente = items.map((i) => {
-        const cod   = buscarCodigo(i.n);
-        const desc  = i.n.toUpperCase()
-            + (i.sin&&i.sin.length ? ' (Sin: '+i.sin.join(', ')+')' : '')
-            + (i.con&&i.con.length ? ' (+'+i.con.map(x=>x.n).join(', ')+')' : '')
-            + (i.obs ? ' ['+i.obs+']' : '');
-        const cant  = String(i.cant).padStart(2,'0');
-        const prec  = (i.totalItem||0).toFixed(2);
-        return `<tr><td>${cod}</td><td class="td-desc">${desc}</td><td class="td-c">${cant}</td><td class="td-r">${prec}</td></tr>`;
+        const cod  = buscarCodigo(i.n);
+        const cant = String(i.cant).padStart(2, '0');
+
+        // Precio base = totalItem − suma de todos los extras × cantidad
+        const extrasTotal = (i.con || []).reduce((sum, x) => sum + ((x.p || 0) * i.cant), 0);
+        const precioBase  = ((i.totalItem || 0) - extrasTotal).toFixed(2);
+
+        // Descripción principal: mantiene obs y sin, pero NO los extras
+        const desc = i.n.toUpperCase()
+            + (i.sin && i.sin.length ? ' (Sin: ' + i.sin.join(', ') + ')' : '')
+            + (i.obs ? ' [' + i.obs + ']' : '');
+
+        // Fila del producto principal
+        let filas = `<tr><td>${cod}</td><td class="td-desc">${desc}</td><td class="td-c">${cant}</td><td class="td-r">${precioBase}</td></tr>`;
+
+        // Una fila independiente por cada extra
+        (i.con || []).forEach(x => {
+            const xCod  = buscarCodigo(x.n || '');
+            const xDesc = (x.n || '').toUpperCase();
+            const xPrec = ((x.p || 0) * i.cant).toFixed(2);
+            filas += `<tr><td>${xCod}</td><td class="td-desc">${xDesc}</td><td class="td-c">${cant}</td><td class="td-r">${xPrec}</td></tr>`;
+        });
+
+        return filas;
     }).join('');
 
-    // Filas tabla cocina — sin precios; extras con código
+    // Filas tabla cocina — sin precios; cada extra genera su propio <tr>
     const filasCocina = items.map((i) => {
         const cod  = buscarCodigo(i.n);
-        // Extras: mostrar código numérico si existe en CODIGOS_PROD
-        const extrasStr = (i.con && i.con.length)
-            ? ' <strong>(+' + i.con.map(x => {
-                const xKey = (x.n || '').toUpperCase().trim();
-                const xCod = CODIGOS_PROD[xKey] !== undefined
-                    ? String(CODIGOS_PROD[xKey])
-                    : (() => {
-                        const ks = Object.keys(CODIGOS_PROD).sort((a,b) => b.length - a.length);
-                        for (const k of ks) { if (xKey.includes(k) || k.includes(xKey)) return String(CODIGOS_PROD[k]); }
-                        return x.n;
-                    })();
-                return xCod !== x.n ? `[${xCod}] ${x.n}` : x.n;
-            }).join(', ') + ')</strong>'
-            : '';
-        const sinStr = (i.sin && i.sin.length) ? ' <strong>(Sin: '+i.sin.join(', ')+')</strong>' : '';
-        const obsStr = i.obs ? ' ['+i.obs+']' : '';
-        const desc = '<strong>'+i.n.toUpperCase()+'</strong>' + sinStr + extrasStr + obsStr;
-        const cant = String(i.cant).padStart(2,'0');
-        return `<tr><td>${cod}</td><td class="td-desc">${desc}</td><td class="td-c">${cant}</td></tr>`;
+        const cant = String(i.cant).padStart(2, '0');
+
+        const sinStr = (i.sin && i.sin.length) ? ' <strong>(Sin: ' + i.sin.join(', ') + ')</strong>' : '';
+        const obsStr = i.obs ? ' [' + i.obs + ']' : '';
+        const desc   = '<strong>' + i.n.toUpperCase() + '</strong>' + sinStr + obsStr;
+
+        // Fila del producto principal (sin extras en la descripción)
+        let filas = `<tr><td>${cod}</td><td class="td-desc">${desc}</td><td class="td-c">${cant}</td></tr>`;
+
+        // Una fila independiente por cada extra
+        (i.con || []).forEach(x => {
+            const xCod  = buscarCodigo(x.n || '');
+            const xDesc = '<strong>' + (x.n || '').toUpperCase() + '</strong>';
+            filas += `<tr><td>${xCod}</td><td class="td-desc">${xDesc}</td><td class="td-c">${cant}</td></tr>`;
+        });
+
+        return filas;
     }).join('');
 
     // Totales cliente

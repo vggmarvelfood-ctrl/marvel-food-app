@@ -6496,6 +6496,48 @@ function actualizarResumenOp(docs) {
  }
 }
 
+
+// ─────────────────────────────────────────────────────────────
+// DETECCIÓN DE ZONA LOCAL — usa GF_GEOJSON embebido, sin red
+// ─────────────────────────────────────────────────────────────
+
+// Ray-casting: devuelve true si el punto (lat,lng) está dentro del polígono
+function _raycast(lat, lng, ring) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    // ring coords son [lng, lat]
+    const xi = ring[i][0], yi = ring[i][1];
+    const xj = ring[j][0], yj = ring[j][1];
+    const intersect = ((yi > lat) !== (yj > lat)) &&
+      (lng < (xj - xi) * (lat - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
+
+// Devuelve { sucursal, zona, barrio_privado } o null
+function _detectarZonaLocal(lat, lng) {
+  const geo = typeof GF_GEOJSON !== 'undefined' ? GF_GEOJSON : null;
+  if (!geo || !geo.features) return null;
+  for (const feat of geo.features) {
+    if (!feat.geometry || !feat.properties) continue;
+    const geom = feat.geometry;
+    const rings = geom.type === 'Polygon'
+      ? [geom.coordinates[0]]
+      : geom.coordinates.map(p => p[0]); // MultiPolygon: exterior rings
+    for (const ring of rings) {
+      if (_raycast(lat, lng, ring)) {
+        return {
+          sucursal: feat.properties.sucursal || null,
+          zona: feat.properties.name || null,
+          barrio_privado: !!feat.properties.barrio_privado,
+        };
+      }
+    }
+  }
+  return null; // fuera de cobertura
+}
+
 // 
 // PANTALLA DE BIENVENIDA — lógica
 // 
@@ -6698,12 +6740,31 @@ function welcomeDirInput() {
  result.style.border = '1px solid #333';
 
  _wsDirVerifyTimeout = setTimeout(async () => {
- try {
  const locVal = (document.getElementById('ws-loc-input')?.value || '').trim();
 
- // Capa 1: detección rápida por localidad conocida
+ function _mostrarFueraDeCobertura(sucMasCercana) {
+ const infoSuc = (typeof ZONA_INFO_UI !== 'undefined' && sucMasCercana && ZONA_INFO_UI[sucMasCercana]) || { label: sucMasCercana || '' };
+ _wsSucursalDetectada = null;
+ _wsFueraDeCoberturaActivo = true;
+ result.style.background = 'rgba(239,68,68,0.08)';
+ result.style.border = '1px solid rgba(239,68,68,0.4)';
+ result.style.display = 'block';
+ result.innerHTML =
+ '<div style="display:flex;flex-direction:column;gap:10px;">' +
+ '<div>' +
+ '<div style="font-weight:800;color:#ef4444;font-size:13px;margin-bottom:4px;">No llegamos a esa direccion</div>' +
+ '<div style="color:#d1d5db;font-size:12px;">Esa zona esta fuera de nuestra area de entrega.</div>' +
+ (sucMasCercana ? '<div style="color:#9ca3af;font-size:11px;margin-top:4px;">Sucursal mas cercana: <strong style="color:#fff;">' + infoSuc.label + '</strong></div>' : '') +
+ '</div>' +
+ '<button onclick="wsCambiarARetiro()" style="width:100%;padding:10px 0;border-radius:10px;border:1px solid rgba(245,158,11,0.5);background:rgba(245,158,11,0.12);color:#f59e0b;font-size:13px;font-weight:700;cursor:pointer;">Cambiar a Retiro en Local</button>' +
+ '</div>';
+ _wsVerificarContinuar();
+ }
+
+ try {
+ // CAPA 1: detección rápida por localidad conocida (sin red)
  if (locVal.length >= 3) {
- const sucPorLoc = _sucursalPorLocalidad(locVal);
+ const sucPorLoc = (typeof _sucursalPorLocalidad === 'function') ? _sucursalPorLocalidad(locVal) : null;
  if (sucPorLoc) {
  _wsSucursalDetectada = sucPorLoc;
  _wsFueraDeCoberturaActivo = false;
@@ -6713,79 +6774,75 @@ function welcomeDirInput() {
  }
  }
 
- // Capa 2: geocodificar con localidad real
+ // CAPA 2: geocodificar para obtener coordenadas (necesita red)
+ result.style.display = 'block';
+ result.style.background = 'rgba(255,255,255,0.03)';
+ result.style.border = '1px solid #333';
+ result.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:6px 0;">Buscando direccion...</div>';
+
  const coords = await _geocodificar(val, locVal);
  if (!coords) {
- // No encontramos la dirección en el mapa
  _wsSucursalDetectada = null;
  _wsFueraDeCoberturaActivo = false;
  result.style.background = 'rgba(239,68,68,0.08)';
  result.style.border = '1px solid rgba(239,68,68,0.3)';
- result.style.display = 'block';
- result.innerHTML = `
- <div style="display:flex;align-items:center;gap:10px;">
- <span style="font-size:22px;">🔍</span>
- <div>
- <div style="font-weight:800;color:#ef4444;font-size:13px;">No encontramos esa dirección</div>
- <div style="color:#d1d5db;font-size:12px;margin-top:2px;">Revisá que la calle y localidad sean correctas e intentá de nuevo.</div>
- </div>
- </div>`;
+ result.innerHTML =
+ '<div>' +
+ '<div style="font-weight:800;color:#ef4444;font-size:13px;margin-bottom:4px;">No encontramos esa direccion</div>' +
+ '<div style="color:#d1d5db;font-size:12px;">Revisa la calle y localidad e intenta de nuevo.</div>' +
+ '</div>';
  _wsVerificarContinuar();
  return;
  }
 
- // Capa 3: chequear cobertura con Firebase+Turf / polígonos estáticos
- const gfResult = await window.determinarSucursal(coords.lat, coords.lng);
- const sucCubre = gfResult?.sucursal || sucursalParaPunto(coords.lat, coords.lng);
  _wsGPS = coords;
 
- if (sucCubre) {
- // ✅ Tiene cobertura
- _wsSucursalDetectada = sucCubre;
+ // CAPA 3: punto-en-poligono con GF_GEOJSON embebido (sin red, instantaneo)
+ const zonaLocal = _detectarZonaLocal(coords.lat, coords.lng);
+
+ if (zonaLocal && zonaLocal.sucursal) {
+ // Dentro de cobertura
+ _wsSucursalDetectada = zonaLocal.sucursal;
  _wsFueraDeCoberturaActivo = false;
- welcomeMostrarResultado(sucCubre, [val, locVal].filter(Boolean).join(', '), true, gfResult);
- } else {
- // ❌ Fuera de cobertura — mostrar mensaje + botón cambiar a retiro
- _wsSucursalDetectada = null;
- _wsFueraDeCoberturaActivo = true;
- const sucMasCercana = sucursalMasCercana(coords.lat, coords.lng);
- const infoSuc = ZONA_INFO_UI[sucMasCercana] || { label: sucMasCercana || 'desconocida', direccion: '' };
- result.style.background = 'rgba(239,68,68,0.08)';
- result.style.border = '1px solid rgba(239,68,68,0.4)';
+ const infoSuc = (typeof ZONA_INFO_UI !== 'undefined' && ZONA_INFO_UI[zonaLocal.sucursal]) || { label: zonaLocal.sucursal, direccion: '' };
+ result.style.background = zonaLocal.barrio_privado ? 'rgba(239,68,68,0.08)' : 'rgba(16,185,129,0.08)';
+ result.style.border = zonaLocal.barrio_privado ? '1px solid rgba(239,68,68,0.35)' : '1px solid rgba(16,185,129,0.35)';
  result.style.display = 'block';
- result.innerHTML = `
- <div style="display:flex;flex-direction:column;gap:10px;">
- <div style="display:flex;align-items:center;gap:10px;">
- <span style="font-size:24px;">😔</span>
- <div>
- <div style="font-weight:800;color:#ef4444;font-size:14px;">No llegamos a esa dirección</div>
- <div style="color:#d1d5db;font-size:12px;margin-top:2px;">Esa zona está fuera de nuestra área de entrega.</div>
- ${sucMasCercana ? `<div style="color:#9ca3af;font-size:11px;margin-top:3px;">Sucursal más cercana: <strong style="color:#fff;">${infoSuc.label}</strong></div>` : ''}
- </div>
- </div>
- <button onclick="wsCambiarARetiro()" style="
- width:100%;padding:10px 0;border-radius:10px;border:none;cursor:pointer;
- background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.5);
- color:#f59e0b;font-size:13px;font-weight:700;
- ">🏠 Cambiar a Retiro en Local</button>
- </div>`;
+ if (zonaLocal.barrio_privado) {
+ result.innerHTML =
+ '<div>' +
+ '<div style="font-weight:800;color:#ef4444;font-size:13px;margin-bottom:4px;">Barrio privado — acceso especial</div>' +
+ '<div style="color:#d1d5db;font-size:12px;">Sucursal: <strong style="color:#fff;">' + infoSuc.label + '</strong></div>' +
+ '<div style="color:#9ca3af;font-size:11px;margin-top:3px;">Zona: ' + (zonaLocal.zona || '') + '</div>' +
+ '<div style="color:#9ca3af;font-size:11px;">Nuestro cadete coordinara el ingreso</div>' +
+ '</div>';
+ } else {
+ result.innerHTML =
+ '<div>' +
+ '<div style="font-weight:800;color:#10b981;font-size:13px;margin-bottom:4px;">Llegamos a tu zona</div>' +
+ '<div style="color:#d1d5db;font-size:12px;">Sucursal: <strong style="color:#fff;">' + infoSuc.label + '</strong></div>' +
+ (zonaLocal.zona ? '<div style="color:#9ca3af;font-size:11px;margin-top:2px;">' + zonaLocal.zona + '</div>' : '') +
+ '<div style="color:#9ca3af;font-size:11px;">' + (infoSuc.direccion || '') + '</div>' +
+ '</div>';
+ }
+ } else {
+ // Fuera de cobertura — calcular sucursal más cercana
+ const sucMasCercana = (typeof sucursalMasCercana === 'function') ? sucursalMasCercana(coords.lat, coords.lng) : null;
+ _mostrarFueraDeCobertura(sucMasCercana);
+ return;
  }
  } catch(e) {
- // Error inesperado — no mostrar "podés continuar igual", pedir dirección de nuevo
  console.warn('[WelcomeDir] Error:', e.message);
  _wsSucursalDetectada = null;
  _wsFueraDeCoberturaActivo = false;
  result.style.background = 'rgba(245,158,11,0.06)';
  result.style.border = '1px solid rgba(245,158,11,0.3)';
  result.style.display = 'block';
- result.innerHTML = `
- <div style="display:flex;align-items:center;gap:10px;">
- <span style="font-size:20px;">⚠️</span>
- <div>
- <div style="font-weight:700;color:#f59e0b;font-size:13px;">No pudimos verificar la dirección</div>
- <div style="color:#d1d5db;font-size:12px;margin-top:2px;">Revisá que esté bien escrita o intentá con GPS.</div>
- </div>
- </div>`;
+ result.innerHTML =
+ '<div>' +
+ '<div style="font-weight:700;color:#f59e0b;font-size:13px;margin-bottom:4px;">No pudimos verificar la direccion</div>' +
+ '<div style="color:#d1d5db;font-size:12px;">Revisa que este bien escrita o usa GPS.</div>' +
+ '</div>';
  }
  _wsVerificarContinuar();
  }, 900);
@@ -7375,7 +7432,7 @@ async function gfCargarStats() {
 'use strict';
 
 // GeoJSON con todas las zonas de envio (fuente de verdad) 
-const GF_GEOJSON = {"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.65624,-32.9279719],[-60.6673851,-32.9205569],[-60.6708183,-32.9160898],[-60.6756249,-32.9098931],[-60.6768265,-32.9054255],[-60.6802597,-32.9029754],[-60.6852379,-32.8946157],[-60.6874695,-32.8881292],[-60.6867829,-32.8802006],[-60.6883278,-32.8741456],[-60.6895294,-32.8712621],[-60.6967392,-32.8721272],[-60.7001724,-32.8731364],[-60.704979,-32.8763082],[-60.6977692,-32.8974984],[-60.692791,-32.910974],[-60.6901302,-32.9187557],[-60.6842938,-32.9230786],[-60.6766548,-32.9288421],[-60.6737366,-32.9325882],[-60.6699729,-32.9327266],[-60.6623211,-32.9302829],[-60.65624,-32.9279719]]]},"properties":{"name":"NORTE 1","fill":"#3b82f6","fill-opacity":0.28,"stroke":"#3b82f6","stroke-width":1.5,"stroke-opacity":1}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.7195702,-32.8935347],[-60.7066097,-32.8933184],[-60.7113304,-32.8840929],[-60.7195702,-32.8935347]]]},"properties":{"name":"NORTE 2","fill":"#3b82f6","fill-opacity":0.28,"stroke":"#3b82f6","stroke-width":1.5,"stroke-opacity":1}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.7066097,-32.8933184],[-60.7063298,-32.8955522],[-60.7058577,-32.8998041],[-60.704699,-32.9013896],[-60.700107,-32.9040919],[-60.6957297,-32.9072266],[-60.6941418,-32.9071545],[-60.7000212,-32.8910838],[-60.7064156,-32.8920207],[-60.7066097,-32.8933184]]]},"properties":{"name":"NORTE 3","fill":"#3b82f6","fill-opacity":0.28,"stroke":"#3b82f6","stroke-width":1.5,"stroke-opacity":1}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.7096557,-32.8843808],[-60.702403,-32.8841646],[-60.704935,-32.8767402],[-60.7069091,-32.8785964],[-60.7085185,-32.8808309],[-60.7094197,-32.8821464],[-60.7093768,-32.8831194],[-60.7093338,-32.8839303],[-60.7096557,-32.8843808]]]},"properties":{"name":"NORTE 4","fill":"#3b82f6","fill-opacity":0.28,"stroke":"#3b82f6","stroke-width":1.5,"stroke-opacity":1}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.6987869,-32.8709556],[-60.6988727,-32.8703789],[-60.7001602,-32.8661255],[-60.6908046,-32.8657651],[-60.6914054,-32.8628092],[-60.6929504,-32.8600695],[-60.6950103,-32.8550946],[-60.7035934,-32.8552388],[-60.7051383,-32.8506242],[-60.6959545,-32.8501195],[-60.6982719,-32.838077],[-60.7013618,-32.838077],[-60.7017051,-32.8356972],[-60.7110607,-32.8361299],[-60.7118331,-32.8367789],[-60.7125198,-32.8413222],[-60.7150089,-32.8447835],[-60.7193862,-32.849759],[-60.7224761,-32.8536526],[-60.7229053,-32.8549504],[-60.7185279,-32.8657651],[-60.716983,-32.8657651],[-60.7167255,-32.8717486],[-60.7066833,-32.8712439],[-60.7051383,-32.8750646],[-60.6987869,-32.8709556]]]},"properties":{"name":"NORTE | ZONA BAIGORRIA","fill":"#3b82f6","fill-opacity":0.28,"stroke":"#3b82f6","stroke-width":1.5,"stroke-opacity":1}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.6736608,-32.9743097],[-60.6757538,-32.9819087],[-60.6765262,-32.9833486],[-60.6768696,-32.9838526],[-60.6765262,-32.9851486],[-60.6780712,-32.9916999],[-60.6785862,-32.9963072],[-60.6774704,-32.9996905],[-60.6780712,-33.0029297],[-60.6772987,-33.0070326],[-60.6683723,-33.0122868],[-60.6597892,-33.0151657],[-60.6512062,-33.0160293],[-60.6398765,-33.0156695],[-60.6354992,-33.0111352],[-60.6262294,-33.0040814],[-60.6208221,-33.0039375],[-60.6185047,-32.9999784],[-60.6187622,-32.9956593],[-60.6209938,-32.9934277],[-60.628461,-32.9934277],[-60.6282894,-32.9825567],[-60.6736608,-32.9743097]]]},"properties":{"name":"ZONA SUR","fill":"#10b981","fill-opacity":0.28,"stroke":"#10b981","stroke-width":1.5,"stroke-opacity":1}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.6183701,-33.0018199],[-60.6175976,-33.0103853],[-60.6161385,-33.0125446],[-60.6136494,-33.0085859],[-60.6136494,-33.0061387],[-60.6151085,-33.0028276],[-60.6157093,-33.001244],[-60.6183701,-33.0018199]]]},"properties":{"name":"GALVEZ 1","fill":"#10b981","fill-opacity":0.28,"stroke":"#10b981","stroke-width":1.5,"stroke-opacity":1}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.6161385,-33.0125446],[-60.6206875,-33.0155778],[-60.6353645,-33.0161535],[-60.6436043,-33.0187444],[-60.6345921,-33.0336406],[-60.6273823,-33.0419152],[-60.6109886,-33.0414835],[-60.6181984,-33.0326332],[-60.6155377,-33.0326332],[-60.6163101,-33.027884],[-60.6127052,-33.0276681],[-60.6132202,-33.0136345],[-60.615366,-33.0134906],[-60.6161385,-33.0125446]]]},"properties":{"name":"GALVEZ 2","fill":"#10b981","fill-opacity":0.28,"stroke":"#10b981","stroke-width":1.5,"stroke-opacity":1}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.656436,-33.034648],[-60.6557493,-33.0329211],[-60.6560497,-33.031338],[-60.6561356,-33.0297909],[-60.6559639,-33.0287835],[-60.6550198,-33.0283517],[-60.6618433,-33.0284956],[-60.6619721,-33.0347919],[-60.656436,-33.034648]]]},"properties":{"name":"GALVEZ 3","fill":"#10b981","fill-opacity":0.28,"stroke":"#10b981","stroke-width":1.5,"stroke-opacity":1}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.6560927,-33.0339285],[-60.6566935,-33.0368067],[-60.6442909,-33.036267],[-60.6353216,-33.0323454],[-60.6372957,-33.0293951],[-60.6397848,-33.0293951],[-60.6400852,-33.0257971],[-60.6494408,-33.025977],[-60.6494408,-33.0285316],[-60.6553202,-33.0286036],[-60.6560068,-33.0292512],[-60.6560068,-33.0304385],[-60.6558352,-33.0316258],[-60.6557493,-33.0329211],[-60.6560927,-33.0339285]]]},"properties":{"name":"GALVEZ 4","fill":"#10b981","fill-opacity":0.28,"stroke":"#10b981","stroke-width":1.5,"stroke-opacity":1}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.7769835,-32.9277622],[-60.7777559,-32.922503],[-60.8662115,-32.9068946],[-60.8695769,-32.92072],[-60.8663153,-32.9229535],[-60.8642125,-32.9234938],[-60.8665299,-32.9251869],[-60.8661437,-32.9308783],[-60.7769835,-32.9277622]]]},"properties":{"name":"FUNES 1","fill":"#a855f7","fill-opacity":0.28,"stroke":"#a855f7","stroke-width":1.5,"stroke-opacity":1}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.8235038,-32.9140698],[-60.795008,-32.9191854],[-60.7938064,-32.9158711],[-60.7902015,-32.9160152],[-60.7886565,-32.9089538],[-60.796553,-32.898721],[-60.7974971,-32.8936041],[-60.8171523,-32.8937483],[-60.816294,-32.9107552],[-60.8192981,-32.9108993],[-60.8204139,-32.9119802],[-60.8227313,-32.9121963],[-60.8235038,-32.9140698]]]},"properties":{"name":"FUNES 2","fill":"#a855f7","fill-opacity":0.28,"stroke":"#a855f7","stroke-width":1.5,"stroke-opacity":1}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.7985506,-32.9286532],[-60.8357153,-32.92995],[-60.8360157,-32.93366],[-60.8315096,-32.9352448],[-60.8261881,-32.9379822],[-60.8197079,-32.9394228],[-60.815116,-32.9402872],[-60.809494,-32.9411876],[-60.8027134,-32.9414397],[-60.8028422,-32.9343444],[-60.7981644,-32.9340922],[-60.7985506,-32.9286532]]]},"properties":{"name":"FUNES 3","fill":"#a855f7","fill-opacity":0.28,"stroke":"#a855f7","stroke-width":1.5,"stroke-opacity":1}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.8353641,-32.9349538],[-60.8376815,-32.9370429],[-60.8378532,-32.9397802],[-60.8378532,-32.9448943],[-60.8365657,-32.9514487],[-60.8298709,-32.9519529],[-60.8191421,-32.9514487],[-60.8201721,-32.9402844],[-60.8272102,-32.9383395],[-60.8342483,-32.9349538],[-60.8353641,-32.9349538]]]},"properties":{"name":"FUNES 4","description":"BARRIO PRIVADO KENTUCY","fill":"#a855f7","fill-opacity":0.28,"stroke":"#a855f7","stroke-width":1.5,"stroke-opacity":1}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.7841382,-32.9210299],[-60.7693753,-32.9231193],[-60.7673154,-32.9197331],[-60.7639465,-32.9189225],[-60.7613502,-32.9178958],[-60.7599769,-32.9174635],[-60.7596765,-32.9184362],[-60.7537541,-32.918148],[-60.7522092,-32.916707],[-60.7518659,-32.9143292],[-60.7596765,-32.9144733],[-60.7602773,-32.9173554],[-60.7606206,-32.9092133],[-60.7473168,-32.908853],[-60.7474885,-32.9016469],[-60.7710919,-32.9022955],[-60.7752977,-32.9093574],[-60.7764993,-32.9100059],[-60.7766709,-32.9151218],[-60.7821641,-32.9147615],[-60.7841382,-32.9210299]]]},"properties":{"name":"FUNES 5","fill":"#a855f7","fill-opacity":0.28,"stroke":"#a855f7","stroke-width":1.5,"stroke-opacity":1}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.7596765,-32.9144733],[-60.7518659,-32.9143292],[-60.7473168,-32.908853],[-60.7598481,-32.9095015],[-60.7596765,-32.9144733]]]},"properties":{"name":"FUNES 6 | FISHERTON","description":"BARRIO PRIVADO","fill":"#a855f7","fill-opacity":0.28,"stroke":"#a855f7","stroke-width":1.5,"stroke-opacity":1}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.7474885,-32.9016469],[-60.7377038,-32.899485],[-60.7375321,-32.8948726],[-60.7475743,-32.8950168],[-60.7474885,-32.9016469]]]},"properties":{"name":"FUNES 7 | FISHERTON","description":"BARRIO PRIV FISHERTON","fill":"#a855f7","fill-opacity":0.28,"stroke":"#a855f7","stroke-width":1.5,"stroke-opacity":1}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.7691822,-32.9232235],[-60.7570372,-32.9245563],[-60.7562218,-32.9199093],[-60.7589898,-32.9199813],[-60.7598481,-32.919513],[-60.7600842,-32.9175857],[-60.7669506,-32.9196571],[-60.7691822,-32.9232235]]]},"properties":{"name":"FUN 8 | FISHERTON","description":"GOLF CLUB BARRIO PRIVADO","fill":"#a855f7","fill-opacity":0.28,"stroke":"#a855f7","stroke-width":1.5,"stroke-opacity":1}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.7271657,-32.9348487],[-60.7278523,-32.9189451],[-60.7562218,-32.9199093],[-60.7570348,-32.924889],[-60.7569489,-32.9260778],[-60.7388387,-32.9283111],[-60.7385383,-32.9353709],[-60.7271657,-32.9348487]]]},"properties":{"name":"FUNES 9 | FISHERTON","fill":"#a855f7","fill-opacity":0.28,"stroke":"#a855f7","stroke-width":1.5,"stroke-opacity":1}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.7775834,-32.9227218],[-60.7769835,-32.9277622],[-60.769687,-32.9275488],[-60.7623485,-32.9346087],[-60.7624343,-32.9365897],[-60.7589153,-32.9363735],[-60.7590869,-32.9329878],[-60.7536796,-32.9328437],[-60.7542375,-32.9281971],[-60.7522205,-32.928053],[-60.7521346,-32.9266122],[-60.7573703,-32.9260358],[-60.7570372,-32.9245563],[-60.7773259,-32.9221814],[-60.7775834,-32.9227218]]]},"properties":{"name":"FUNES 10 | FISHERTON","fill":"#a855f7","fill-opacity":0.28,"stroke":"#a855f7","stroke-width":1.5,"stroke-opacity":1}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.6318704,-32.979213],[-60.6269351,-32.9598787],[-60.6212274,-32.960923],[-60.6233302,-32.9555576],[-60.6252614,-32.9530729],[-60.626506,-32.95012],[-60.6287376,-32.9462666],[-60.6333295,-32.9410444],[-60.639166,-32.9365784],[-60.6469337,-32.9317158],[-60.6524698,-32.9289063],[-60.6555167,-32.9282939],[-60.6611387,-32.9305272],[-60.6679193,-32.9327604],[-60.6737558,-32.9334087],[-60.6779186,-32.9334087],[-60.6847421,-32.9602388],[-60.6709234,-32.9626513],[-60.6739703,-32.9742448],[-60.6367198,-32.981049],[-60.6359903,-32.978565],[-60.6318704,-32.979213]]]},"properties":{"name":"PELLEGRINI","fill":"#f59e0b","fill-opacity":0.28,"stroke":"#f59e0b","stroke-width":1.5,"stroke-opacity":1}}]};
+const GF_GEOJSON = {"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.65624,-32.9279719,0],[-60.6673851,-32.9205569,0],[-60.6708183,-32.9160898,0],[-60.6756249,-32.9098931,0],[-60.6768265,-32.9054255,0],[-60.6802597,-32.9029754,0],[-60.6852379,-32.8946157,0],[-60.6874695,-32.8881292,0],[-60.6867829,-32.8802006,0],[-60.6883278,-32.8741456,0],[-60.6895294,-32.8712621,0],[-60.6967392,-32.8721272,0],[-60.7001724,-32.8731364,0],[-60.704979,-32.8763082,0],[-60.6977692,-32.8974984,0],[-60.692791,-32.910974,0],[-60.6901302,-32.9187557,0],[-60.6842938,-32.9230786,0],[-60.6766548,-32.9288421,0],[-60.6737366,-32.9325882,0],[-60.6699729,-32.9327266,0],[-60.6623211,-32.9302829,0],[-60.65624,-32.9279719,0]]]},"properties":{"name":"NORTE 1","styleUrl":"#poly-1A237E-1200-77-nodesc","fill-opacity":0.30196078431372547,"fill":"#1a237e","stroke-opacity":1,"stroke":"#1a237e","stroke-width":1.2,"sucursal":"Norte","barrio_privado":false}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.7195702,-32.8935347,0],[-60.7066097,-32.8933184,0],[-60.7113304,-32.8840929,0],[-60.7195702,-32.8935347,0]]]},"properties":{"name":"NORTE 2","styleUrl":"#poly-1A237E-1200-77-nodesc","fill-opacity":0.30196078431372547,"fill":"#1a237e","stroke-opacity":1,"stroke":"#1a237e","stroke-width":1.2,"sucursal":"Norte","barrio_privado":false}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.7066097,-32.8933184,0],[-60.7063298,-32.8955522,0],[-60.7058577,-32.8998041,0],[-60.704699,-32.9013896,0],[-60.700107,-32.9040919,0],[-60.6957297,-32.9072266,0],[-60.6941418,-32.9071545,0],[-60.7000212,-32.8910838,0],[-60.7064156,-32.8920207,0],[-60.7066097,-32.8933184,0]]]},"properties":{"name":"NORTE 3","styleUrl":"#poly-1A237E-1200-77-nodesc","fill-opacity":0.30196078431372547,"fill":"#1a237e","stroke-opacity":1,"stroke":"#1a237e","stroke-width":1.2,"sucursal":"Norte","barrio_privado":false}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.7096557,-32.8843808,0],[-60.702403,-32.8841646,0],[-60.704935,-32.8767402,0],[-60.7069091,-32.8785964,0],[-60.7085185,-32.8808309,0],[-60.7094197,-32.8821464,0],[-60.7093768,-32.8831194,0],[-60.7093338,-32.8839303,0],[-60.7096557,-32.8843808,0]]]},"properties":{"name":"NORTE 4","styleUrl":"#poly-3949AB-1200-77-nodesc","fill-opacity":0.30196078431372547,"fill":"#3949ab","stroke-opacity":1,"stroke":"#3949ab","stroke-width":1.2,"sucursal":"Norte","barrio_privado":false}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.6987869,-32.8709556,0],[-60.6988727,-32.8703789,0],[-60.7001602,-32.8661255,0],[-60.6908046,-32.8657651,0],[-60.6914054,-32.8628092,0],[-60.6929504,-32.8600695,0],[-60.6950103,-32.8550946,0],[-60.7035934,-32.8552388,0],[-60.7051383,-32.8506242,0],[-60.6959545,-32.8501195,0],[-60.6982719,-32.838077,0],[-60.7013618,-32.838077,0],[-60.7017051,-32.8356972,0],[-60.7110607,-32.8361299,0],[-60.7118331,-32.8367789,0],[-60.7125198,-32.8413222,0],[-60.7150089,-32.8447835,0],[-60.7193862,-32.849759,0],[-60.7224761,-32.8536526,0],[-60.7229053,-32.8549504,0],[-60.7185279,-32.8657651,0],[-60.716983,-32.8657651,0],[-60.7167255,-32.8717486,0],[-60.7066833,-32.8712439,0],[-60.7051383,-32.8750646,0],[-60.6987869,-32.8709556,0]]]},"properties":{"name":"NORTE | ZONA BAIGORRIA","styleUrl":"#poly-1A237E-1200-77-nodesc","fill-opacity":0.30196078431372547,"fill":"#1a237e","stroke-opacity":1,"stroke":"#1a237e","stroke-width":1.2,"sucursal":"Norte","barrio_privado":false}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.6736608,-32.9743097,0],[-60.6757538,-32.9819087,0],[-60.6765262,-32.9833486,0],[-60.6768696,-32.9838526,0],[-60.6765262,-32.9851486,0],[-60.6780712,-32.9916999,0],[-60.6785862,-32.9963072,0],[-60.6774704,-32.9996905,0],[-60.6780712,-33.0029297,0],[-60.6772987,-33.0070326,0],[-60.6683723,-33.0122868,0],[-60.6597892,-33.0151657,0],[-60.6512062,-33.0160293,0],[-60.6398765,-33.0156695,0],[-60.6354992,-33.0111352,0],[-60.6262294,-33.0040814,0],[-60.6208221,-33.0039375,0],[-60.6185047,-32.9999784,0],[-60.6187622,-32.9956593,0],[-60.6209938,-32.9934277,0],[-60.628461,-32.9934277,0],[-60.6282894,-32.9825567,0],[-60.6736608,-32.9743097,0]]]},"properties":{"name":"ZONA SUR","styleUrl":"#poly-7CB342-1200-77-nodesc","fill-opacity":0.30196078431372547,"fill":"#7cb342","stroke-opacity":1,"stroke":"#7cb342","stroke-width":1.2,"sucursal":"Sur","barrio_privado":false}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.6183701,-33.0018199,0],[-60.6175976,-33.0103853,0],[-60.6161385,-33.0125446,0],[-60.6136494,-33.0085859,0],[-60.6136494,-33.0061387,0],[-60.6151085,-33.0028276,0],[-60.6157093,-33.001244,0],[-60.6183701,-33.0018199,0]]]},"properties":{"name":"GALVEZ 1","styleUrl":"#poly-7CB342-1200-77-nodesc","fill-opacity":0.30196078431372547,"fill":"#7cb342","stroke-opacity":1,"stroke":"#7cb342","stroke-width":1.2,"sucursal":"Sur","barrio_privado":false}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.6161385,-33.0125446,0],[-60.6206875,-33.0155778,0],[-60.6353645,-33.0161535,0],[-60.6436043,-33.0187444,0],[-60.6345921,-33.0336406,0],[-60.6273823,-33.0419152,0],[-60.6109886,-33.0414835,0],[-60.6181984,-33.0326332,0],[-60.6155377,-33.0326332,0],[-60.6163101,-33.027884,0],[-60.6127052,-33.0276681,0],[-60.6132202,-33.0136345,0],[-60.615366,-33.0134906,0],[-60.6161385,-33.0125446,0]]]},"properties":{"name":"GALVEZ 2","styleUrl":"#poly-7CB342-1200-77-nodesc","fill-opacity":0.30196078431372547,"fill":"#7cb342","stroke-opacity":1,"stroke":"#7cb342","stroke-width":1.2,"sucursal":"Sur","barrio_privado":false}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.656436,-33.034648,0],[-60.6557493,-33.0329211,0],[-60.6560497,-33.031338,0],[-60.6561356,-33.0297909,0],[-60.6559639,-33.0287835,0],[-60.6550198,-33.0283517,0],[-60.6618433,-33.0284956,0],[-60.6619721,-33.0347919,0],[-60.656436,-33.034648,0]]]},"properties":{"name":"GALVEZ 3","styleUrl":"#poly-7CB342-1200-77-nodesc","fill-opacity":0.30196078431372547,"fill":"#7cb342","stroke-opacity":1,"stroke":"#7cb342","stroke-width":1.2,"sucursal":"Sur","barrio_privado":false}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.6560927,-33.0339285,0],[-60.6566935,-33.0368067,0],[-60.6442909,-33.036267,0],[-60.6353216,-33.0323454,0],[-60.6372957,-33.0293951,0],[-60.6397848,-33.0293951,0],[-60.6400852,-33.0257971,0],[-60.6494408,-33.025977,0],[-60.6494408,-33.0285316,0],[-60.6553202,-33.0286036,0],[-60.6560068,-33.0292512,0],[-60.6560068,-33.0304385,0],[-60.6558352,-33.0316258,0],[-60.6557493,-33.0329211,0],[-60.6560927,-33.0339285,0]]]},"properties":{"name":"GALVEZ 4","styleUrl":"#poly-7CB342-1200-77-nodesc","fill-opacity":0.30196078431372547,"fill":"#7cb342","stroke-opacity":1,"stroke":"#7cb342","stroke-width":1.2,"sucursal":"Sur","barrio_privado":false}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.7769835,-32.9277622,0],[-60.7777559,-32.922503,0],[-60.8662115,-32.9068946,0],[-60.8695769,-32.92072,0],[-60.8663153,-32.9229535,0],[-60.8642125,-32.9234938,0],[-60.8665299,-32.9251869,0],[-60.8661437,-32.9308783,0],[-60.7769835,-32.9277622,0]]]},"properties":{"name":"FUNES 1","styleUrl":"#poly-9C27B0-1200-77-nodesc","fill-opacity":0.30196078431372547,"fill":"#9c27b0","stroke-opacity":1,"stroke":"#9c27b0","stroke-width":1.2,"sucursal":"Funes","barrio_privado":false}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.8235038,-32.9140698,0],[-60.795008,-32.9191854,0],[-60.7938064,-32.9158711,0],[-60.7902015,-32.9160152,0],[-60.7886565,-32.9089538,0],[-60.796553,-32.898721,0],[-60.7974971,-32.8936041,0],[-60.8171523,-32.8937483,0],[-60.816294,-32.9107552,0],[-60.8192981,-32.9108993,0],[-60.8204139,-32.9119802,0],[-60.8227313,-32.9121963,0],[-60.8235038,-32.9140698,0]]]},"properties":{"name":"FUNES 2","styleUrl":"#poly-9C27B0-1200-77-nodesc","fill-opacity":0.30196078431372547,"fill":"#9c27b0","stroke-opacity":1,"stroke":"#9c27b0","stroke-width":1.2,"sucursal":"Funes","barrio_privado":false}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.7985506,-32.9286532,0],[-60.8357153,-32.92995,0],[-60.8360157,-32.93366,0],[-60.8315096,-32.9352448,0],[-60.8261881,-32.9379822,0],[-60.8197079,-32.9394228,0],[-60.815116,-32.9402872,0],[-60.809494,-32.9411876,0],[-60.8027134,-32.9414397,0],[-60.8028422,-32.9343444,0],[-60.7981644,-32.9340922,0],[-60.7985506,-32.9286532,0]]]},"properties":{"name":"FUNES 3","styleUrl":"#poly-9C27B0-1200-77-nodesc","fill-opacity":0.30196078431372547,"fill":"#9c27b0","stroke-opacity":1,"stroke":"#9c27b0","stroke-width":1.2,"sucursal":"Funes","barrio_privado":false}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.8353641,-32.9349538,0],[-60.8376815,-32.9370429,0],[-60.8378532,-32.9397802,0],[-60.8378532,-32.9448943,0],[-60.8365657,-32.9514487,0],[-60.8298709,-32.9519529,0],[-60.8191421,-32.9514487,0],[-60.8201721,-32.9402844,0],[-60.8272102,-32.9383395,0],[-60.8342483,-32.9349538,0],[-60.8353641,-32.9349538,0]]]},"properties":{"name":"FUNES 4","description":"BARRIO PRIVADO KENTUCY","styleUrl":"#poly-9C27B0-1200-77","fill-opacity":0.30196078431372547,"fill":"#9c27b0","stroke-opacity":1,"stroke":"#9c27b0","stroke-width":1.2,"sucursal":"Funes","barrio_privado":true}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.7841382,-32.9210299,0],[-60.7693753,-32.9231193,0],[-60.7673154,-32.9197331,0],[-60.7639465,-32.9189225,0],[-60.7613502,-32.9178958,0],[-60.7599769,-32.9174635,0],[-60.7596765,-32.9184362,0],[-60.7537541,-32.918148,0],[-60.7522092,-32.916707,0],[-60.7518659,-32.9143292,0],[-60.7596765,-32.9144733,0],[-60.7602773,-32.9173554,0],[-60.7606206,-32.9092133,0],[-60.7473168,-32.908853,0],[-60.7474885,-32.9016469,0],[-60.7710919,-32.9022955,0],[-60.7752977,-32.9093574,0],[-60.7764993,-32.9100059,0],[-60.7766709,-32.9151218,0],[-60.7821641,-32.9147615,0],[-60.7841382,-32.9210299,0]]]},"properties":{"name":"FUNES 5","styleUrl":"#poly-9C27B0-1200-77-nodesc","fill-opacity":0.30196078431372547,"fill":"#9c27b0","stroke-opacity":1,"stroke":"#9c27b0","stroke-width":1.2,"sucursal":"Funes","barrio_privado":false}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.7596765,-32.9144733,0],[-60.7518659,-32.9143292,0],[-60.7473168,-32.908853,0],[-60.7598481,-32.9095015,0],[-60.7596765,-32.9144733,0]]]},"properties":{"name":"FUNES 6 | FISHERTON","description":"BARRIO PRIVADO","styleUrl":"#poly-9C27B0-1200-77","fill-opacity":0.30196078431372547,"fill":"#9c27b0","stroke-opacity":1,"stroke":"#9c27b0","stroke-width":1.2,"sucursal":"Funes","barrio_privado":true}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.7474885,-32.9016469,0],[-60.7377038,-32.899485,0],[-60.7375321,-32.8948726,0],[-60.7475743,-32.8950168,0],[-60.7474885,-32.9016469,0]]]},"properties":{"name":"FUNES 7 | FISHERTON","description":"BARRIO PRIV FISHERTON","styleUrl":"#poly-9C27B0-1200-77","fill-opacity":0.30196078431372547,"fill":"#9c27b0","stroke-opacity":1,"stroke":"#9c27b0","stroke-width":1.2,"sucursal":"Funes","barrio_privado":false}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.7691822,-32.9232235,0],[-60.7570372,-32.9245563,0],[-60.7562218,-32.9199093,0],[-60.7589898,-32.9199813,0],[-60.7598481,-32.919513,0],[-60.7600842,-32.9175857,0],[-60.7669506,-32.9196571,0],[-60.7691822,-32.9232235,0]]]},"properties":{"name":"FUN 8 | FISHERTON","description":"GOLF CLUB BARRIO PRIVADO","styleUrl":"#poly-9C27B0-1200-77","fill-opacity":0.30196078431372547,"fill":"#9c27b0","stroke-opacity":1,"stroke":"#9c27b0","stroke-width":1.2,"sucursal":"Funes","barrio_privado":true}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.7271657,-32.9348487,0],[-60.7278523,-32.9189451,0],[-60.7562218,-32.9199093,0],[-60.7570348,-32.924889,0],[-60.7569489,-32.9260778,0],[-60.7388387,-32.9283111,0],[-60.7385383,-32.9353709,0],[-60.7271657,-32.9348487,0]]]},"properties":{"name":"funes 9 | FISHERTON","styleUrl":"#poly-9C27B0-1200-77-nodesc","fill-opacity":0.30196078431372547,"fill":"#9c27b0","stroke-opacity":1,"stroke":"#9c27b0","stroke-width":1.2,"sucursal":"Funes","barrio_privado":false}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.7775834,-32.9227218,0],[-60.7769835,-32.9277622,0],[-60.769687,-32.9275488,0],[-60.7623485,-32.9346087,0],[-60.7624343,-32.9365897,0],[-60.7589153,-32.9363735,0],[-60.7590869,-32.9329878,0],[-60.7536796,-32.9328437,0],[-60.7542375,-32.9281971,0],[-60.7522205,-32.928053,0],[-60.7521346,-32.9266122,0],[-60.7573703,-32.9260358,0],[-60.7570372,-32.9245563,0],[-60.7773259,-32.9221814,0],[-60.7775834,-32.9227218,0]]]},"properties":{"name":"FUNES 10 | FISHERTON","styleUrl":"#poly-9C27B0-1200-77-nodesc","fill-opacity":0.30196078431372547,"fill":"#9c27b0","stroke-opacity":1,"stroke":"#9c27b0","stroke-width":1.2,"sucursal":"Funes","barrio_privado":false}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-60.6318704,-32.979213,0],[-60.6269351,-32.9598787,0],[-60.6212274,-32.960923,0],[-60.6233302,-32.9555576,0],[-60.6252614,-32.9530729,0],[-60.626506,-32.95012,0],[-60.6287376,-32.9462666,0],[-60.6333295,-32.9410444,0],[-60.639166,-32.9365784,0],[-60.6469337,-32.9317158,0],[-60.6524698,-32.9289063,0],[-60.6555167,-32.9282939,0],[-60.6611387,-32.9305272,0],[-60.6679193,-32.9327604,0],[-60.6737558,-32.9334087,0],[-60.6779186,-32.9334087,0],[-60.6847421,-32.9602388,0],[-60.6709234,-32.9626513,0],[-60.6739703,-32.9742448,0],[-60.6367198,-32.981049,0],[-60.6359903,-32.978565,0],[-60.6318704,-32.979213,0]]]},"properties":{"name":"PELLEGRINI","styleUrl":"#poly-FFD600-1200-77-nodesc","fill-opacity":0.30196078431372547,"fill":"#ffd600","stroke-opacity":1,"stroke":"#ffd600","stroke-width":1.2,"sucursal":"Centro","barrio_privado":false}}]};
 
 // Constantes 
 const GF_ADMINS = ['ulises', 'leticia'];

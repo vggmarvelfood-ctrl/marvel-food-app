@@ -1433,22 +1433,85 @@ try {
  animation: gfSpin .8s linear infinite;
 }
 @keyframes gfSpin { to { transform: rotate(360deg); } }
+
+/* ===== COMPATIBILIDAD DISPOSITIVOS DE GAMA BAJA (Moto E14, Android Go, etc.) =====
+ * 1. Elimina backdrop-filter (rompe en WebView antiguo y consume GPU)
+ * 2. Reduce animaciones en modo reducido
+ * 3. Evita will-change innecesario
+ ================================================================================ */
+@supports not (backdrop-filter: blur(1px)) {
+ .bottom-nav, .top-header.scrolled {
+ background: rgba(18,18,18,0.98) !important;
+ backdrop-filter: none !important;
+ }
+ .hero-btn-secondary {
+ background: rgba(30,30,30,0.9) !important;
+ backdrop-filter: none !important;
+ }
+ .modal-sheet {
+ backdrop-filter: none !important;
+ }
+}
+/* Para dispositivos que prefieren reducir movimiento (Accessibility + batería) */
+@media (prefers-reduced-motion: reduce) {
+ *, *::before, *::after {
+ animation-duration: 0.01ms !important;
+ animation-iteration-count: 1 !important;
+ transition-duration: 0.01ms !important;
+ }
+ .hero-slide .hero-bg-img { animation: none !important; }
+ .splash-logo { animation: none !important; }
+}
+/* Pantallas muy pequeñas (≤360px de ancho — Android Go típico) */
+@media (max-width: 360px) {
+ .hero-title { font-size: 34px !important; }
+ .hero-subtitle { font-size: 13px !important; }
+ .brand-name { font-size: 15px !important; }
+ .bottom-nav { padding: 8px 2px !important; }
+ .nav-item { font-size: 9px !important; }
+}
 </style>
-<!-- Leaflet CSS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-<!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<!-- Turf.js -->
-<script src="https://cdn.jsdelivr.net/npm/@turf/turf@7.0.0/turf.min.js"></script>
-<!-- toGeoJSON (importar KML desde panel admin) -->
-<script src="https://cdn.jsdelivr.net/npm/@tmcw/togeojson@5/dist/togeojson.umd.js"></script>
-</head><body> <!-- 
- GEO-FENCING v2 — CDN dependencies (Turf + toGeoJSON)
- Cargados en <body> temprano para que estén disponibles
- cuando se inicialice GeoFencing.init(window.db)
- -->
-<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tmcw/togeojson@5/dist/togeojson.umd.js"></script>
+<!-- Leaflet CSS — solo para panel admin, se carga con media=print para no bloquear -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" media="print" onload="this.media='all'" crossorigin=""/>
+<!-- Leaflet JS — diferido, solo necesario en panel admin -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer crossorigin=""></script>
+<!-- Turf.js v6 — una sola versión, diferida -->
+<!-- toGeoJSON — diferida -->
+</head><body><!-- GEO-FENCING v2 — libs cargadas de forma lazy solo cuando se necesitan
+ Turf.js y toGeoJSON se inyectan dinámicamente al abrir el panel admin
+ o al hacer la primera consulta de geofencing, para no bloquear la carga inicial -->
+<script>
+// Lazy loader de librerías pesadas — evita bloquear el hilo principal en dispositivos de baja gama
+window._libsLoaded = false;
+window._loadGeoLibs = function() {
+  if (window._libsLoaded) return Promise.resolve();
+  return new Promise(function(resolve) {
+    var loaded = 0;
+    var needed = 2;
+    function check() { if (++loaded >= needed) { window._libsLoaded = true; resolve(); } }
+    // Turf.js v6
+    if (typeof turf === 'undefined') {
+      var ts = document.createElement('script');
+      ts.src = 'https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js';
+      ts.onload = check; ts.onerror = check;
+      document.head.appendChild(ts);
+    } else { check(); }
+    // toGeoJSON
+    if (typeof toGeoJSON === 'undefined') {
+      var gs = document.createElement('script');
+      gs.src = 'https://cdn.jsdelivr.net/npm/@tmcw/togeojson@5/dist/togeojson.umd.js';
+      gs.onload = check; gs.onerror = check;
+      document.head.appendChild(gs);
+    } else { check(); }
+  });
+};
+// Pre-cargar libs en background cuando el browser esté idle (no bloquea nada)
+if (window.requestIdleCallback) {
+  requestIdleCallback(function() { window._loadGeoLibs(); }, { timeout: 5000 });
+} else {
+  setTimeout(function() { window._loadGeoLibs(); }, 3000);
+}
+</script>
 <div id="offline-banner"> Sin conexión — algunos datos pueden estar desactualizados</div>
 <script>
 // SISTEMA BÁSICO DE DIAGNÓSTICO DE ERRORES 
@@ -1501,12 +1564,25 @@ try {
 // Detector de conexión en tiempo real 
 (function() {
  function setBanner(isOffline) {
- const b = document.getElementById('offline-banner');
+ var b = document.getElementById('offline-banner');
  if (b) b.classList.toggle('show', isOffline);
  }
- window.addEventListener('online', () => setBanner(false));
- window.addEventListener('offline', () => setBanner(true));
+ window.addEventListener('online', function() { setBanner(false); });
+ window.addEventListener('offline', function() { setBanner(true); });
  if (!navigator.onLine) setBanner(true);
+
+ // BARRERA ANTI-PANTALLA-BLANCA: si la página no se interactua en 12 segundos
+ // y hay un splash visible, lo ocultamos para que el usuario vea el menú
+ var _splashSafetyTimer = setTimeout(function() {
+ try {
+ var splash = document.getElementById('app-splash');
+ if (splash && splash.style.display !== 'none') {
+ splash.classList.add('hide');
+ setTimeout(function() { splash.style.display = 'none'; }, 600);
+ }
+ } catch(e) {}
+ }, 12000);
+ window.addEventListener('load', function() { clearTimeout(_splashSafetyTimer); });
 })();
 </script><div id="toast">¡Agregado al pedido!</div><!-- PANTALLA DE BIENVENIDA / VERIFICACIÓN DE ZONA --><div id="welcome-screen" style="
  position:fixed; inset:0; z-index:99000;
@@ -1524,7 +1600,7 @@ try {
  /><p style="color:#f59e0b;font-size:11px;font-weight:700;margin:0 0 12px;text-align:center;letter-spacing:.3px;">Ingresá dirección y localidad para continuar</p><!-- Resultado zona --><div id="ws-zona-result" style="display:none;border-radius:12px;padding:14px;margin-bottom:14px;"></div></div><!-- Sección RETIRO --><div id="ws-seccion-retiro" style="display:none;"><p style="color:#d1d5db;font-size:13px;margin:0 0 12px;font-weight:600;">Seleccioná el local de retiro:</p><select id="ws-sucursal-retiro" onchange="wsRetiroSucursalChange()" style="width:100%;padding:14px;border-radius:12px;border:1px solid #444;background:#1a1a1a;color:#fff;font-size:14px;font-weight:600;outline:none;margin-bottom:12px;"><option value="" disabled selected>Elegí tu sucursal...</option><option value="Centro">(Pellegrini 1149) Rosario, Centro</option><option value="Norte">(Rondeau 2430) Rosario, Norte — Baigorria</option><option value="Sur">(San Martin 1808) Rosario Sur / V.G.Gálvez</option><option value="Funes">(RN9 972) Funes — Fisherton</option></select><div id="ws-retiro-info" style="display:none;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:12px;padding:12px;margin-bottom:14px;"><div style="font-weight:800;color:#f59e0b;font-size:13px;" id="ws-retiro-nombre"></div><div style="color:#9ca3af;font-size:12px;margin-top:3px;" id="ws-retiro-addr"></div></div></div><!-- Botón continuar --><button id="ws-btn-continuar" onclick="welcomeContinuar()" disabled style="width:100%;padding:16px;border-radius:14px;border:none;background:#444;color:#888;font-weight:800;font-size:15px;cursor:not-allowed;transition:.3s;">Continuar →</button></div></div><!-- FIN PANTALLA DE BIENVENIDA --><!-- SPLASH DE CARGA -->
 <div id="app-splash" style="display:none;"></div>
 <!-- -->
-<div class="hero-slider" id="hero-slider"><!-- SLIDE 1: Hulk --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/CsY32Zpc/Hulk-6.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> DESTACADO DEL MENÚ</div><h1 class="hero-title">LA MEJOR<br>DE LA CARTA<br><span>Nuestra Hulk</span></h1><p class="hero-subtitle">Doble carne, cheddar, panceta, cebolla caramelizada y bbq.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Pedir Ahora</button><button class="hero-btn-secondary" onclick="scrollToMenu()">Ver Menú</button></div></div></div><!-- SLIDE 2: Compartir --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/sp9f92tD/DSC04607.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> ESPECIAL</div><h1 class="hero-title">COMPARTIR<br><span>Una Marvel</span></h1><p class="hero-subtitle">¡No hay 1 sin 2! Invitá a alguien y disfrutá juntos.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Aprovechar</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);})()">Ver Promos</button></div></div></div><!-- SLIDE 3: Combo --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/gLZH7hJW/DSC04609.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> COMBOS</div><h1 class="hero-title">ARMÁ TU<br><span>Combo Perfecto</span></h1><p class="hero-subtitle">¿Papas, Nuggets o Aros de cebolla? Elegí lo tuyo.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Pedir Combo</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);})()">Ver Promos</button></div></div></div><!-- SLIDE 4: Promos --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/wNQdcXh6/Dr-Strange-8.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> OFERTAS ACTIVAS</div><h1 class="hero-title">PROMOS<br><span>Para Vos</span></h1><p class="hero-subtitle">Las mejores promos del momento. ¡No te las pierdas!</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);scrollToMenu&&scrollToMenu();})()">Ver Promos</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-perfil]');if(n)switchTab('tab-perfil',n);})()">Cupones</button></div></div></div><!-- SLIDE 5: Smash --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/hRgTKHLs/DSC-4850.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> LÍNEA SMASH</div><h1 class="hero-title">¿NOCHE<br>DE SMASH?<br><span>Línea Flama</span></h1><p class="hero-subtitle">Probá nuestra línea smashed y dejanos tu opinión.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Ver Smash</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('#nav-pedidos');if(n)switchTab('tab-pedidos',n);})()">Mis Pedidos</button></div></div></div><!-- SLIDE 6: Brand --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/4B4ZCwF/DSC-4842.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> GRACIAS POR ELEGIRNOS</div><h1 class="hero-title">MARVEL<br>FOOD<br><span>Más que una Burger</span></h1><p class="hero-subtitle">Dejanos tu opinión y ayudá a otros a elegir mejor.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Pedir Ahora</button><button class="hero-btn-secondary" onclick="scrollToMenu()">Ver Menú</button></div></div></div><!-- Dots indicadores --><div class="hero-dots" id="hero-dots"></div><div class="scroll-indicator" onclick="scrollToMenu()"><span style="font-size: 12px; font-weight: 700; letter-spacing: 2px; margin-bottom: 5px;">MENÚ</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></div></div><div class="main-content"><div id="tab-inicio" class="tab-page"><div id="store-status-banner"></div><div id="cart-restore-banner"></div><div class="nav-cats" id="cat-list"></div><!-- TOP PRODUCTOS — alimentado por Firebase -->
+<div class="hero-slider" id="hero-slider"><!-- SLIDE 1: Hulk --><div class="hero-slide"><div class="hero-bg-img" style="background-image:url('https://i.ibb.co/CsY32Zpc/Hulk-6.jpg')"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> DESTACADO DEL MENÚ</div><h1 class="hero-title">LA MEJOR<br>DE LA CARTA<br><span>Nuestra Hulk</span></h1><p class="hero-subtitle">Doble carne, cheddar, panceta, cebolla caramelizada y bbq.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Pedir Ahora</button><button class="hero-btn-secondary" onclick="scrollToMenu()">Ver Menú</button></div></div></div><!-- SLIDE 2: Compartir --><div class="hero-slide"><div class="hero-bg-img lazy-bg" data-bg="https://i.ibb.co/sp9f92tD/DSC04607.jpg" style="background-color:#1a1a1a"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> ESPECIAL</div><h1 class="hero-title">COMPARTIR<br><span>Una Marvel</span></h1><p class="hero-subtitle">¡No hay 1 sin 2! Invitá a alguien y disfrutá juntos.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Aprovechar</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);})()">Ver Promos</button></div></div></div><!-- SLIDE 3: Combo --><div class="hero-slide"><div class="hero-bg-img lazy-bg" data-bg="https://i.ibb.co/gLZH7hJW/DSC04609.jpg" style="background-color:#1a1a1a"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> COMBOS</div><h1 class="hero-title">ARMÁ TU<br><span>Combo Perfecto</span></h1><p class="hero-subtitle">¿Papas, Nuggets o Aros de cebolla? Elegí lo tuyo.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Pedir Combo</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);})()">Ver Promos</button></div></div></div><!-- SLIDE 4: Promos --><div class="hero-slide"><div class="hero-bg-img lazy-bg" data-bg="https://i.ibb.co/wNQdcXh6/Dr-Strange-8.jpg" style="background-color:#1a1a1a"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> OFERTAS ACTIVAS</div><h1 class="hero-title">PROMOS<br><span>Para Vos</span></h1><p class="hero-subtitle">Las mejores promos del momento. ¡No te las pierdas!</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-promos]');if(n)switchTab('tab-promos',n);scrollToMenu&&scrollToMenu();})()">Ver Promos</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-perfil]');if(n)switchTab('tab-perfil',n);})()">Cupones</button></div></div></div><!-- SLIDE 5: Smash --><div class="hero-slide"><div class="hero-bg-img lazy-bg" data-bg="https://i.ibb.co/hRgTKHLs/DSC-4850.jpg" style="background-color:#1a1a1a"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> LÍNEA SMASH</div><h1 class="hero-title">¿NOCHE<br>DE SMASH?<br><span>Línea Flama</span></h1><p class="hero-subtitle">Probá nuestra línea smashed y dejanos tu opinión.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Ver Smash</button><button class="hero-btn-secondary" onclick="(function(){var n=document.querySelector('#nav-pedidos');if(n)switchTab('tab-pedidos',n);})()">Mis Pedidos</button></div></div></div><!-- SLIDE 6: Brand --><div class="hero-slide"><div class="hero-bg-img lazy-bg" data-bg="https://i.ibb.co/4B4ZCwF/DSC-4842.jpg" style="background-color:#1a1a1a"></div><div class="hero-content"><div class="hero-eyebrow"><span></span> GRACIAS POR ELEGIRNOS</div><h1 class="hero-title">MARVEL<br>FOOD<br><span>Más que una Burger</span></h1><p class="hero-subtitle">Dejanos tu opinión y ayudá a otros a elegir mejor.</p><div class="hero-btn-row"><button class="hero-btn-primary" onclick="scrollToMenu()">Pedir Ahora</button><button class="hero-btn-secondary" onclick="scrollToMenu()">Ver Menú</button></div></div></div><!-- Dots indicadores --><div class="hero-dots" id="hero-dots"></div><div class="scroll-indicator" onclick="scrollToMenu()"><span style="font-size: 12px; font-weight: 700; letter-spacing: 2px; margin-bottom: 5px;">MENÚ</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></div></div><div class="main-content"><div id="tab-inicio" class="tab-page"><div id="store-status-banner"></div><div id="cart-restore-banner"></div><div class="nav-cats" id="cat-list"></div><!-- TOP PRODUCTOS — alimentado por Firebase -->
 <div id="section-top-prods" style="margin-bottom:24px;padding:0 20px;display:none;"> <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;"> <div> <div style="font-size:11px;color:var(--primary);font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Basado en pedidos reales</div> <div style="font-size:18px;font-weight:800;color:var(--white);">Lo más pedido</div> </div> </div> <div id="top-prods-lista" style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;"></div>
 </div> <!-- RESUMEN DE OPINIONES en inicio -->
 <div id="section-resumen-opiniones" style="margin:0 20px 24px;display:none;"> <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;" onclick="(function(){var n=document.querySelector('.nav-item[onclick*=tab-opiniones]');if(n)switchTab('tab-opiniones',n);})()"> <div style="text-align:center;flex-shrink:0;"> <div id="inicio-op-prom" style="font-size:28px;font-weight:800;color:var(--primary);line-height:1;">—</div> <div id="inicio-op-stars" style="font-size:14px;color:#f59e0b;letter-spacing:2px;margin-top:2px;"></div> </div> <div style="flex:1;min-width:0;"> <div style="font-weight:800;color:var(--white);font-size:13px;margin-bottom:2px;">Opiniones de clientes</div>
@@ -7448,22 +7524,50 @@ function actualizarBadgePromos() {
 // ARRANCAR TODO AL CARGAR
 // 
 (function initMejoras() {
+ // Lazy-load de imágenes de fondo del hero slider usando IntersectionObserver
+ function initLazyBg() {
+ var lazyEls = document.querySelectorAll('.lazy-bg[data-bg]');
+ if (!lazyEls.length) return;
+ if ('IntersectionObserver' in window) {
+ var obs = new IntersectionObserver(function(entries) {
+ entries.forEach(function(entry) {
+ if (entry.isIntersecting) {
+ var el = entry.target;
+ el.style.backgroundImage = 'url(' + el.getAttribute('data-bg') + ')';
+ el.removeAttribute('data-bg');
+ obs.unobserve(el);
+ }
+ });
+ }, { rootMargin: '200px' });
+ lazyEls.forEach(function(el) { obs.observe(el); });
+ } else {
+ // Fallback sin IntersectionObserver (Android <5)
+ lazyEls.forEach(function(el) {
+ el.style.backgroundImage = 'url(' + el.getAttribute('data-bg') + ')';
+ });
+ }
+ }
+
  function run(t) {
  t = t||0;
- if (!window.db) { if(t<30) setTimeout(()=>run(t+1), 300); return; }
+ if (!window.db) { if(t<30) setTimeout(function(){run(t+1);}, 300); return; }
  cargarTopProductos();
  cargarResumenOpinionesInicio();
  actualizarBadgePromos();
  // GeoFencing v3: pre-calentar caché de zonas en background
- // Así cuando el usuario abre el welcome-screen ya está listo
- setTimeout(() => {
+ // Así cuando el usuario abre el carrito ya está listo
+ setTimeout(function() {
  if (window._gfLoadZones) {
- window._gfLoadZones().catch(() => {});
+ window._gfLoadZones().catch(function() {});
  }
  }, 2000);
  }
- if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', ()=>run());
- else run();
+ if (document.readyState==='loading') {
+ document.addEventListener('DOMContentLoaded', function(){ initLazyBg(); run(); });
+ } else {
+ initLazyBg();
+ run();
+ }
 })();
 </script>
 <!-- Registro del Service Worker (PWA) -->
@@ -8403,20 +8507,25 @@ window._gfLoadZones = async function() {
 
 // Exponer tambien como determinarSucursal() para compatibilidad con el resto del sistema
 window.determinarSucursal = async function(lat, lng) {
+ // Asegurar que Turf esté cargado antes de usarlo
+ if (typeof turf === 'undefined' && typeof window._loadGeoLibs === 'function') {
+ await window._loadGeoLibs();
+ }
  const data = await window._gfLoadZones();
- if (!data?.features || typeof turf === 'undefined') return null;
- const punto = turf.point([lng, lat]);
- for (const feat of data.features) {
+ if (!data || !data.features || typeof turf === 'undefined') return null;
+ var punto = turf.point([lng, lat]);
+ for (var i = 0; i < data.features.length; i++) {
  try {
+ var feat = data.features[i];
  if (turf.booleanPointInPolygon(punto, feat)) {
- const p = feat.properties || {};
+ var p = feat.properties || {};
  return {
  sucursal: p.sucursal || _gfInferSucursal(p.name || '', ''),
  zona: p.name || null,
  requiresSpecialAccess: !!p.requiresSpecialAccess,
  };
  }
- } catch(_) {}
+ } catch(e) {}
  }
  return null;
 };

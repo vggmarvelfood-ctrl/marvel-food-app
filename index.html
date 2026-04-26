@@ -6505,6 +6505,15 @@ let _wsSucursalDetectada = null;
 let _wsDirTimeout = null;
 let _wsTipo = 'envio'; // 'envio' | 'retiro'
 let _wsLocOk = false;
+let _wsFueraDeCoberturaActivo = false; // true cuando la dir está fuera de zona
+
+// Cambiar a retiro cuando no hay cobertura en la dirección
+window.wsCambiarARetiro = function() {
+ _wsFueraDeCoberturaActivo = false;
+ wsTipoSeleccionar('retiro');
+ const secRetiro = document.getElementById('ws-seccion-retiro');
+ if (secRetiro) secRetiro.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+};
 let _wsDirOk = false;
 
 // Ver si ya se visitó antes (no mostrar de nuevo en la misma sesión)
@@ -6574,15 +6583,16 @@ window.wsRetiroSucursalChange = function() {
 
 function _wsVerificarContinuar() {
  const btn = document.getElementById('ws-btn-continuar');
+ if (!btn) return;
  let ok = false;
 
  if (_wsTipo === 'retiro') {
  ok = !!_wsSucursalDetectada;
  } else {
- // envio: necesita dirección Y localidad
+ // envio: necesita dir + loc y NO estar fuera de cobertura confirmada
  const dir = (document.getElementById('ws-dir-input')?.value || '').trim();
  const loc = (document.getElementById('ws-loc-input')?.value || '').trim();
- ok = dir.length >= 5 && loc.length >= 3;
+ ok = dir.length >= 5 && loc.length >= 3 && !_wsFueraDeCoberturaActivo;
  }
 
  if (ok) {
@@ -6590,11 +6600,13 @@ function _wsVerificarContinuar() {
  btn.style.background = 'var(--primary, #f59e0b)';
  btn.style.color = '#000';
  btn.style.cursor = 'pointer';
+ btn.textContent = 'Continuar →';
  } else {
  btn.disabled = true;
  btn.style.background = '#444';
  btn.style.color = '#888';
  btn.style.cursor = 'not-allowed';
+ if (_wsFueraDeCoberturaActivo) btn.textContent = 'Sin cobertura en esa dirección';
  }
 }
 
@@ -6689,11 +6701,12 @@ function welcomeDirInput() {
  try {
  const locVal = (document.getElementById('ws-loc-input')?.value || '').trim();
 
- // Capa 1: detección rápida por localidad
+ // Capa 1: detección rápida por localidad conocida
  if (locVal.length >= 3) {
  const sucPorLoc = _sucursalPorLocalidad(locVal);
  if (sucPorLoc) {
  _wsSucursalDetectada = sucPorLoc;
+ _wsFueraDeCoberturaActivo = false;
  welcomeMostrarResultado(sucPorLoc, locVal, true);
  _wsVerificarContinuar();
  return;
@@ -6703,22 +6716,76 @@ function welcomeDirInput() {
  // Capa 2: geocodificar con localidad real
  const coords = await _geocodificar(val, locVal);
  if (!coords) {
- result.innerHTML = '<div style="color:#f59e0b;font-size:13px;text-align:center;padding:6px 0;">No encontramos esa dirección — verificá localidad y calle</div>';
+ // No encontramos la dirección en el mapa
+ _wsSucursalDetectada = null;
+ _wsFueraDeCoberturaActivo = false;
+ result.style.background = 'rgba(239,68,68,0.08)';
+ result.style.border = '1px solid rgba(239,68,68,0.3)';
+ result.style.display = 'block';
+ result.innerHTML = `
+ <div style="display:flex;align-items:center;gap:10px;">
+ <span style="font-size:22px;">🔍</span>
+ <div>
+ <div style="font-weight:800;color:#ef4444;font-size:13px;">No encontramos esa dirección</div>
+ <div style="color:#d1d5db;font-size:12px;margin-top:2px;">Revisá que la calle y localidad sean correctas e intentá de nuevo.</div>
+ </div>
+ </div>`;
  _wsVerificarContinuar();
  return;
  }
 
- // v3: enriquecer con datos de Firebase (zona granular + acceso especial)
+ // Capa 3: chequear cobertura con Firebase+Turf / polígonos estáticos
  const gfResult = await window.determinarSucursal(coords.lat, coords.lng);
  const sucCubre = gfResult?.sucursal || sucursalParaPunto(coords.lat, coords.lng);
- const sucSug = sucCubre || sucursalMasCercana(coords.lat, coords.lng);
- _wsSucursalDetectada = sucSug;
  _wsGPS = coords;
 
- welcomeMostrarResultado(sucSug, [val, locVal].filter(Boolean).join(', '), sucCubre !== null, gfResult);
- } catch(e) {
- result.innerHTML = '<div style="color:#6b7280;font-size:13px;text-align:center;padding:6px 0;">No se pudo verificar — podés continuar igual</div>';
+ if (sucCubre) {
+ // ✅ Tiene cobertura
+ _wsSucursalDetectada = sucCubre;
+ _wsFueraDeCoberturaActivo = false;
+ welcomeMostrarResultado(sucCubre, [val, locVal].filter(Boolean).join(', '), true, gfResult);
+ } else {
+ // ❌ Fuera de cobertura — mostrar mensaje + botón cambiar a retiro
  _wsSucursalDetectada = null;
+ _wsFueraDeCoberturaActivo = true;
+ const sucMasCercana = sucursalMasCercana(coords.lat, coords.lng);
+ const infoSuc = ZONA_INFO_UI[sucMasCercana] || { label: sucMasCercana || 'desconocida', direccion: '' };
+ result.style.background = 'rgba(239,68,68,0.08)';
+ result.style.border = '1px solid rgba(239,68,68,0.4)';
+ result.style.display = 'block';
+ result.innerHTML = `
+ <div style="display:flex;flex-direction:column;gap:10px;">
+ <div style="display:flex;align-items:center;gap:10px;">
+ <span style="font-size:24px;">😔</span>
+ <div>
+ <div style="font-weight:800;color:#ef4444;font-size:14px;">No llegamos a esa dirección</div>
+ <div style="color:#d1d5db;font-size:12px;margin-top:2px;">Esa zona está fuera de nuestra área de entrega.</div>
+ ${sucMasCercana ? `<div style="color:#9ca3af;font-size:11px;margin-top:3px;">Sucursal más cercana: <strong style="color:#fff;">${infoSuc.label}</strong></div>` : ''}
+ </div>
+ </div>
+ <button onclick="wsCambiarARetiro()" style="
+ width:100%;padding:10px 0;border-radius:10px;border:none;cursor:pointer;
+ background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.5);
+ color:#f59e0b;font-size:13px;font-weight:700;
+ ">🏠 Cambiar a Retiro en Local</button>
+ </div>`;
+ }
+ } catch(e) {
+ // Error inesperado — no mostrar "podés continuar igual", pedir dirección de nuevo
+ console.warn('[WelcomeDir] Error:', e.message);
+ _wsSucursalDetectada = null;
+ _wsFueraDeCoberturaActivo = false;
+ result.style.background = 'rgba(245,158,11,0.06)';
+ result.style.border = '1px solid rgba(245,158,11,0.3)';
+ result.style.display = 'block';
+ result.innerHTML = `
+ <div style="display:flex;align-items:center;gap:10px;">
+ <span style="font-size:20px;">⚠️</span>
+ <div>
+ <div style="font-weight:700;color:#f59e0b;font-size:13px;">No pudimos verificar la dirección</div>
+ <div style="color:#d1d5db;font-size:12px;margin-top:2px;">Revisá que esté bien escrita o intentá con GPS.</div>
+ </div>
+ </div>`;
  }
  _wsVerificarContinuar();
  }, 900);

@@ -6504,6 +6504,9 @@ async function _gfLoadZones() {
         snap.forEach(doc => {
             const d = doc.data();
             if (!d.geometry) return;
+            let geom;
+            try { geom = typeof d.geometry === 'string' ? JSON.parse(d.geometry) : d.geometry; }
+            catch(e) { return; }
             features.push({
                 type: 'Feature',
                 id:   doc.id,
@@ -6514,7 +6517,7 @@ async function _gfLoadZones() {
                     requiresSpecialAccess: !!d.requiresSpecialAccess,
                     active:              true,
                 },
-                geometry: d.geometry,
+                geometry: geom,
             });
         });
 
@@ -6714,7 +6717,7 @@ window.syncMapData = async function(kmlSource, adminUser) {
                 sucursal: inferSucursal(name, folder),
                 requiresSpecialAccess: _isSpecialAccess(desc),
                 active: true,
-                geometry: feature.geometry,
+                geometry: JSON.stringify(feature.geometry),
                 updatedAt: new Date().toISOString(),
                 source: isGeoJSON ? 'geojson_import' : 'kml_import',
             });
@@ -8427,10 +8430,12 @@ async function _gfRenderZonesOnMap() {
 
     snap.forEach(doc => {
         const d = doc.data();
-        if (!d.geometry || d.geometry.type !== 'Polygon') return;
+        let geom;
+        try { geom = typeof d.geometry === 'string' ? JSON.parse(d.geometry) : d.geometry; } catch(e) { return; }
+        if (!geom || geom.type !== 'Polygon') return;
 
         const color  = GF_COLORS[d.sucursal] || '#888';
-        const coords = d.geometry.coordinates[0].map(([lng, lat]) => ({ lat, lng }));
+        const coords = geom.coordinates[0].map(([lng, lat]) => ({ lat, lng }));
         if (!coords.length) return;
 
         const poly = new google.maps.Polygon({
@@ -8636,7 +8641,7 @@ window.gfRunSync = async function() {
                 name, description: desc, sucursal,
                 requiresSpecialAccess: isSpecial,
                 active: true,
-                geometry: feature.geometry,
+                geometry: JSON.stringify(feature.geometry),
                 source: isGeoJSONFile ? 'geojson_import' : 'kml_import',
                 updatedAt: new Date().toISOString(),
             };

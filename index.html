@@ -7785,31 +7785,59 @@ window.gfToggleHeatmap = async function() {
  });
  }
 
- // Sin orderBy para evitar requerir índice compuesto en Firestore;
- // ordenamos en memoria después de traer los datos.
+ // Traer todos los pedidos de delivery (con o sin GPS) — sin orderBy para evitar índice compuesto
  const snap = await window.db.collection('pedidos_v2')
- .where('estado', '==', 'Entregado')
+ .where('tipo', '==', 'Delivery')
  .limit(500).get();
 
  const allDocs = [];
  snap.forEach(doc => allDocs.push({ id: doc.id, ...doc.data() }));
- // Ordenar por fecha descendente en memoria
- allDocs.sort((a, b) => {
- const fa = a.fecha ? (a.fecha.toMillis ? a.fecha.toMillis() : new Date(a.fecha).getTime()) : 0;
- const fb = b.fecha ? (b.fecha.toMillis ? b.fecha.toMillis() : new Date(b.fecha).getTime()) : 0;
- return fb - fa;
- });
+
+ gfFeedback(`Procesando ${allDocs.length} pedidos delivery...`, 'info');
 
  const points = [];
- allDocs.forEach(d => {
- if (d.coordsGPS) {
- const [lat, lng] = d.coordsGPS.split(',').map(Number);
- if (!isNaN(lat) && !isNaN(lng)) points.push([lat, lng, 1]);
+ const toGeocode = []; // pedidos sin GPS que tienen dirección de texto
+
+ // Paso 1: extraer los que ya tienen coordenadas GPS reales
+ // El campo se llama 'gps' y puede ser 'lat,lng' o 'No provisto'
+ for (const d of allDocs) {
+ const gpsVal = d.gps || d.coordsGPS || '';
+ if (gpsVal && gpsVal !== 'No provisto' && gpsVal !== '') {
+ const parts = gpsVal.split(',').map(Number);
+ if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+ points.push([parts[0], parts[1], 1]);
+ continue;
+ }
+ }
+ // Sin GPS válido: encolar para geocodificación si tiene dirección
+ if (d.dir && d.dir !== 'N/A' && d.dir.trim()) {
+ toGeocode.push(d);
+ }
+ }
+
+ // Paso 2: geocodificar direcciones de texto (máx 40 para no saturar la API)
+ // Usamos la misma función _geocodificar() que ya existe en la app
+ if (typeof _geocodificar === 'function' && toGeocode.length > 0) {
+ const limit40 = toGeocode.slice(0, 40);
+ gfFeedback(`GPS directo: ${points.length} · Geocodificando ${limit40.length} direcciones...`, 'info');
+ // Procesamos de a 3 simultáneos para no superar rate-limit
+ for (let i = 0; i < limit40.length; i += 3) {
+ const chunk = limit40.slice(i, i + 3);
+ const results = await Promise.allSettled(
+ chunk.map(d => _geocodificar(d.dir, d.loc))
+ );
+ results.forEach(r => {
+ if (r.status === 'fulfilled' && r.value) {
+ points.push([r.value.lat, r.value.lng, 0.7]); // peso levemente menor por ser geocodificado
  }
  });
+ // Pequeña pausa para respetar rate-limit de la API gratuita
+ if (i + 3 < limit40.length) await new Promise(r => setTimeout(r, 400));
+ }
+ }
 
  if (!points.length) {
- gfFeedback('Sin pedidos con GPS para el heatmap.', 'warn');
+ gfFeedback('Sin coordenadas disponibles. Los pedidos no tienen GPS ni dirección geocodificable.', 'warn');
  if (btn) btn.textContent = 'Cargar Heatmap de pedidos';
  return;
  }
@@ -7819,7 +7847,7 @@ window.gfToggleHeatmap = async function() {
  gradient: { 0.2:'blue', 0.4:'cyan', 0.6:'lime', 0.8:'orange', 1.0:'red' },
  }).addTo(_gfMap);
 
- gfFeedback('Heatmap con ' + points.length + ' entregas.', 'success');
+ gfFeedback('Heatmap con ' + points.length + ' puntos de entrega.', 'success');
  if (btn) btn.textContent = 'Ocultar Heatmap';
 
  } catch(e) {

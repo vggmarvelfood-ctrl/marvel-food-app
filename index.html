@@ -6043,6 +6043,10 @@ function _normalizarTexto(txt) {
 function _sucursalPorLocalidad(localidad) {
  if (!localidad) return null;
  const norm = _normalizarTexto(localidad);
+ // 'rosario' genérico: no asignar directamente — hay múltiples sucursales en Rosario.
+ // Dejar que la geocodificación + punto-en-polígono decida cuál corresponde.
+ const GENERICAS = ['rosario', 'rosario centro', 'rosario capital'];
+ if (GENERICAS.includes(norm)) return null;
  if (LOCALIDAD_A_SUCURSAL[norm]) return LOCALIDAD_A_SUCURSAL[norm];
  for (const [key, suc] of Object.entries(LOCALIDAD_A_SUCURSAL)) {
  if (norm.includes(key) || key.includes(norm)) return suc;
@@ -6050,27 +6054,73 @@ function _sucursalPorLocalidad(localidad) {
  return null;
 }
 
+// Extraer calle+número y localidad cuando el usuario escribe todo junto en el campo dir
+// Ej: "paraguay 2272 rosario" -> { dir: "paraguay 2272", loc: "rosario" }
+function _parsearDireccionCompleta(rawDir, rawLoc) {
+ if (rawLoc && rawLoc.trim().length >= 3) return { dir: rawDir, loc: rawLoc };
+ // Buscar si el campo dir termina con una localidad conocida
+ const norm = _normalizarTexto(rawDir);
+ const localidades = Object.keys(LOCALIDAD_A_SUCURSAL).concat(['rosario', 'funes', 'fisherton', 'galvez', 'baigorria']);
+ // Ordenar por largo desc para matchear primero las más largas
+ localidades.sort((a, b) => b.length - a.length);
+ for (const loc of localidades) {
+ if (norm.endsWith(' ' + loc)) {
+ const dirLimpia = rawDir.slice(0, rawDir.length - loc.length).trim().replace(/,\s*$/, '').trim();
+ return { dir: dirLimpia, loc: loc };
+ }
+ }
+ return { dir: rawDir, loc: rawLoc };
+}
+
 async function _geocodificar(direccion, localidad) {
- const contexto = localidad ? localidad + ' Santa Fe Argentina' : 'Rosario Santa Fe Argentina';
- const q = encodeURIComponent(direccion + ' ' + contexto);
  const bbox = '-61.3,-33.25,-60.2,-32.7';
+ // Generar múltiples variantes de consulta para mayor cobertura
+ const contextos = [];
+ if (localidad && localidad.trim()) {
+ const locNorm = localidad.trim();
+ contextos.push(locNorm + ' Santa Fe Argentina');
+ // Si la localidad no menciona Rosario, agregar también Rosario como alternativa
+ if (!_normalizarTexto(locNorm).includes('rosario')) {
+ contextos.push('Rosario Santa Fe Argentina');
+ }
+ } else {
+ contextos.push('Rosario Santa Fe Argentina');
+ contextos.push('Santa Fe Argentina');
+ }
+
+ for (const contexto of contextos) {
+ const q = encodeURIComponent(direccion + ' ' + contexto);
+ // Intento 1: Photon (Komoot) — muy bueno para Argentina
  try {
- const r = await fetch(`https://photon.komoot.io/api/?q=${q}&limit=1&bbox=${bbox}`, { signal: AbortSignal.timeout(5000) });
+ const r = await fetch(`https://photon.komoot.io/api/?q=${q}&limit=3&bbox=${bbox}`, { signal: AbortSignal.timeout(6000) });
  if (r.ok) {
  const d = await r.json();
  if (d.features && d.features.length) {
- const [lng, lat] = d.features[0].geometry.coordinates;
+ // Preferir resultados dentro del bbox
+ const valido = d.features.find(f => {
+ const [lng, lat] = f.geometry.coordinates;
+ return lat >= -33.26 && lat <= -32.7 && lng >= -61.3 && lng <= -60.2;
+ });
+ if (valido) {
+ const [lng, lat] = valido.geometry.coordinates;
  return { lat, lng };
  }
  }
+ }
  } catch(e) {}
+ // Intento 2: Nominatim (OSM) — más lento pero muy completo
  try {
- const r = await fetch(`https://geocode.maps.co/search?q=${q}&countrycodes=ar&limit=1`, { signal: AbortSignal.timeout(5000) });
+ const q2 = encodeURIComponent(direccion + ', ' + contexto);
+ const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${q2}&format=json&limit=3&countrycodes=ar&viewbox=-61.3,-32.7,-60.2,-33.26&bounded=1`, {
+ signal: AbortSignal.timeout(6000),
+ headers: { 'Accept-Language': 'es', 'User-Agent': 'MarvelFood/1.0' }
+ });
  if (r.ok) {
  const d = await r.json();
  if (d && d.length) return { lat: parseFloat(d[0].lat), lng: parseFloat(d[0].lon) };
  }
  } catch(e) {}
+ }
  return null;
 }
 
@@ -6740,7 +6790,11 @@ function welcomeDirInput() {
  result.style.border = '1px solid #333';
 
  _wsDirVerifyTimeout = setTimeout(async () => {
- const locVal = (document.getElementById('ws-loc-input')?.value || '').trim();
+ const locRaw = (document.getElementById('ws-loc-input')?.value || '').trim();
+ // Parsear: si el usuario escribió todo junto (ej "paraguay 2272 rosario"), separar
+ const { dir: dirGeo, loc: locVal } = (typeof _parsearDireccionCompleta === 'function')
+ ? _parsearDireccionCompleta(val, locRaw)
+ : { dir: val, loc: locRaw };
 
  function _mostrarFueraDeCobertura(sucMasCercana) {
  const infoSuc = (typeof ZONA_INFO_UI !== 'undefined' && sucMasCercana && ZONA_INFO_UI[sucMasCercana]) || { label: sucMasCercana || '' };
@@ -6780,7 +6834,7 @@ function welcomeDirInput() {
  result.style.border = '1px solid #333';
  result.innerHTML = '<div style="text-align:center;color:#9ca3af;font-size:13px;padding:6px 0;">Buscando direccion...</div>';
 
- const coords = await _geocodificar(val, locVal);
+  const coords = await _geocodificar(dirGeo, locVal);
  if (!coords) {
  _wsSucursalDetectada = null;
  _wsFueraDeCoberturaActivo = false;

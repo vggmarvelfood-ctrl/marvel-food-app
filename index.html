@@ -115,7 +115,6 @@ try {
 
  // Avisar al resto de la app que la DB está lista
  document.dispatchEvent(new CustomEvent('firebase:ready', { detail: { db: window.db } }));
- // Marcar Firebase como inicializado para el watchdog
  window._firebaseOk = true;
 
  // Tarea 5: Firebase Cloud Messaging (FCM) — inicialización modular
@@ -124,11 +123,6 @@ try {
 
  async function fcmInit() {
  try {
- // Guard extra: algunos Android WebView crashean con firebase-messaging
- if (typeof window === 'undefined' || !window.isSecureContext) {
- console.warn('[FCM] No es contexto seguro, FCM omitido.');
- return;
- }
  const { getMessaging, getToken, onMessage } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js');
  const messaging = getMessaging(_app);
  window._fcmMessaging = messaging;
@@ -146,7 +140,7 @@ try {
 
  window._fcmGetToken = async function() {
  try {
- // Timeout de 10s para navigator.serviceWorker.ready (puede colgar en Android)
+ // Race con timeout para evitar que navigator.serviceWorker.ready cuelgue en Android
  const reg = await Promise.race([
  navigator.serviceWorker.ready,
  new Promise((_, rej) => setTimeout(() => rej(new Error('SW ready timeout')), 10000))
@@ -163,9 +157,8 @@ try {
  }
  }
 
- // Inicializar FCM si el browser lo soporta — con guard extra para Android
+ // Inicializar FCM si el browser lo soporta — con delay para no bloquear carga
  if ('serviceWorker' in navigator && 'PushManager' in window) {
- // Usar setTimeout para no bloquear el hilo principal durante la carga inicial
  setTimeout(function() {
  try { fcmInit(); } catch(e) { console.warn('[FCM] Error init:', e); }
  }, 3000);
@@ -176,25 +169,10 @@ try {
  window.db = null;
  window.firebase = { firestore: { FieldValue: { serverTimestamp: () => null } } };
 }
-</script>
+</script><meta charset="utf-8" />
 <script>
-// === WATCHDOG: si Firebase no inició en 12s, despachar evento igualmente ===
-(function() {
- setTimeout(function() {
- if (!window._firebaseOk) {
- console.warn('[Watchdog] Firebase no respondió, iniciando app sin DB');
- window.db = window.db || null;
- window.firebase = window.firebase || { firestore: { FieldValue: { serverTimestamp: () => null } } };
- document.dispatchEvent(new CustomEvent('firebase:ready', { detail: { db: null } }));
- try {
- var splash = document.getElementById('app-splash');
- if (splash) { splash.style.opacity = '0'; setTimeout(function(){ splash.style.display='none'; }, 400); }
- } catch(_) {}
- }
- }, 12000);
-})();
-</script><script>
-// === POLYFILL: AbortSignal.timeout para Android WebView / Chrome < 103 ===
+// === POLYFILLS COMPATIBILIDAD MÓVIL (Android WebView / Chrome < 103) ===
+// AbortSignal.timeout — no existe en Chrome < 103
 if (typeof AbortSignal !== 'undefined' && !AbortSignal.timeout) {
   AbortSignal.timeout = function(ms) {
     var ctrl = new AbortController();
@@ -202,34 +180,25 @@ if (typeof AbortSignal !== 'undefined' && !AbortSignal.timeout) {
     return ctrl.signal;
   };
 }
-// === POLYFILL: Array.at para Android Chrome < 92 ===
+// Array.at — no existe en Chrome < 92
 if (!Array.prototype.at) {
   Array.prototype.at = function(i) { return i < 0 ? this[this.length + i] : this[i]; };
 }
-// === POLYFILL: Object.hasOwn para Android Chrome < 93 ===
+// Object.hasOwn — no existe en Chrome < 93
 if (!Object.hasOwn) {
   Object.hasOwn = function(o, k) { return Object.prototype.hasOwnProperty.call(o, k); };
 }
+// Detectar soporte de backdrop-filter y añadir clase al <html>
+(function() {
+  var testEl = document.createElement('div');
+  var supported = typeof testEl.style.backdropFilter !== 'undefined' ||
+                  typeof testEl.style.webkitBackdropFilter !== 'undefined';
+  if (!supported) {
+    document.documentElement.classList.add('no-backdrop-filter');
+  }
+})();
 </script>
-<script>
-// === HANDLER GLOBAL DE ERRORES — Evita pantalla gris en móvil ===
-window.addEventListener('error', function(e) {
-  console.error('[AppError]', e.message, e.filename, e.lineno);
-  // Si el splash todavía está visible, ocultarlo para no quedar bloqueado
-  try {
-    var splash = document.getElementById('app-splash');
-    if (splash && splash.parentNode) {
-      splash.style.display = 'none';
-    }
-  } catch(_) {}
-});
-window.addEventListener('unhandledrejection', function(e) {
-  console.warn('[UnhandledPromise]', e.reason);
-  // Evitar que promesas rechazadas (e.g. Firebase offline) bloqueen la app
-  e.preventDefault && e.preventDefault();
-});
-</script>
-<meta charset="utf-8" />
+
 <!-- PWA -->
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="./icon-192x192.png">
@@ -271,7 +240,7 @@ window.addEventListener('unhandledrejection', function(e) {
  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Montserrat', 'Open Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
  html { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
  input, textarea, select, button { -webkit-appearance: none; -moz-appearance: none; appearance: none; font-family: inherit; }
- body { background-color: var(--bg); color: var(--text); overflow-x: hidden; padding-bottom: 80px; 
+ body { background-color: var(--bg); color: var(--text); overflow-x: hidden; padding-bottom: 80px;
  -webkit-font-smoothing: antialiased;
  -moz-osx-font-smoothing: grayscale;
  }
@@ -280,6 +249,31 @@ window.addEventListener('unhandledrejection', function(e) {
  @keyframes modalSlide { from { transform: translateY(100%); } to { transform: translateY(0); } }
  @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
  .hidden { display: none !important; }
+
+/* UPSELL en carrito */
+@keyframes upsellIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+.upsell-section { margin: 0 0 4px; animation: upsellIn .35s ease both; }
+.upsell-title { font-size:11px; font-weight:800; color:#f59e0b; text-transform:uppercase; letter-spacing:.8px; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+.upsell-scroll { display:flex; gap:10px; overflow-x:auto; padding-bottom:4px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+.upsell-scroll::-webkit-scrollbar { display:none; }
+.upsell-card { flex:0 0 auto; width:130px; background:var(--surface-elevated); border:1px solid var(--border); border-radius:12px; overflow:hidden; cursor:pointer; transition:border-color .2s, transform .2s; }
+.upsell-card:hover { border-color:var(--primary); transform:translateY(-2px); }
+.upsell-card img { width:100%; height:72px; object-fit:cover; display:block; }
+.upsell-card-body { padding:8px 8px 6px; }
+.upsell-card-name { font-size:11px; font-weight:700; color:var(--white); line-height:1.3; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.upsell-card-price { font-size:12px; font-weight:800; color:var(--primary); }
+.upsell-card-btn { width:100%; border:none; background:var(--primary); color:#000; font-size:11px; font-weight:800; padding:6px; cursor:pointer; transition:background .2s; }
+.upsell-card-btn:hover { background:var(--primary-hover); }
+
+/* Precio envío detectado en zona-box */
+.zona-precio-badge { display:inline-flex; align-items:center; gap:4px; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.35); border-radius:8px; padding:3px 10px; font-size:13px; font-weight:800; color:#10b981; margin-left:8px; }
+
+/* Admin zona precio inline */
+.gf-zone-price-row { display:flex; align-items:center; gap:6px; margin-top:5px; margin-left:16px; }
+.gf-zone-price-inp { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.15); border-radius:6px; color:#e2e8f0; font-size:11px; padding:3px 7px; width:80px; outline:none; }
+.gf-zone-price-inp:focus { border-color:#f59e0b; }
+.gf-zone-price-save { background:#f59e0b; border:none; border-radius:5px; color:#000; font-size:10px; font-weight:800; padding:3px 8px; cursor:pointer; white-space:nowrap; }
+
 
  .hero-slider {
  width: 100vw; height: 100vh; display: flex; overflow-x: auto;
@@ -292,7 +286,8 @@ window.addEventListener('unhandledrejection', function(e) {
  @keyframes heroGlow { 0%,100%{text-shadow:0 0 20px rgba(245,158,11,.6);} 50%{text-shadow:0 0 40px rgba(245,158,11,1),0 0 80px rgba(245,158,11,.4);} }
  @keyframes heroPulseBtn { 0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.5);} 70%{box-shadow:0 0 0 12px rgba(245,158,11,0);} }
  @keyframes heroKenBurns { 0%{transform:scale(1);} 100%{transform:scale(1.08);} }
- @media (max-width: 400px), (max-device-memory: 2gb) {
+ /* Dispositivos de baja RAM (≤2GB): deshabilitar animaciones GPU pesadas */
+ @media (max-width: 400px) {
  .hero-slide .hero-bg-img { animation: none !important; }
  @keyframes heroGlow { 0%,100%{text-shadow:none;} }
  @keyframes heroPulseBtn { 0%,100%{box-shadow:none;} }
@@ -938,8 +933,8 @@ window.addEventListener('unhandledrejection', function(e) {
  position: fixed; 
  inset: 0; 
  background: rgba(0, 0, 0, 0.85); 
- backdrop-filter: blur(8px); 
  -webkit-backdrop-filter: blur(8px);
+ backdrop-filter: blur(8px);
  z-index: 2000; 
  display: none; 
  justify-content: center; 
@@ -1010,8 +1005,8 @@ window.addEventListener('unhandledrejection', function(e) {
  justify-content: space-around;
  padding: 12px 8px;
  background: rgba(26, 26, 26, 0.98);
- backdrop-filter: blur(20px);
  -webkit-backdrop-filter: blur(20px);
+ backdrop-filter: blur(20px);
  border-top: 1px solid var(--border);
  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
 }
@@ -1518,18 +1513,38 @@ window.addEventListener('unhandledrejection', function(e) {
  * 2. Reduce animaciones en modo reducido
  * 3. Evita will-change innecesario
  ================================================================================ */
-@supports not (backdrop-filter: blur(1px)) and (not (-webkit-backdrop-filter: blur(1px))) {
+/* FALLBACK: dispositivos sin backdrop-filter (Android WebView antiguo, Chrome < 76) */
+@supports not (backdrop-filter: blur(1px)) {
  .bottom-nav, .top-header.scrolled {
  background: rgba(18,18,18,0.98) !important;
+ -webkit-backdrop-filter: none !important;
  backdrop-filter: none !important;
  }
  .hero-btn-secondary {
  background: rgba(30,30,30,0.9) !important;
+ -webkit-backdrop-filter: none !important;
  backdrop-filter: none !important;
  }
  .modal-sheet {
+ -webkit-backdrop-filter: none !important;
  backdrop-filter: none !important;
  }
+}
+/* FALLBACK adicional via clase JS (para WebView que no soporta @supports) */
+.no-backdrop-filter .bottom-nav,
+.no-backdrop-filter .top-header.scrolled {
+ background: rgba(18,18,18,0.98) !important;
+ -webkit-backdrop-filter: none !important;
+ backdrop-filter: none !important;
+}
+.no-backdrop-filter .hero-btn-secondary {
+ background: rgba(30,30,30,0.9) !important;
+ -webkit-backdrop-filter: none !important;
+ backdrop-filter: none !important;
+}
+.no-backdrop-filter .modal-sheet {
+ -webkit-backdrop-filter: none !important;
+ backdrop-filter: none !important;
 }
 /* Para dispositivos que prefieren reducir movimiento (Accessibility + batería) */
 @media (prefers-reduced-motion: reduce) {
@@ -1690,7 +1705,7 @@ if (window.requestIdleCallback) {
  style="width:100%;height:100%;object-fit:contain;display:block;" /> <div id="zona-modal-no-img" style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--text-light);"> <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> <span style="font-size:13px;">Mapa no disponible</span> </div> </div> </div>
 </div>
 <div id="tab-perfil" class="tab-page hidden" style="padding: 20px;"><!-- Título de sección --><div style="margin-bottom:20px;"><h2 style="font-weight:800; font-size:22px; color:var(--white); margin:0 0 4px;">CUPONES</h2><p style="color:var(--text-light); font-size:13px; margin:0;">Beneficios disponibles para vos hoy.</p></div><!-- Cupón del día (se rellena por JS) --><div id="cupon-del-dia-box" style="margin-bottom:20px;"></div><!-- Lista de todos los cupones de la semana --><div id="cupones-semana-box"></div></div><div id="tab-ayuda" class="tab-page hidden" style="padding: 20px;"><h2 style="color: var(--primary); font-weight: 800; margin-bottom: 20px; text-transform: uppercase; font-size: 20px;">¿Cómo realizar tu pedido?</h2><div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px;"><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">1. Seleccioná tu Sucursal</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">Elegí la sucursal más cercana para ver el menú y rango de envío correcto.</p></div><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">2. Consultá el Rango de Envío</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">En la pestaña <strong>"Locales"</strong> podés ver los mapas de cobertura y costos.</p></div><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">3. Armá tu Carrito</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">Agregá tus productos y revisá todo en el botón flotante del carrito.</p></div><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">4. Envia tu pedido</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">Envia tu pedido y recibiras un mensaje de confirmación una vez enviado con los datos y horarios.</p></div><h2 style="color: var(--primary); font-weight: 800; margin-top: 15px; margin-bottom: 15px; text-transform: uppercase; font-size: 20px;">¿SABIAS ESTE DATO?</h2><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">¡Podés venir a comer y disfrutar de nuestros espacios!</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">Contamos con 3 sucursales abiertas al público:</p><p style="color: var(--white); font-size: 14px; margin-top: 5px; font-weight: 600;">Rosario, Zona Centro: Pellegrini 1149<br>Funes: RN9 972<br>Cañada de gomez: LAVALLE 907</p></div></div><h3 style="color: var(--white); font-size: 16px; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">Nuestros Medios de Pagos Actuales</h3><div style="background: var(--surface); border-radius: 16px; overflow: hidden; border: 1px solid var(--border);"><table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;"><thead style="background: var(--primary);"><tr><th style="padding: 10px; color: black;">Método</th><th style="padding: 10px; color: black;">Sucursal</th><th style="padding: 10px; color: black;">Envío</th></tr></thead><tbody style="color: var(--text-light);"><tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px; color: var(--white);">Efectivo</td><td style="padding: 10px;color:#10b981;font-weight:700;">Si</td><td style="padding: 10px;color:#10b981;font-weight:700;">Si</td></tr><tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px; color: var(--white);">Débito/Crédito</td><td style="padding: 10px;color:#10b981;font-weight:700;">Si</td><td style="padding: 10px;">—</td></tr><tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px; color: var(--white);">QR Mercado Pago</td><td style="padding: 10px;color:#10b981;font-weight:700;">Si</td><td style="padding: 10px;">—</td></tr><tr><td style="padding: 10px; color: var(--white);">Link Mercado Pago</td><td style="padding: 10px;">—</td><td style="padding: 10px;color:#10b981;font-weight:700;">Si</td></tr></tbody></table></div></div><!-- TAB OPINIONES --><div id="tab-opiniones" class="tab-page hidden" style="padding:20px;padding-bottom:100px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;"><div><h2 style="font-weight:800;font-size:22px;color:var(--white);margin:0 0 4px;">OPINIONES</h2><p style="color:var(--text-light);font-size:13px;margin:0;">Lo que dicen nuestros clientes</p></div></div><!-- Resumen estrellas --><div id="opiniones-resumen" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:20px;display:flex;gap:20px;align-items:center;"><div style="text-align:center;flex-shrink:0;"><div id="op-prom" style="font-size:44px;font-weight:800;color:var(--primary);line-height:1;">—</div><div id="op-stars-avg" style="font-size:20px;margin:4px 0;color:#f59e0b;letter-spacing:2px;"></div><div id="op-count" style="font-size:11px;color:var(--text-light);font-weight:700;">0 reseñas</div></div><div id="op-bars" style="flex:1;display:flex;flex-direction:column;gap:5px;"></div></div><!-- Lista de reseñas --><div id="opiniones-lista"></div></div><!-- MODAL DEJAR OPINIÓN --><div id="opinion-modal" style="
- display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);
+ display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
  z-index:6000;align-items:flex-end;justify-content:center;
 " onclick="if(event.target===this)cerrarModalOpinion()"><div style="background:var(--surface);width:100%;max-width:500px;border-radius:24px 24px 0 0;padding:28px 24px 40px;animation:modalSlide .3s ease-out;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;"><h3 style="font-weight:800;font-size:18px;color:var(--white);margin:0;">Tu Opinión</h3><button onclick="cerrarModalOpinion()" style="background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:20px;font-weight:300;">×</button></div><p style="color:var(--text-light);font-size:13px;margin-bottom:18px;">¿Qué te pareció tu experiencia con Marvel Food?</p><!-- Estrellas --><div style="display:flex;justify-content:center;gap:10px;margin-bottom:20px;"><button class="op-star" onclick="opSetStar(1)" data-v="1" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;"></button><button class="op-star" onclick="opSetStar(2)" data-v="2" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;"></button><button class="op-star" onclick="opSetStar(3)" data-v="3" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;"></button><button class="op-star" onclick="opSetStar(4)" data-v="4" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;"></button><button class="op-star" onclick="opSetStar(5)" data-v="5" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;"></button></div><div id="op-label" style="text-align:center;font-size:14px;font-weight:700;color:var(--primary);margin-bottom:16px;min-height:20px;"></div><!-- Nombre y Apellido (obligatorio) --><input id="op-nombre" type="text" placeholder="Nombre y apellido *" maxlength="60"
  style="width:100%;padding:13px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:#fff;font-size:14px;margin-bottom:10px;outline:none;box-sizing:border-box;" oninput="opLimpiarError(this)"><!-- Teléfono (obligatorio) --><input id="op-tel" type="tel" placeholder="Teléfono (ej: 3412345678) *" maxlength="20"
@@ -1729,7 +1744,7 @@ if (window.requestIdleCallback) {
 </div>
 
 <!-- PASO 2: Datos del cliente y envío -->
-<div id="cart-step-2" style="display:none;flex:1;overflow-y:auto;flex-direction:column;">
+<div id="cart-step-2" style="display:none;flex:1;overflow-y:auto;flex-direction:column;" data-display="flex">
   <div style="padding: 20px; background: var(--bg); flex:1; overflow-y:auto;">
     <!-- SUCURSAL Y TIPO DE PEDIDO -->
     <div class="m-section" style="margin-top: 0;">SUCURSAL Y TIPO DE PEDIDO</div>
@@ -1750,7 +1765,7 @@ if (window.requestIdleCallback) {
     <!-- DATOS DEL CLIENTE -->
     <div class="m-section" style="margin-top: 0;">DATOS DEL CLIENTE</div>
     <input type="text" id="c-nombre" class="ui-input" placeholder="Nombre completo" oninput="validarDatosEnvio()">
-    <input type="number" id="c-tel" class="ui-input" placeholder="WhatsApp (Ej: 3416107498)" oninput="validarDatosEnvio()">
+    <input type="tel" id="c-tel" class="ui-input" inputmode="numeric" placeholder="WhatsApp (Ej: 3416107498)" oninput="validarDatosEnvio()">
 
     <!-- DATOS DE ENVÍO -->
     <div id="box-envio-checkout">
@@ -1776,7 +1791,7 @@ if (window.requestIdleCallback) {
       <option value="Transferencia">Transferencia bancaria</option>
       <option value="Mercado Pago">Mercado Pago</option>
     </select>
-    <div id="vuelto-box"><input type="number" id="p-vuelto" class="ui-input" placeholder="¿Con cuánto abonás? (Ej: 20000)"></div>
+    <div id="vuelto-box"><input type="tel" id="p-vuelto" class="ui-input" inputmode="numeric" placeholder="¿Con cuánto abonás? (Ej: 20000)"></div>
 
     <!-- RESUMEN DE TOTALES -->
     <div style="border-top: 1px dashed var(--border); margin: 20px 0; padding-top: 15px;">
@@ -2708,7 +2723,8 @@ function renderCartItems() {
  if (carrito.length === 0) {
  list.innerHTML = `<div style="text-align:center; color:var(--text-light); margin-top:40px;">Tu pedido está vacío.</div>`;
  } else {
- list.innerHTML = carrito.map((i, idx) => {
+ // Render productos
+ let itemsHtml = carrito.map((i, idx) => {
  subtotal += i.totalItem;
  return `
  <div style="background:var(--surface); border-radius:12px; padding:15px; margin-bottom:15px; border:1px solid var(--border);"> <div style="display:flex; justify-content:space-between; font-weight:800; font-size:15px; color:var(--white);"> <span>${i.cant}x ${i.n}</span> <span>$${i.totalItem.toLocaleString()}</span> </div> ${i.con && i.con.length ? `<div style="margin-top:6px;padding-top:6px;border-top:1px dashed var(--border);">${i.con.map(x=>`<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-light);margin-top:3px;"><span>+ ${x.n}</span><span style="color:var(--primary);">+$${(x.p*i.cant).toLocaleString()}</span></div>`).join('')}</div>` : ''}
@@ -2716,6 +2732,10 @@ function renderCartItems() {
  ${i.obs ? `<div style="margin-top:4px;font-size:11px;color:#9ca3af;font-style:italic;">"${i.obs}"</div>` : ''}
  <div style="text-align:right; margin-top:10px;"><span onclick="delItem(${idx})" style="color:#ef4444; font-size:12px; font-weight:800; cursor:pointer;">ELIMINAR</span></div> </div> `;
  }).join('');
+
+ // UPSELL: "¿Combinás con...?"
+ const upsellHtml = _buildUpsellSection();
+ list.innerHTML = itemsHtml + upsellHtml;
  }
 
  // Mostrar resumen de dirección si hay datos
@@ -2739,8 +2759,8 @@ function renderCartItems() {
  }
  }
 
- // El costo de envío lo confirma el local: se muestra "A confirmar" en el resumen
- let costoEnvio = 0;
+ // El costo de envío: usar precio detectado por zona si existe
+ let costoEnvio = isDelivery ? (_checkoutEnvioPrecio || 0) : 0;
 
  // --- NUEVA SECCIÓN DE HORARIO ESTIMADO ---
  const horarioTexto = obtenerHorarioEstimado(isDelivery);
@@ -2781,7 +2801,10 @@ function renderCartItems() {
  let totalFinal = subtotal + costoEnvio - montoDescuento;
 
  document.getElementById('res-sub').innerText = `$${subtotal.toLocaleString()}`;
- document.getElementById('res-envio').innerText = isDelivery ? 'A confirmar por el local' : 'Gratis';
+ const envioLabel = isDelivery
+ ? (costoEnvio > 0 ? `$${costoEnvio.toLocaleString('es-AR')}` : 'A confirmar')
+ : 'Gratis';
+ document.getElementById('res-envio').innerText = envioLabel;
  
  const totalBox = document.getElementById('res-total').parentElement;
  const descuentoPrevio = document.getElementById('detalle-descuento-ui');
@@ -2803,6 +2826,107 @@ function renderCartItems() {
 }
 
  window.delItem = (i) => { carrito.splice(i,1); guardarCarritoPersistente(); updateCartUI(); renderCartItems(); };
+
+// =======================================================
+// UPSELL: "¿Combinás con...?" — sección dentro del carrito
+// =======================================================
+function _buildUpsellSection() {
+ if (!carrito.length || typeof MENU === 'undefined') return '';
+
+ // IDs ya en el carrito
+ const idsEnCarrito = new Set(carrito.map(i => i.id));
+
+ // Candidatos: todos los ítems del menú no en carrito
+ const todos = [];
+ for (const cat of MENU) {
+ for (const item of cat.items) {
+ if (!idsEnCarrito.has(item.id)) {
+ todos.push({ ...item, _cat: cat.cat });
+ }
+ }
+ }
+ if (!todos.length) return '';
+
+ // Prioridades: papas > hamburguesas > resto
+ const esPapas = i => i.n.toLowerCase().includes('papa') || i.n.toLowerCase().includes('batata');
+ const esHamburguesa = i => i._cat.toLowerCase().includes('hambur');
+ const esMasVendido = i => [1,5,6,2,24,26,28].includes(i.id); // IDs best-sellers hardcoded
+ 
+ const prioAlta = todos.filter(esPapas);
+ const prioMedia = todos.filter(i => !esPapas(i) && (esHamburguesa(i) || esMasVendido(i)));
+ const resto = todos.filter(i => !esPapas(i) && !esHamburguesa(i) && !esMasVendido(i));
+
+ // Siempre incluir al menos 1 papa si hay, 1 hamburguesa si hay
+ const picks = [];
+ const _rnd = arr => arr[Math.floor(Math.random() * arr.length)];
+ 
+ if (prioAlta.length) picks.push(_rnd(prioAlta));
+ if (prioMedia.length && picks.length < 3) {
+ const hb = _rnd(prioMedia);
+ if (!picks.find(p => p.id === hb.id)) picks.push(hb);
+ }
+ // Rellenar con resto random hasta 3
+ const mezclado = [...prioMedia, ...resto].sort(() => Math.random() - .5);
+ for (const c of mezclado) {
+ if (picks.length >= 3) break;
+ if (!picks.find(p => p.id === c.id)) picks.push(c);
+ }
+
+ if (!picks.length) return '';
+
+ const frases = [
+ '🔥 Otros también pidieron',
+ '⭐ Los más elegidos para combinar',
+ '🍔 Completá tu pedido con',
+ '👀 ¿Te faltó algo?',
+ ];
+ const frase = frases[Math.floor(Math.random() * frases.length)];
+
+ const cardsHtml = picks.map(item => {
+ const precio = item.p;
+ const imgHtml = item.img
+ ? `<img src="${item.img}" alt="${item.n}" loading="lazy" style="width:100%;height:72px;object-fit:cover;display:block;">`
+ : `<div style="width:100%;height:72px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:28px;">🍔</div>`;
+ return `<div class="upsell-card">
+ ${imgHtml}
+ <div class="upsell-card-body">
+ <div class="upsell-card-name">${item.n}</div>
+ <div class="upsell-card-price">$${precio.toLocaleString('es-AR')}</div>
+ </div>
+ <button class="upsell-card-btn" onclick="upsellAdd(${item.id})">+ Agregar</button>
+ </div>`;
+ }).join('');
+
+ return `<div class="upsell-section" style="margin-top:4px;padding-top:16px;border-top:1px dashed var(--border);">
+ <div class="upsell-title">${frase}</div>
+ <div class="upsell-scroll">${cardsHtml}</div>
+ </div>`;
+}
+
+// Agregar producto desde upsell (abre el modal con el item pre-cargado)
+window.upsellAdd = function(productId) {
+ let found = null;
+ if (typeof MENU !== 'undefined') {
+ for (const cat of MENU) {
+ for (const item of cat.items) {
+ if (item.id === productId) { found = item; break; }
+ }
+ if (found) break;
+ }
+ }
+ if (!found) return;
+ // Usar openModal si existe, sino agregar directamente
+ if (typeof openModal === 'function') {
+ openModal(found);
+ } else {
+ carrito.push({ id: found.id, n: found.n, p: found.p, cant: 1, con: [], sin: [], obs: '', totalItem: found.p, img: found.img || '' });
+ guardarCarritoPersistente();
+ updateCartUI();
+ renderCartItems();
+ const t = document.getElementById('toast');
+ if (t) { t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
+ }
+};
 
 window.procesarPedido = async () => {
  if (carrito.length === 0) return alert("Agregá productos a tu pedido primero.");
@@ -2842,7 +2966,7 @@ window.procesarPedido = async () => {
 
  // Calcular Subtotal correctamente
  let sub = carrito.reduce((s, i) => s + i.totalItem, 0);
- let envio = 0; // El costo de envío lo asigna el admin en el panel
+ let envio = isDelivery ? (_checkoutEnvioPrecio || 0) : 0; // Precio detectado por zona
  
  let montoDescuento = 0;
  let detalleCupon = "Ninguno";
@@ -2993,6 +3117,7 @@ window.procesarPedido = async () => {
  _checkoutSucursalDetectada = null;
  _checkoutLat = null; _checkoutLng = null;
  _checkoutFueraDeCoberturaActivo = false;
+ _checkoutEnvioPrecio = 0;
  const zb = document.getElementById('zona-detectada-box');
  if (zb) zb.style.display = 'none';
 
@@ -3079,6 +3204,7 @@ window.procesarPedido = async () => {
 let _checkoutLat = null, _checkoutLng = null;
 let _checkoutSucursalDetectada = null;
 let _checkoutFueraDeCovbertura = false;
+let _checkoutEnvioPrecio = 0; // precio de envío detectado según zona
 
 // Paso 1 → Paso 2: ir a pagar
 window.irAPagar = function() {
@@ -3088,7 +3214,7 @@ window.irAPagar = function() {
  const title = document.getElementById('cart-title');
  const backBtn = document.getElementById('cart-step2-back');
  if (step1) step1.style.display = 'none';
- if (step2) step2.style.display = 'flex';
+ if (step2) step2.style.display = step2.dataset.display || 'flex';
  if (title) title.textContent = 'COMPLETAR PEDIDO';
  if (backBtn) backBtn.style.display = 'flex';
  // Sincronizar totales en paso 2
@@ -3175,6 +3301,7 @@ window.detectarZonaDesdeTexto = function() {
  const loc = (document.getElementById('c-loc')?.value || '').trim();
  if (!dir && !loc) {
  _checkoutSucursalDetectada = null;
+ _checkoutEnvioPrecio = 0;
  _mostrarZonaBox(null, null);
  validarDatosEnvio();
  return;
@@ -3191,24 +3318,41 @@ window.detectarZonaDesdeTexto = function() {
  }
  } catch(e) {}
  }
- // Fallback: detectar sucursal por localidad usando la función existente
- if (typeof _detectarSucursalPorLocalidad === 'function') {
- const sucPorLoc = _detectarSucursalPorLocalidad(loc);
+ // Fallback: detectar sucursal por localidad usando texto (SIEMPRE actualizar)
+ const sucPorLoc = (typeof _sucursalPorLocalidad === 'function') ? _sucursalPorLocalidad(loc || dir) : null;
  if (sucPorLoc) {
  _checkoutSucursalDetectada = sucPorLoc;
  _checkoutFueraDeCoberturaActivo = false;
- _mostrarZonaBox(sucPorLoc, '(por localidad)');
- // Sincronizar con main-sucursal
+ // Asignar precio de envío por defecto de la sucursal detectada
+ _checkoutEnvioPrecio = _getPrecioEnvioPorSucursal(sucPorLoc, loc);
+ _mostrarZonaBox(sucPorLoc, '(por localidad)', _checkoutEnvioPrecio);
+ // Siempre sincronizar con main-sucursal
  const sel = document.getElementById('main-sucursal');
- if (sel && !sel.value) sel.value = sucPorLoc;
+ if (sel) sel.value = sucPorLoc;
  } else {
  _checkoutSucursalDetectada = null;
+ _checkoutEnvioPrecio = 0;
  _mostrarZonaBox(null, null);
- }
  }
  validarDatosEnvio();
  }, 700);
 };
+
+// Obtener precio de envío por sucursal + localidad desde SUC_MAP
+function _getPrecioEnvioPorSucursal(sucursal, localidad) {
+ if (!sucursal || typeof SUC_MAP === 'undefined') return 0;
+ const suc = SUC_MAP[sucursal];
+ if (!suc || !suc.locs) return 0;
+ // Buscar coincidencia de localidad en locs
+ const locNorm = (localidad || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+ for (const [locKey, precio] of Object.entries(suc.locs)) {
+ const keyNorm = locKey.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+ if (keyNorm.includes(locNorm) || locNorm.includes(keyNorm)) return precio;
+ }
+ // Retornar el primer precio (base) de esa sucursal
+ const primero = Object.values(suc.locs)[0];
+ return primero || 0;
+}
 
 // Detectar zona usando turf geofencing con coordenadas
 async function _detectarZonaCheckout(lat, lng) {
@@ -3218,23 +3362,29 @@ async function _detectarZonaCheckout(lat, lng) {
  if (resultado && resultado.sucursal) {
  _checkoutSucursalDetectada = resultado.sucursal;
  _checkoutFueraDeCoberturaActivo = false;
- _mostrarZonaBox(resultado.sucursal, resultado.zona ? `zona: ${resultado.zona}` : '');
- // Sincronizar con el selector de sucursal
+ // Precio: del campo precio de Firebase primero, sino buscar en SUC_MAP por zona
+ let precio = resultado.precio || 0;
+ if (!precio) precio = _getPrecioEnvioPorSucursal(resultado.sucursal, resultado.zona || '');
+ _checkoutEnvioPrecio = precio;
+ _mostrarZonaBox(resultado.sucursal, resultado.zona ? `zona: ${resultado.zona}` : '', precio);
+ // Siempre sincronizar con el selector de sucursal
  const sel = document.getElementById('main-sucursal');
  if (sel) sel.value = resultado.sucursal;
  } else {
  _checkoutSucursalDetectada = null;
+ _checkoutEnvioPrecio = 0;
  _checkoutFueraDeCoberturaActivo = true;
- _mostrarZonaBox(null, null);
+ _mostrarZonaBox(null, null, 0);
  }
  } catch(e) {
  console.warn('[detectarZona]', e);
  }
+ renderCartItems();
  validarDatosEnvio();
 }
 
 // Mostrar/ocultar indicador de zona detectada
-function _mostrarZonaBox(sucursal, detalle) {
+function _mostrarZonaBox(sucursal, detalle, precio) {
  const box = document.getElementById('zona-detectada-box');
  if (!box) return;
  if (!sucursal) {
@@ -3254,7 +3404,8 @@ function _mostrarZonaBox(sucursal, detalle) {
  box.style.background = 'rgba(16,185,129,0.1)';
  box.style.border = '1px solid rgba(16,185,129,0.35)';
  box.style.color = '#10b981';
- box.innerHTML = `✓ Pedido asignado a Sucursal: <b>${NOMBRES[sucursal] || sucursal}</b>${detalle ? ' <span style="opacity:.7;font-weight:500;font-size:11px;">' + detalle + '</span>' : ''}`;
+ const precioHtml = precio ? `<span class="zona-precio-badge">🛵 Envío: $${precio.toLocaleString('es-AR')}</span>` : '';
+ box.innerHTML = `<div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">✓ Sucursal: <b>${NOMBRES[sucursal] || sucursal}</b>${detalle ? ' <span style="opacity:.7;font-weight:500;font-size:11px;">' + detalle + '</span>' : ''}${precioHtml}</div>`;
 }
 
 // Validar datos y habilitar/deshabilitar botón final
@@ -6347,7 +6498,7 @@ document.getElementById('admin-root') && document.getElementById('admin-root').a
  ondrop="gfHandleDrop(event)"> <div style="font-weight:700;color:#e2e8f0;font-size:12px;" id="gf-drop-label">Soltar KML / GeoJSON o hacer click</div> <div style="font-size:10px;color:#6b7280;margin-top:2px;">MAPA_ENVIOS_MARVEL_FOOD.kml</div> </div> <input type="file" id="gf-kml-file" accept=".kml,.geojson,.json" style="display:none" onchange="gfHandleFile(event)"> </div> <!-- Options --> <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#9ca3af;cursor:pointer;"> <input type="checkbox" id="gf-overwrite" checked style="accent-color:var(--primary);width:14px;height:14px;"> Sobrescribir zonas existentes
  </label> <!-- Sync button --> <button id="gf-btn-sync" class="gf-import-btn primary" onclick="gfRunSync()" disabled style="opacity:.4;cursor:not-allowed;"> <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg> Sincronizar con Firebase
  </button> <!-- Feedback --> <div id="gf-feedback" style="display:none;padding:10px 12px;border-radius:10px;font-size:12px;font-weight:700;"></div> <!-- Separator --> <div style="border-top:1px solid var(--border);"></div> <!-- Heatmap toggle --> <div> <div style="font-size:10px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Mapa de Calor</div> <button class="gf-import-btn ghost" onclick="gfToggleHeatmap()" id="gf-btn-heat"> Cargar Heatmap de pedidos
- </button> </div> <!-- Separator --> <div style="border-top:1px solid var(--border);"></div> <!-- Zone list --> <div style="flex:1;overflow-y:auto;min-height:0;"> <div style="font-size:10px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Zonas activas</div> <div id="gf-zones-list" style="display:flex;flex-direction:column;gap:5px;"> <div style="color:#6b7280;font-size:12px;text-align:center;padding:16px 0;">Cargando...</div> </div> </div> </div><!-- /gf-sidebar --> <!-- MAPA Leaflet --> <div style="flex:1;position:relative;"> <div id="admin-map" style="width:100%;height:100%;background:#1a1a2e;"></div> <div id="gf-map-loader"> <div class="gf-spinner"></div> <div style="font-size:13px;color:#6b7280;font-weight:600;" id="gf-loader-txt">Cargando mapa...</div> </div> <!-- Leyenda --> <div style="position:absolute;bottom:16px;left:16px;background:rgba(10,10,10,.9);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:12px;padding:10px 14px;display:flex;flex-wrap:wrap;gap:10px;z-index:999;font-size:11px;font-weight:700;"> <span><span class="gf-zone-dot" style="background:#f59e0b;"></span>Centro</span> <span><span class="gf-zone-dot" style="background:#3b82f6;"></span>Norte</span> <span><span class="gf-zone-dot" style="background:#10b981;"></span>Sur</span> <span><span class="gf-zone-dot" style="background:#a855f7;"></span>Funes</span> <span><span class="gf-zone-dot" style="background:#ef4444;border-radius:0;"></span>Privado</span> </div> </div> </div><!-- /adm-tab-mapa --><!-- TAB MERCADO PAGO --><div id="adm-tab-mercadopago" style="display:none;padding:20px;"><h3 style="color:#00b1ea;font-weight:800;font-size:16px;margin-bottom:4px;">MERCADO PAGO</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:20px;">Conectá tu cuenta de Mercado Pago para generar links de pago automáticos cuando el cliente elija ese método.</p><!-- Estado de conexión --><div id="adm-mp-status-card" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px;display:flex;align-items:center;gap:12px;"><div id="adm-mp-status-dot" style="width:12px;height:12px;border-radius:50%;background:#6b7280;flex-shrink:0;"></div><div style="flex:1;"><div style="font-size:14px;font-weight:800;color:var(--white);" id="adm-mp-status-txt">No configurado</div><div style="font-size:11px;color:#9ca3af;margin-top:2px;" id="adm-mp-status-sub">Ingresá tu Access Token para activar los pagos online</div></div></div><!-- Formulario Access Token --><div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px;"><div style="font-size:11px;color:#9ca3af;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Access Token de Producción</div><div style="display:flex;gap:8px;"><input type="password" id="adm-mp-token-inp" class="adm-minp" placeholder="APP_USR-XXXX..." style="flex:1;margin-bottom:0;" autocomplete="off"><button onclick="admMpToggleToken()" style="background:rgba(255,255,255,.07);border:1px solid var(--border);color:#9ca3af;padding:0 12px;border-radius:9px;font-size:12px;cursor:pointer;white-space:nowrap;" id="adm-mp-eye-btn">Ver</button></div><p style="font-size:11px;color:#6b7280;margin-top:8px;line-height:1.5;">Encontrá tu token en <strong style="color:#9ca3af;">mercadopago.com.ar → Tu Negocio → Credenciales</strong>. Usá el token de <em>producción</em>.</p><button onclick="admMpGuardar()" style="width:100%;margin-top:14px;padding:12px;background:#00b1ea;border:none;color:#000;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;">GUARDAR Y ACTIVAR</button><div id="adm-mp-feedback" style="display:none;margin-top:10px;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:700;text-align:center;"></div></div><!-- Info --><div style="background:rgba(0,177,234,0.06);border:1px solid rgba(0,177,234,0.25);border-radius:12px;padding:14px;"><div style="font-size:12px;font-weight:800;color:#00b1ea;margin-bottom:8px;">¿Cómo funciona?</div><ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:7px;"><li style="display:flex;gap:8px;font-size:12px;color:#9ca3af;"><span style="color:#00b1ea;font-weight:800;flex-shrink:0;">1.</span>El cliente elige "Mercado Pago" al hacer su pedido</li><li style="display:flex;gap:8px;font-size:12px;color:#9ca3af;"><span style="color:#00b1ea;font-weight:800;flex-shrink:0;">2.</span>El sistema crea un link de pago por el monto exacto del pedido</li><li style="display:flex;gap:8px;font-size:12px;color:#9ca3af;"><span style="color:#00b1ea;font-weight:800;flex-shrink:0;">3.</span>El cliente es redirigido al checkout de MP para pagar</li><li style="display:flex;gap:8px;font-size:12px;color:#9ca3af;"><span style="color:#00b1ea;font-weight:800;flex-shrink:0;">4.</span>Luego se abre WhatsApp con los datos del pedido</li></ul></div></div><!-- TAB PROMOS --><div id="adm-tab-promos" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">GESTIÓN DE PROMOS</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Editá precios y el día de venta de cada promo. Los cambios se aplican en tiempo real en la tienda.</p><div id="adm-promos-lista"></div></div><!-- TAB CÓDIGOS DE DESCUENTO --><div id="adm-tab-codigos" style="display:none;padding:20px;">
+ </button> </div> <!-- Separator --> <div style="border-top:1px solid var(--border);"></div> <!-- Zone list --> <div style="flex:1;overflow-y:auto;min-height:0;"> <div style="font-size:10px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Zonas activas</div> <div id="gf-zones-list" style="display:flex;flex-direction:column;gap:5px;"> <div style="color:#6b7280;font-size:12px;text-align:center;padding:16px 0;">Cargando...</div> </div> </div> </div><!-- /gf-sidebar --> <!-- MAPA Leaflet --> <div style="flex:1;position:relative;"> <div id="admin-map" style="width:100%;height:100%;background:#1a1a2e;"></div> <div id="gf-map-loader"> <div class="gf-spinner"></div> <div style="font-size:13px;color:#6b7280;font-weight:600;" id="gf-loader-txt">Cargando mapa...</div> </div> <!-- Leyenda --> <div style="position:absolute;bottom:16px;left:16px;background:rgba(10,10,10,.9);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:12px;padding:10px 14px;display:flex;flex-wrap:wrap;gap:10px;z-index:999;font-size:11px;font-weight:700;"> <span><span class="gf-zone-dot" style="background:#f59e0b;"></span>Centro</span> <span><span class="gf-zone-dot" style="background:#3b82f6;"></span>Norte</span> <span><span class="gf-zone-dot" style="background:#10b981;"></span>Sur</span> <span><span class="gf-zone-dot" style="background:#a855f7;"></span>Funes</span> <span><span class="gf-zone-dot" style="background:#ef4444;border-radius:0;"></span>Privado</span> </div> </div> </div><!-- /adm-tab-mapa --><!-- TAB MERCADO PAGO --><div id="adm-tab-mercadopago" style="display:none;padding:20px;"><h3 style="color:#00b1ea;font-weight:800;font-size:16px;margin-bottom:4px;">MERCADO PAGO</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:20px;">Conectá tu cuenta de Mercado Pago para generar links de pago automáticos cuando el cliente elija ese método.</p><!-- Estado de conexión --><div id="adm-mp-status-card" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px;display:flex;align-items:center;gap:12px;"><div id="adm-mp-status-dot" style="width:12px;height:12px;border-radius:50%;background:#6b7280;flex-shrink:0;"></div><div style="flex:1;"><div style="font-size:14px;font-weight:800;color:var(--white);" id="adm-mp-status-txt">No configurado</div><div style="font-size:11px;color:#9ca3af;margin-top:2px;" id="adm-mp-status-sub">Ingresá tu Access Token para activar los pagos online</div></div></div><!-- Formulario Access Token --><div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px;"><div style="font-size:11px;color:#9ca3af;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Access Token de Producción</div><div style="display:flex;gap:8px;"><input type="password" id="adm-mp-token-inp" class="adm-minp" placeholder="APP_USR-XXXX..." style="flex:1;margin-bottom:0;" autocomplete="off"><button onclick="admMpToggleToken()" style="background:rgba(255,255,255,.07);border:1px solid var(--border);color:#9ca3af;padding:0 12px;border-radius:9px;font-size:12px;cursor:pointer;white-space:nowrap;" id="adm-mp-eye-btn">Ver</button></div><p style="font-size:11px;color:#6b7280;margin-top:8px;line-height:1.5;">Encontrá tu token en <strong style="color:#9ca3af;">mercadopago.com.ar → Tu Negocio → Credenciales</strong>. Usá el token de <em>producción</em>.</p><button onclick="admMpGuardar()" style="width:100%;margin-top:14px;padding:12px;background:#00b1ea;border:none;color:#000;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;">GUARDAR Y ACTIVAR</button><div id="adm-mp-feedback" style="display:none;margin-top:10px;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:700;text-align:center;"></div></div><!-- Info --><div style="background:rgba(0,177,234,0.06);border:1px solid rgba(0,177,234,0.25);border-radius:12px;padding:14px;"><div style="font-size:12px;font-weight:800;color:#00b1ea;margin-bottom:8px;">¿Cómo funciona?</div><ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:7px;"><li style="display:flex;gap:8px;font-size:12px;color:#9ca3af;"><span style="color:#00b1ea;font-weight:800;flex-shrink:0;">1.</span>El cliente elige "Mercado Pago" al hacer su pedido</li><li style="display:flex;gap:8px;font-size:12px;color:#9ca3af;"><span style="color:#00b1ea;font-weight:800;flex-shrink:0;">2.</span>El sistema crea un link de pago por el monto exacto del pedido</li><li style="display:flex;gap:8px;font-size:12px;color:#9ca3af;"><span style="color:#00b1ea;font-weight:800;flex-shrink:0;">3.</span>El cliente es redirigido al checkout de MP para pagar</li><li style="display:flex;gap:8px;font-size:12px;color:#9ca3af;"><span style="color:#00b1ea;font-weight:800;flex-shrink:0;">4.</span>Luego se abre WhatsApp con los datos del pedido</li></ul></div></div><!-- TAB PROMOS --><div id="adm-tab-promos" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">GESTIÓN DE PROMOS</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Editá precios y el día de venta de cada promo. Los cambios se aplican en tiempo real en la tienda.</p><div id="adm-promos-lista"></div></div><!-- TAB CÓDIGOS DE DESCUENTO --><div id="adm-tab-codigos" style="display:none;padding:20px;">
 <h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">CODIGOS DE DESCUENTO</h3>
 <p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Gestioná los códigos de uso interno del personal y los códigos promocionales. Podés activar, desactivar o agregar nuevos.</p> <!-- MASTER SWITCH -->
 <div id="adm-cod-master-card" style="background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:12px;"> <div> <div style="font-size:14px;font-weight:800;color:var(--white);">Sección visible en el checkout</div> <div style="font-size:11px;color:#9ca3af;margin-top:3px;" id="adm-cod-master-desc">Desactivado — el campo de código no aparece para los clientes</div> </div> <label class="adm-toggle" style="flex-shrink:0;width:44px;height:24px;"> <input type="checkbox" id="adm-cod-master-toggle" onchange="admToggleMasterCodigos(this.checked)"> <span class="adm-toggle-slider"></span> </label>
@@ -7859,7 +8010,7 @@ if ('serviceWorker' in navigator) {
  GEO-FENCING ADMIN — Panel de importación KML (solo ulises/leticia)
  Se activa desde el panel admin con admAbrirGeoFencing()
  -->
-<div id="gf-import-panel" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);align-items:center;justify-content:center;"> <div style="background:#1a1a1a;border:1px solid #333;border-radius:20px;padding:24px;width:90%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,0.8);"> <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;"> <div> <div style="font-size:16px;font-weight:800;color:#f59e0b;text-transform:uppercase;letter-spacing:.5px;">GeoFencing Admin</div> <div style="font-size:11px;color:#6b7280;margin-top:2px;">Importar KML → Firebase</div> </div> <button onclick="admCerrarGeoFencing()" style="background:rgba(255,255,255,0.08);border:none;color:#9ca3af;width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;">×</button> </div> <!-- Dropzone --> <div id="gf-drop-zone"
+<div id="gf-import-panel" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);align-items:center;justify-content:center;"> <div style="background:#1a1a1a;border:1px solid #333;border-radius:20px;padding:24px;width:90%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,0.8);"> <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;"> <div> <div style="font-size:16px;font-weight:800;color:#f59e0b;text-transform:uppercase;letter-spacing:.5px;">GeoFencing Admin</div> <div style="font-size:11px;color:#6b7280;margin-top:2px;">Importar KML → Firebase</div> </div> <button onclick="admCerrarGeoFencing()" style="background:rgba(255,255,255,0.08);border:none;color:#9ca3af;width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;">×</button> </div> <!-- Dropzone --> <div id="gf-drop-zone"
  style="border:2px dashed #333;border-radius:14px;padding:24px;text-align:center;cursor:pointer;transition:.2s;margin-bottom:14px;"
  onclick="document.getElementById('gf-kml-input').click()"
  ondragover="event.preventDefault();this.style.borderColor='#f59e0b';this.style.background='rgba(245,158,11,0.06)'"
@@ -8167,6 +8318,7 @@ async function _gfRenderZones() {
  'stroke-width': 2,
  'stroke-opacity': 1,
  _fireId: doc.id,
+ precio: d.precio || 0,
  },
  });
  });
@@ -8203,7 +8355,7 @@ async function _gfRenderZones() {
  const isPriv = p.requiresSpecialAccess || _gfIsSpecial(desc) || _gfIsSpecial(name);
  const suc = p.sucursal || _gfInferSucursal(name, desc);
 
- _gfZoneIndex[name] = { color: p.fill || '#888', sucursal: suc, priv: isPriv };
+ _gfZoneIndex[name] = { color: p.fill || '#888', sucursal: suc, priv: isPriv, precio: p.precio || 0, fireId: p._fireId || '' };
  total++;
  if (isPriv) privados++;
 
@@ -8213,8 +8365,10 @@ async function _gfRenderZones() {
  ? `<br><button onclick="gfDeleteZone('${_esc(fireId)}')" style="margin-top:8px;padding:4px 10px;background:#ef4444;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">Eliminar zona</button>`
  : '';
  const privTag = isPriv ? `<br><span style="color:#f59e0b;font-size:11px;">Barrio privado / acceso especial</span>` : '';
+ const precioVal = p.precio || 0;
+ const precioTag = `<br><span style="color:#9ca3af;font-size:11px;">Envío: <strong style="color:#f59e0b;">${precioVal ? '$' + precioVal.toLocaleString('es-AR') : 'Sin precio'}</strong></span>`;
  layer.bindPopup(`
- <div style="font-family:sans-serif;min-width:160px;"> <strong style="font-size:13px;color:#e2e8f0;">${_esc(name)}</strong><br> <span style="font-size:11px;color:#9ca3af;">Sucursal: <strong style="color:#e2e8f0;">${_esc(suc)}</strong></span> ${privTag}${deleteBtn}
+ <div style="font-family:sans-serif;min-width:160px;"> <strong style="font-size:13px;color:#e2e8f0;">${_esc(name)}</strong><br> <span style="font-size:11px;color:#9ca3af;">Sucursal: <strong style="color:#e2e8f0;">${_esc(suc)}</strong></span> ${precioTag}${privTag}${deleteBtn}
  </div>`, { maxWidth: 240 });
 
  // Hover highlight
@@ -8255,8 +8409,26 @@ async function _gfRefreshZonesList() {
  zones.sort((a,b) => (a.sucursal||'').localeCompare(b.sucursal||'') || a.name.localeCompare(b.name));
  container.innerHTML = zones.map(z => {
  const color = z.priv ? '#ef4444' : (z.color || GF_COLORS[z.sucursal] || '#888');
- return `<div style="background:rgba(255,255,255,.04);border-radius:6px;padding:7px 10px;border-left:3px solid ${color};cursor:pointer;"
- onclick="gfFocusZone('${_esc(z.name)}')"> <div style="display:flex;align-items:center;gap:6px;"> <span style="width:10px;height:10px;border-radius:50%;background:${color};display:inline-block;flex-shrink:0;"></span> <strong style="color:#e2e8f0;font-size:11px;">${_esc(z.name)}</strong> </div> <div style="color:#6b7280;font-size:10px;margin-top:3px;margin-left:16px;">${_esc(z.sucursal)}${z.priv ? ' · Privado' : ''}</div> </div>`;
+ const precio = z.precio || 0;
+ const fireId = z.fireId || '';
+ const precioDisplay = precio ? `<span style="color:#f59e0b;font-size:10px;font-weight:800;">$${precio.toLocaleString('es-AR')}</span>` : `<span style="color:#6b7280;font-size:10px;">Sin precio</span>`;
+ const editHtml = fireId ? `
+ <div class="gf-zone-price-row">
+ <span style="color:#6b7280;font-size:10px;">$</span>
+ <input class="gf-zone-price-inp" type="number" min="0" step="100"
+ value="${precio}" id="gf-price-${_esc(fireId)}"
+ placeholder="Precio envío" title="Precio de envío para esta zona">
+ <button class="gf-zone-price-save" onclick="gfSaveZonePrice('${_esc(fireId)}','${_esc(z.name)}')">Guardar</button>
+ </div>` : '';
+ return `<div style="background:rgba(255,255,255,.04);border-radius:6px;padding:7px 10px;border-left:3px solid ${color};">
+ <div style="display:flex;align-items:center;gap:6px;cursor:pointer;" onclick="gfFocusZone('${_esc(z.name)}')">
+ <span style="width:10px;height:10px;border-radius:50%;background:${color};display:inline-block;flex-shrink:0;"></span>
+ <strong style="color:#e2e8f0;font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_esc(z.name)}</strong>
+ ${precioDisplay}
+ </div>
+ <div style="color:#6b7280;font-size:10px;margin-top:2px;margin-left:16px;">${_esc(z.sucursal)}${z.priv ? ' · Privado' : ''}</div>
+ ${editHtml}
+ </div>`;
  }).join('');
 }
 
@@ -8269,6 +8441,29 @@ window.gfFocusZone = function(name) {
  l.openPopup();
  }
  });
+};
+
+// Guardar precio de envío para una zona
+window.gfSaveZonePrice = async function(docId, zoneName) {
+ try { _gfGuard(); } catch(e) { gfFeedback('Sesión admin requerida.', 'warn'); return; }
+ if (!window.db) { gfFeedback('Firebase no disponible.', 'error'); return; }
+ const inp = document.getElementById('gf-price-' + docId);
+ if (!inp) return;
+ const precio = parseFloat(inp.value) || 0;
+ try {
+ await window.db.collection('delivery_zones').doc(docId).update({ precio, updatedAt: new Date().toISOString() });
+ // Actualizar en memoria
+ if (_gfZoneIndex[zoneName]) _gfZoneIndex[zoneName].precio = precio;
+ if (_gfFireCache) {
+ const feat = _gfFireCache.features?.find(f => f.properties?._fireId === docId);
+ if (feat) feat.properties.precio = precio;
+ }
+ gfFeedback(`Precio $${precio.toLocaleString('es-AR')} guardado para "${zoneName}"`, 'success');
+ inp.style.borderColor = '#10b981';
+ setTimeout(() => { inp.style.borderColor = ''; }, 2000);
+ } catch(e) {
+ gfFeedback('Error al guardar: ' + e.message, 'error');
+ }
 };
 
 // 
@@ -8570,6 +8765,7 @@ window._gfLoadZones = async function() {
  sucursal: d.sucursal || 'Centro',
  requiresSpecialAccess: !!d.requiresSpecialAccess,
  fill: color, _fireId: doc.id,
+ precio: d.precio || 0,
  },
  });
  });
@@ -8602,6 +8798,7 @@ window.determinarSucursal = async function(lat, lng) {
  sucursal: p.sucursal || _gfInferSucursal(p.name || '', ''),
  zona: p.name || null,
  requiresSpecialAccess: !!p.requiresSpecialAccess,
+ precio: p.precio || 0,
  };
  }
  } catch(e) {}

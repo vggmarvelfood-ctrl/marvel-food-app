@@ -1338,7 +1338,110 @@ try {
 .u-sh0{flex-shrink:0}.u-g8{gap:8px}.u-g10{gap:10px}.u-g12{gap:12px}
 .u-brd{border:1px solid var(--border)}.u-surf{background:var(--surface)}
 @keyframes peoSpin { to { transform: rotate(360deg); } }
+
+/* ──────────────────────────────────────────────────────────
+   GEO-FENCING ADMIN — Estilos del panel integrado (Tab Zonas)
+   ────────────────────────────────────────────────────────── */
+.gf-sidebar {
+    width: 300px;
+    min-width: 260px;
+    background: rgba(26,26,46,0.97);
+    border-right: 1px solid var(--border);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow-y: auto;
+    flex-shrink: 0;
+}
+.zone-card {
+    background: rgba(255,255,255,0.05);
+    border-left: 4px solid var(--primary);
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    transition: transform 0.2s, background 0.2s;
+    cursor: default;
+}
+.zone-card:hover {
+    transform: translateX(5px);
+    background: rgba(255,255,255,0.09);
+}
+.zone-card.privado { border-left-color: #ef4444; }
+.zone-card.norte   { border-left-color: #3b82f6; }
+.zone-card.sur     { border-left-color: #10b981; }
+.zone-card.funes   { border-left-color: #a855f7; }
+.zone-card.centro  { border-left-color: var(--primary); }
+
+#admin-map {
+    flex: 1;
+    min-height: 400px;
+    border-radius: 0 12px 12px 0;
+    filter: grayscale(0.15) contrast(1.08);
+}
+#adm-tab-mapa {
+    display: none;
+    height: calc(100vh - 160px);
+    flex-direction: row;
+    overflow: hidden;
+}
+.gf-zone-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+    flex-shrink: 0;
+}
+.gf-import-btn {
+    width: 100%; padding: 11px;
+    border: none; border-radius: 10px;
+    font-size: 12px; font-weight: 800;
+    cursor: pointer; transition: opacity .2s, transform .1s;
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+}
+.gf-import-btn:active { transform: scale(.97); }
+.gf-import-btn:disabled { opacity: .4; cursor: not-allowed; }
+.gf-import-btn.primary { background: var(--primary); color: #000; }
+.gf-import-btn.danger  { background: #ef4444; color: #fff; }
+.gf-import-btn.ghost   { background: rgba(255,255,255,.07); color: var(--text); border: 1px solid var(--border); }
+#gf-drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 16px 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+    font-size: 12px;
+}
+#gf-drop-zone:hover, #gf-drop-zone.over {
+    border-color: var(--primary);
+    background: rgba(245,158,11,.06);
+}
+#gf-map-loader {
+    position: absolute; inset: 0;
+    background: rgba(10,10,10,.85);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 14px; border-radius: 0 12px 12px 0;
+    z-index: 5;
+}
+.gf-spinner {
+    width: 40px; height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: gfSpin .8s linear infinite;
+}
+@keyframes gfSpin { to { transform: rotate(360deg); } }
 </style></head><body>
+
+<!-- ═══════════════════════════════════════════════════════
+     GEO-FENCING v2 — CDN dependencies (Turf + toGeoJSON)
+     Cargados en <body> temprano para que estén disponibles
+     cuando se inicialice GeoFencing.init(window.db)
+═══════════════════════════════════════════════════════ -->
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tmcw/togeojson@5/dist/togeojson.umd.js"></script>
 <div id="offline-banner"> Sin conexión — algunos datos pueden estar desactualizados</div>
 <script>
 //  SISTEMA BÁSICO DE DIAGNÓSTICO DE ERRORES 
@@ -2627,6 +2730,35 @@ window.procesarPedido = async () => {
 
         const docRef = await db.collection("pedidos_v2").add(ordenDatos);
         const pedidoId = docRef.id;
+
+        // ── Auditoría de ventas en colección 'orders' (Tarea 3) ────────────
+        // Registro liviano para alimentar el dashboard de ventas futuro.
+        // No bloquea el flujo: cualquier error se captura silenciosamente.
+        (async function _registrarOrdenAuditoria() {
+            try {
+                if (!window.db) return;
+                await db.collection(
+                    (window.CONFIG?.collections?.orders) || 'orders'
+                ).add({
+                    pedidoId,
+                    sucursal:  ordenDatos.sucursal,
+                    tipo:      ordenDatos.tipo,
+                    total:     total,
+                    subtotal:  sub,
+                    descuento: montoDescuento,
+                    pago:      pago,
+                    itemCount: carrito.length,
+                    gps:       ordenDatos.gps,
+                    // Productos (sólo nombre + cantidad para estadísticas)
+                    productos: carrito.map(i => ({ n: i.n, cant: i.cant, precio: i.p })),
+                    zona:      (typeof _wsSucursalDetectada !== 'undefined' ? _wsSucursalDetectada : null),
+                    fecha:     firebase.firestore.FieldValue.serverTimestamp(),
+                    fechaISO:  new Date().toISOString(),
+                });
+            } catch(e) {
+                console.warn('[Auditoría] No se pudo registrar en orders:', e.message);
+            }
+        })();
 
         // Guardar pedidoId para seguimiento en tiempo real
         // Guardar dirección para pre-cargar la próxima vez
@@ -5208,12 +5340,21 @@ function admImprimir(id) {
 function admSwitchTab(tab, btn) {
     if (tab === 'integracion') { _integRenderTab(); }
     if (tab === 'mercadopago') { admCargarMercadoPago(); }
-    ['pedidos','dashboard','menu','resenas','promos','cupones','integracion','codigos','mercadopago'].forEach(t => {
+
+    // ── Tabs normales (display:block) ─────────────────────────────────────
+    const BLOCK_TABS = ['pedidos','dashboard','menu','resenas','promos','cupones','integracion','codigos','mercadopago'];
+    BLOCK_TABS.forEach(t => {
         const el = document.getElementById('adm-tab-' + t);
         if (el) el.style.display = t === tab ? 'block' : 'none';
     });
+
+    // ── Tab Mapa: usa display:flex en lugar de block ───────────────────────
+    const mapaEl = document.getElementById('adm-tab-mapa');
+    if (mapaEl) mapaEl.style.display = tab === 'mapa' ? 'flex' : 'none';
+
     document.querySelectorAll('.adm-tab').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
+
     // Cargar datos de cada tab
     if (tab === 'dashboard')   setTimeout(admCargarDashboard, 50);
     if (tab === 'menu')        setTimeout(admCargarMenuGestion, 50);
@@ -5222,6 +5363,11 @@ function admSwitchTab(tab, btn) {
     if (tab === 'cupones')     setTimeout(admCargarCupones, 50);
     if (tab === 'codigos')     setTimeout(admCargarCodigos, 300);
     if (tab === 'integracion') setTimeout(_integRenderTab, 50);
+
+    // ── Lazy init del mapa (solo primera vez que se abre la tab) ──────────
+    if (tab === 'mapa') {
+        setTimeout(gfInitLazy, 80);
+    }
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -6072,7 +6218,102 @@ document.getElementById('admin-root') && document.getElementById('admin-root').a
 <div id="tracking-anulado-label" style="display:none;text-align:center;padding:10px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;margin-top:8px;"><span style="color:#ef4444;font-weight:800;font-size:14px;letter-spacing:1px;">ANULADO</span></div></div></div><!-- MODAL RESEÑA --><div id="resena-modal"><div class="resena-sheet"><div style="font-size:40px;margin-bottom:8px;"></div><h3 style="font-weight:800;font-size:18px;color:var(--white);margin-bottom:6px;">¿Cómo estuvo tu pedido?</h3><p style="color:var(--text-light);font-size:13px;">Tu opinión nos ayuda a mejorar</p><div class="stars-row" id="stars-row"><span class="star-btn" data-v="1" onclick="setStars(1)">★</span><span class="star-btn" data-v="2" onclick="setStars(2)">★</span><span class="star-btn" data-v="3" onclick="setStars(3)">★</span><span class="star-btn" data-v="4" onclick="setStars(4)">★</span><span class="star-btn" data-v="5" onclick="setStars(5)">★</span></div><textarea id="resena-comentario" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--white);font-size:13px;resize:none;height:80px;margin-bottom:16px;" placeholder="Comentario opcional..."></textarea><button onclick="enviarResena()" id="resena-btn" style="width:100%;padding:14px;border-radius:10px;border:none;background:var(--primary);color:#000;font-weight:800;font-size:15px;cursor:pointer;">ENVIAR RESEÑA</button><button onclick="document.getElementById('resena-modal').classList.remove('open')" style="width:100%;padding:10px;border-radius:10px;border:none;background:transparent;color:var(--text-light);font-size:13px;margin-top:8px;cursor:pointer;">Ahora no</button></div></div><!-- ADMIN --><div id="admin-root" style="display:none;"><!-- LOGIN --><div id="adm-login-screen"><div class="adm-login-box"><div style="font-size:36px;margin-bottom:8px;"></div><h1>MARVEL FOOD</h1><p>Panel de administración</p><input class="adm-inp" type="password" id="adm-pin" placeholder="PIN de acceso" autocomplete="off"
                 onkeydown="if(event.key==='Enter') admCheckPin()">
 <div id="adm-pin-feedback" style="min-height:18px;font-size:12px;font-weight:700;margin:6px 0 2px;text-align:center;"></div>
-<button class="adm-btn-primary" onclick="admCheckPin()">INGRESAR</button></div></div><!-- PANEL PRINCIPAL --><div id="adm-app" style="display:none;"><!-- Header --><div class="adm-header"><h1>MARVEL <span>ADMIN</span></h1><div style="display:flex;align-items:center;gap:8px;"><span class="adm-badge-live"> EN VIVO</span><span style="color:#9ca3af;font-size:10px;" id="adm-last-update">—</span><button onclick="admLogout()" style="background:transparent;border:1px solid #333;color:#9ca3af;padding:5px 10px;border-radius:8px;font-size:10px;cursor:pointer;">SALIR</button></div></div><!-- Stats --><div class="adm-stats-bar"><div class="adm-stat"><span>Pendientes</span><span id="adm-s-pend">0</span></div><div class="adm-stat"><span>Aceptados</span><span id="adm-s-acep" style="color:#10b981">0</span></div><div class="adm-stat"><span>Listos</span><span id="adm-s-list" style="color:#3b82f6">0</span></div><div class="adm-stat"><span>Hoy</span><span id="adm-s-total" style="color:#fff">0</span></div><div class="adm-stat"><span>Recaudado</span><span id="adm-s-cash" style="color:#10b981">$0</span></div></div><!-- Barra de filtros --><!-- Tabs del admin --><div style="display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);overflow-x:auto;"><button class="adm-tab active" onclick="admSwitchTab('pedidos',this)">Pedidos</button><button class="adm-tab" onclick="admSwitchTab('dashboard',this)">Dashboard</button><button class="adm-tab" onclick="admSwitchTab('menu',this)">Menu</button><button class="adm-tab" onclick="admSwitchTab('promos',this)">Promos</button><button class="adm-tab" onclick="admSwitchTab('cupones',this)">Cupones</button><button class="adm-tab" onclick="admSwitchTab('codigos',this)">Codigos</button><button class="adm-tab" onclick="admSwitchTab('resenas',this)">Reseñas</button><button class="adm-tab" onclick="admSwitchTab('integracion',this)" style="color:#a78bfa;"> Integración</button><button class="adm-tab" onclick="admSwitchTab('mercadopago',this)" style="color:#00b1ea;"> Mercado Pago</button></div><!-- TAB PEDIDOS --><div id="adm-tab-pedidos"><div class="adm-filterbar"><!-- Fila 1: Fecha + Sucursal --><div class="adm-filterrow"><div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;"><span style="color:#9ca3af;font-size:11px;font-weight:700;white-space:nowrap;"> FECHA</span><input type="date" id="adm-fecha-filtro" class="adm-date-inp" onchange="admAplicarFiltros()"><button onclick="admFechaHoy()" class="adm-filter-btn" style="white-space:nowrap;padding:5px 10px;">Hoy</button><button onclick="admVerTodoHistorial()" id="btn-todo-historial" class="adm-filter-btn" style="white-space:nowrap;padding:5px 10px;background:rgba(99,102,241,0.15);border-color:#6366f1;color:#a5b4fc;">Todo</button></div><div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;"><span style="color:#9ca3af;font-size:11px;font-weight:700;white-space:nowrap;">SUCURSAL</span><select id="adm-suc-filtro" class="adm-date-inp" onchange="admAplicarFiltros()" style="flex:1;"><option value="">Todas</option><option value="PELLEGRINI">Centro</option><option value="Rondeau">Norte</option><option value="San Martin">Sur</option><option value="Funes">Funes</option></select></div></div><!-- Fila 2: Estado + Tipo + Limpiar --><div class="adm-filterrow" style="margin-top:8px;"><button class="adm-filter-btn active" data-f="Todos"    onclick="admFiltroEstado('Todos',this)">Todos</button><button class="adm-filter-btn"        data-f="Pendiente" onclick="admFiltroEstado('Pendiente',this)">Pendientes</button><button class="adm-filter-btn f-acep" data-f="Aceptado" onclick="admFiltroEstado('Aceptado',this)">Aceptados</button><button class="adm-filter-btn f-list" data-f="Listo"    onclick="admFiltroEstado('Listo',this)">Listos</button><button class="adm-filter-btn f-ent"  data-f="Entregado" onclick="admFiltroEstado('Entregado',this)">Entregados</button><button class="adm-filter-btn"        data-f="Delivery" onclick="admFiltroEstado('Delivery',this)">Delivery</button><button class="adm-filter-btn"        data-f="Retiro"   onclick="admFiltroEstado('Retiro',this)">Retiro</button><button onclick="admLimpiarDia()" style="margin-left:auto;background:rgba(239,68,68,.15);border:1px solid #ef4444;color:#ef4444;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">Limpiar día</button></div></div><!-- Lista pedidos --><div class="adm-orders" id="adm-orders"></div></div><!-- /adm-tab-pedidos --><!-- TAB DASHBOARD --><div id="adm-tab-dashboard" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:16px;">MÉTRICAS DEL DÍA</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;"><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Pedidos hoy</div><div id="dash-total" style="font-size:28px;font-weight:800;color:var(--primary);">0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Recaudado</div><div id="dash-cash" style="font-size:22px;font-weight:800;color:#10b981;">$0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Ticket promedio</div><div id="dash-ticket" style="font-size:22px;font-weight:800;color:#3b82f6;">$0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Delivery / Retiro</div><div id="dash-tipos" style="font-size:16px;font-weight:800;color:var(--white);">0 / 0</div></div></div><!-- Ventas por hora --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Ventas por hora</div><div id="dash-chart-horas" style="display:flex;align-items:flex-end;gap:4px;height:80px;"></div><div id="dash-chart-labels" style="display:flex;gap:4px;margin-top:4px;"></div></div><!-- Productos más pedidos --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Productos más pedidos hoy</div><div id="dash-top-prods"></div></div><!-- Mapa de calor de zonas --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Pedidos por zona</div><div id="dash-zonas"></div></div></div><!-- TAB MENÚ --><div id="adm-tab-menu" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:6px;"> GESTIÓN DE MENÚ</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Pausá productos o editá precios. Los cambios son inmediatos en la tienda.</p><div id="adm-menu-lista" style="display:flex;flex-direction:column;gap:8px;"></div></div><!-- TAB RESEÑAS / OPINIONES --><div id="adm-tab-resenas" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">OPINIONES DE CLIENTES</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Podés eliminar cualquier opinión que no corresponda. Los cambios son inmediatos.</p><!-- Toggle visibilidad modal opinión --><div id="adm-op-visible-toggle"></div><div style="display:flex;gap:12px;margin-bottom:20px;"><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);flex:1;text-align:center;"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Promedio</div><div id="res-promedio" style="font-size:32px;font-weight:800;color:var(--primary);">—</div><div style="color:#9ca3af;font-size:11px;" id="res-count">0 reseñas</div></div><div id="res-dist" style="flex:2;background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);display:flex;flex-direction:column;gap:5px;justify-content:center;"></div></div><!-- Tabs internas: Pedido / Públicas --><div style="display:flex;gap:8px;margin-bottom:16px;"><button id="adm-res-tab-ped" onclick="admResTab('pedidos')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--primary);background:rgba(245,158,11,.15);color:var(--primary);font-weight:800;font-size:12px;cursor:pointer;">Desde pedido</button><button id="adm-res-tab-pub" onclick="admResTab('publicas')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--border);background:transparent;color:#9ca3af;font-weight:800;font-size:12px;cursor:pointer;">Opiniones públicas</button></div><div id="adm-resenas-lista" style="display:flex;flex-direction:column;gap:10px;"></div></div><!-- TAB INTEGRACIÓN --><div id="adm-tab-integracion" style="display:none;"></div><!-- TAB MERCADO PAGO --><div id="adm-tab-mercadopago" style="display:none;padding:20px;"><h3 style="color:#00b1ea;font-weight:800;font-size:16px;margin-bottom:4px;">MERCADO PAGO</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:20px;">Conectá tu cuenta de Mercado Pago para generar links de pago automáticos cuando el cliente elija ese método.</p><!-- Estado de conexión --><div id="adm-mp-status-card" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px;display:flex;align-items:center;gap:12px;"><div id="adm-mp-status-dot" style="width:12px;height:12px;border-radius:50%;background:#6b7280;flex-shrink:0;"></div><div style="flex:1;"><div style="font-size:14px;font-weight:800;color:var(--white);" id="adm-mp-status-txt">No configurado</div><div style="font-size:11px;color:#9ca3af;margin-top:2px;" id="adm-mp-status-sub">Ingresá tu Access Token para activar los pagos online</div></div></div><!-- Formulario Access Token --><div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px;"><div style="font-size:11px;color:#9ca3af;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Access Token de Producción</div><div style="display:flex;gap:8px;"><input type="password" id="adm-mp-token-inp" class="adm-minp" placeholder="APP_USR-XXXX..." style="flex:1;margin-bottom:0;" autocomplete="off"><button onclick="admMpToggleToken()" style="background:rgba(255,255,255,.07);border:1px solid var(--border);color:#9ca3af;padding:0 12px;border-radius:9px;font-size:12px;cursor:pointer;white-space:nowrap;" id="adm-mp-eye-btn">Ver</button></div><p style="font-size:11px;color:#6b7280;margin-top:8px;line-height:1.5;">Encontrá tu token en <strong style="color:#9ca3af;">mercadopago.com.ar → Tu Negocio → Credenciales</strong>. Usá el token de <em>producción</em>.</p><button onclick="admMpGuardar()" style="width:100%;margin-top:14px;padding:12px;background:#00b1ea;border:none;color:#000;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;">GUARDAR Y ACTIVAR</button><div id="adm-mp-feedback" style="display:none;margin-top:10px;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:700;text-align:center;"></div></div><!-- Info --><div style="background:rgba(0,177,234,0.06);border:1px solid rgba(0,177,234,0.25);border-radius:12px;padding:14px;"><div style="font-size:12px;font-weight:800;color:#00b1ea;margin-bottom:8px;">¿Cómo funciona?</div><ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:7px;"><li style="display:flex;gap:8px;font-size:12px;color:#9ca3af;"><span style="color:#00b1ea;font-weight:800;flex-shrink:0;">1.</span>El cliente elige "Mercado Pago" al hacer su pedido</li><li style="display:flex;gap:8px;font-size:12px;color:#9ca3af;"><span style="color:#00b1ea;font-weight:800;flex-shrink:0;">2.</span>El sistema crea un link de pago por el monto exacto del pedido</li><li style="display:flex;gap:8px;font-size:12px;color:#9ca3af;"><span style="color:#00b1ea;font-weight:800;flex-shrink:0;">3.</span>El cliente es redirigido al checkout de MP para pagar</li><li style="display:flex;gap:8px;font-size:12px;color:#9ca3af;"><span style="color:#00b1ea;font-weight:800;flex-shrink:0;">4.</span>Luego se abre WhatsApp con los datos del pedido</li></ul></div></div><!-- TAB PROMOS --><div id="adm-tab-promos" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">GESTIÓN DE PROMOS</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Editá precios y el día de venta de cada promo. Los cambios se aplican en tiempo real en la tienda.</p><div id="adm-promos-lista"></div></div><!-- TAB CÓDIGOS DE DESCUENTO --><div id="adm-tab-codigos" style="display:none;padding:20px;">
+<button class="adm-btn-primary" onclick="admCheckPin()">INGRESAR</button></div></div><!-- PANEL PRINCIPAL --><div id="adm-app" style="display:none;"><!-- Header --><div class="adm-header"><h1>MARVEL <span>ADMIN</span></h1><div style="display:flex;align-items:center;gap:8px;"><span class="adm-badge-live"> EN VIVO</span><span style="color:#9ca3af;font-size:10px;" id="adm-last-update">—</span><button onclick="admLogout()" style="background:transparent;border:1px solid #333;color:#9ca3af;padding:5px 10px;border-radius:8px;font-size:10px;cursor:pointer;">SALIR</button></div></div><!-- Stats --><div class="adm-stats-bar"><div class="adm-stat"><span>Pendientes</span><span id="adm-s-pend">0</span></div><div class="adm-stat"><span>Aceptados</span><span id="adm-s-acep" style="color:#10b981">0</span></div><div class="adm-stat"><span>Listos</span><span id="adm-s-list" style="color:#3b82f6">0</span></div><div class="adm-stat"><span>Hoy</span><span id="adm-s-total" style="color:#fff">0</span></div><div class="adm-stat"><span>Recaudado</span><span id="adm-s-cash" style="color:#10b981">$0</span></div></div><!-- Barra de filtros --><!-- Tabs del admin --><div style="display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);overflow-x:auto;"><button class="adm-tab active" onclick="admSwitchTab('pedidos',this)">Pedidos</button><button class="adm-tab" onclick="admSwitchTab('dashboard',this)">Dashboard</button><button class="adm-tab" onclick="admSwitchTab('menu',this)">Menu</button><button class="adm-tab" onclick="admSwitchTab('promos',this)">Promos</button><button class="adm-tab" onclick="admSwitchTab('cupones',this)">Cupones</button><button class="adm-tab" onclick="admSwitchTab('codigos',this)">Codigos</button><button class="adm-tab" onclick="admSwitchTab('resenas',this)">Reseñas</button><button class="adm-tab" onclick="admSwitchTab('integracion',this)" style="color:#a78bfa;"> Integración</button><button class="adm-tab" onclick="admSwitchTab('mercadopago',this)" style="color:#00b1ea;"> Mercado Pago</button><button class="adm-tab" onclick="admSwitchTab('mapa',this)" style="color:#34d399;">🗺️ Zonas de Envío</button></div><!-- TAB PEDIDOS --><div id="adm-tab-pedidos"><div class="adm-filterbar"><!-- Fila 1: Fecha + Sucursal --><div class="adm-filterrow"><div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;"><span style="color:#9ca3af;font-size:11px;font-weight:700;white-space:nowrap;"> FECHA</span><input type="date" id="adm-fecha-filtro" class="adm-date-inp" onchange="admAplicarFiltros()"><button onclick="admFechaHoy()" class="adm-filter-btn" style="white-space:nowrap;padding:5px 10px;">Hoy</button><button onclick="admVerTodoHistorial()" id="btn-todo-historial" class="adm-filter-btn" style="white-space:nowrap;padding:5px 10px;background:rgba(99,102,241,0.15);border-color:#6366f1;color:#a5b4fc;">Todo</button></div><div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;"><span style="color:#9ca3af;font-size:11px;font-weight:700;white-space:nowrap;">SUCURSAL</span><select id="adm-suc-filtro" class="adm-date-inp" onchange="admAplicarFiltros()" style="flex:1;"><option value="">Todas</option><option value="PELLEGRINI">Centro</option><option value="Rondeau">Norte</option><option value="San Martin">Sur</option><option value="Funes">Funes</option></select></div></div><!-- Fila 2: Estado + Tipo + Limpiar --><div class="adm-filterrow" style="margin-top:8px;"><button class="adm-filter-btn active" data-f="Todos"    onclick="admFiltroEstado('Todos',this)">Todos</button><button class="adm-filter-btn"        data-f="Pendiente" onclick="admFiltroEstado('Pendiente',this)">Pendientes</button><button class="adm-filter-btn f-acep" data-f="Aceptado" onclick="admFiltroEstado('Aceptado',this)">Aceptados</button><button class="adm-filter-btn f-list" data-f="Listo"    onclick="admFiltroEstado('Listo',this)">Listos</button><button class="adm-filter-btn f-ent"  data-f="Entregado" onclick="admFiltroEstado('Entregado',this)">Entregados</button><button class="adm-filter-btn"        data-f="Delivery" onclick="admFiltroEstado('Delivery',this)">Delivery</button><button class="adm-filter-btn"        data-f="Retiro"   onclick="admFiltroEstado('Retiro',this)">Retiro</button><button onclick="admLimpiarDia()" style="margin-left:auto;background:rgba(239,68,68,.15);border:1px solid #ef4444;color:#ef4444;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">Limpiar día</button></div></div><!-- Lista pedidos --><div class="adm-orders" id="adm-orders"></div></div><!-- /adm-tab-pedidos --><!-- TAB DASHBOARD --><div id="adm-tab-dashboard" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:16px;">MÉTRICAS DEL DÍA</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;"><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Pedidos hoy</div><div id="dash-total" style="font-size:28px;font-weight:800;color:var(--primary);">0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Recaudado</div><div id="dash-cash" style="font-size:22px;font-weight:800;color:#10b981;">$0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Ticket promedio</div><div id="dash-ticket" style="font-size:22px;font-weight:800;color:#3b82f6;">$0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Delivery / Retiro</div><div id="dash-tipos" style="font-size:16px;font-weight:800;color:var(--white);">0 / 0</div></div></div><!-- Ventas por hora --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Ventas por hora</div><div id="dash-chart-horas" style="display:flex;align-items:flex-end;gap:4px;height:80px;"></div><div id="dash-chart-labels" style="display:flex;gap:4px;margin-top:4px;"></div></div><!-- Productos más pedidos --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Productos más pedidos hoy</div><div id="dash-top-prods"></div></div><!-- Mapa de calor de zonas --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Pedidos por zona</div><div id="dash-zonas"></div></div></div><!-- TAB MENÚ --><div id="adm-tab-menu" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:6px;"> GESTIÓN DE MENÚ</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Pausá productos o editá precios. Los cambios son inmediatos en la tienda.</p><div id="adm-menu-lista" style="display:flex;flex-direction:column;gap:8px;"></div></div><!-- TAB RESEÑAS / OPINIONES --><div id="adm-tab-resenas" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">OPINIONES DE CLIENTES</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Podés eliminar cualquier opinión que no corresponda. Los cambios son inmediatos.</p><!-- Toggle visibilidad modal opinión --><div id="adm-op-visible-toggle"></div><div style="display:flex;gap:12px;margin-bottom:20px;"><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);flex:1;text-align:center;"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Promedio</div><div id="res-promedio" style="font-size:32px;font-weight:800;color:var(--primary);">—</div><div style="color:#9ca3af;font-size:11px;" id="res-count">0 reseñas</div></div><div id="res-dist" style="flex:2;background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);display:flex;flex-direction:column;gap:5px;justify-content:center;"></div></div><!-- Tabs internas: Pedido / Públicas --><div style="display:flex;gap:8px;margin-bottom:16px;"><button id="adm-res-tab-ped" onclick="admResTab('pedidos')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--primary);background:rgba(245,158,11,.15);color:var(--primary);font-weight:800;font-size:12px;cursor:pointer;">Desde pedido</button><button id="adm-res-tab-pub" onclick="admResTab('publicas')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--border);background:transparent;color:#9ca3af;font-weight:800;font-size:12px;cursor:pointer;">Opiniones públicas</button></div><div id="adm-resenas-lista" style="display:flex;flex-direction:column;gap:10px;"></div></div><!-- TAB INTEGRACIÓN --><div id="adm-tab-integracion" style="display:none;"></div><!-- TAB ZONAS DE ENVÍO -->
+<div id="adm-tab-mapa" style="display:none;flex-direction:row;height:calc(100vh - 160px);overflow:hidden;">
+
+  <!-- ── SIDEBAR ─────────────────────────────────────────────────── -->
+  <div class="gf-sidebar">
+
+    <!-- Header -->
+    <div>
+      <div style="font-size:15px;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:.5px;">🗺️ Zonas de Envío</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;">GeoFencing v3 · Firebase</div>
+    </div>
+
+    <!-- Stats chips -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div style="background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:22px;font-weight:800;color:var(--primary);" id="gf-stat-total">—</div>
+        <div style="font-size:10px;color:#6b7280;font-weight:700;">ZONAS</div>
+      </div>
+      <div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:22px;font-weight:800;color:#ef4444;" id="gf-stat-priv">—</div>
+        <div style="font-size:10px;color:#6b7280;font-weight:700;">PRIVADOS</div>
+      </div>
+    </div>
+
+    <!-- Import KML -->
+    <div>
+      <div style="font-size:10px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Importar KML → Firebase</div>
+      <div id="gf-drop-zone"
+        onclick="document.getElementById('gf-kml-file').click()"
+        ondragover="event.preventDefault();this.classList.add('over')"
+        ondragleave="this.classList.remove('over')"
+        ondrop="gfHandleDrop(event)">
+        <div style="font-size:20px;margin-bottom:4px;">📂</div>
+        <div style="font-weight:700;color:#e2e8f0;font-size:12px;" id="gf-drop-label">Soltá el KML / GeoJSON o hacé click</div>
+        <div style="font-size:10px;color:#6b7280;margin-top:2px;">MAPA_ENVIOS_MARVEL_FOOD.kml · map.geojson</div>
+      </div>
+      <input type="file" id="gf-kml-file" accept=".kml,.geojson,.json" style="display:none" onchange="gfHandleFile(event)">
+    </div>
+
+    <!-- Options -->
+    <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#9ca3af;cursor:pointer;">
+      <input type="checkbox" id="gf-overwrite" checked style="accent-color:var(--primary);width:14px;height:14px;">
+      Sobrescribir zonas existentes
+    </label>
+
+    <!-- Sync button -->
+    <button id="gf-btn-sync" class="gf-import-btn primary" onclick="gfRunSync()" disabled style="opacity:.4;cursor:not-allowed;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+      Sincronizar con Firebase
+    </button>
+
+    <!-- Feedback -->
+    <div id="gf-feedback" style="display:none;padding:10px 12px;border-radius:10px;font-size:12px;font-weight:700;"></div>
+
+    <!-- Separator -->
+    <div style="border-top:1px solid var(--border);"></div>
+
+    <!-- Heatmap toggle -->
+    <div>
+      <div style="font-size:10px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Mapa de Calor</div>
+      <button class="gf-import-btn ghost" onclick="gfToggleHeatmap()" id="gf-btn-heat">
+        🔥 Cargar Heatmap (pedidos)
+      </button>
+    </div>
+
+    <!-- Separator -->
+    <div style="border-top:1px solid var(--border);"></div>
+
+    <!-- Zone list -->
+    <div style="flex:1;overflow-y:auto;min-height:0;">
+      <div style="font-size:10px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Zonas activas</div>
+      <div id="gf-zones-list" style="display:flex;flex-direction:column;gap:5px;">
+        <div style="color:#6b7280;font-size:12px;text-align:center;padding:16px 0;">Cargando…</div>
+      </div>
+    </div>
+
+  </div><!-- /gf-sidebar -->
+
+  <!-- ── MAPA ─────────────────────────────────────────────────────── -->
+  <div style="flex:1;position:relative;">
+    <div id="admin-map" style="width:100%;height:100%;"></div>
+    <div id="gf-map-loader">
+      <div class="gf-spinner"></div>
+      <div style="font-size:13px;color:#6b7280;font-weight:600;" id="gf-loader-txt">Cargando mapa…</div>
+    </div>
+    <!-- Legend -->
+    <div style="position:absolute;bottom:16px;left:16px;background:rgba(10,10,10,.9);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:12px;padding:10px 14px;display:flex;flex-wrap:wrap;gap:10px;z-index:4;font-size:11px;font-weight:700;">
+      <span><span class="gf-zone-dot" style="background:#f59e0b;"></span>Centro</span>
+      <span><span class="gf-zone-dot" style="background:#3b82f6;"></span>Norte</span>
+      <span><span class="gf-zone-dot" style="background:#10b981;"></span>Sur</span>
+      <span><span class="gf-zone-dot" style="background:#a855f7;"></span>Funes</span>
+      <span><span class="gf-zone-dot" style="background:#ef4444;border-radius:0;"></span>🔒 Privado</span>
+    </div>
+  </div>
+
+</div><!-- /adm-tab-mapa --><!-- TAB MERCADO PAGO --><div id="adm-tab-mercadopago" style="display:none;padding:20px;"><h3 style="color:#00b1ea;font-weight:800;font-size:16px;margin-bottom:4px;">MERCADO PAGO</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:20px;">Conectá tu cuenta de Mercado Pago para generar links de pago automáticos cuando el cliente elija ese método.</p><!-- Estado de conexión --><div id="adm-mp-status-card" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px;display:flex;align-items:center;gap:12px;"><div id="adm-mp-status-dot" style="width:12px;height:12px;border-radius:50%;background:#6b7280;flex-shrink:0;"></div><div style="flex:1;"><div style="font-size:14px;font-weight:800;color:var(--white);" id="adm-mp-status-txt">No configurado</div><div style="font-size:11px;color:#9ca3af;margin-top:2px;" id="adm-mp-status-sub">Ingresá tu Access Token para activar los pagos online</div></div></div><!-- Formulario Access Token --><div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px;"><div style="font-size:11px;color:#9ca3af;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Access Token de Producción</div><div style="display:flex;gap:8px;"><input type="password" id="adm-mp-token-inp" class="adm-minp" placeholder="APP_USR-XXXX..." style="flex:1;margin-bottom:0;" autocomplete="off"><button onclick="admMpToggleToken()" style="background:rgba(255,255,255,.07);border:1px solid var(--border);color:#9ca3af;padding:0 12px;border-radius:9px;font-size:12px;cursor:pointer;white-space:nowrap;" id="adm-mp-eye-btn">Ver</button></div><p style="font-size:11px;color:#6b7280;margin-top:8px;line-height:1.5;">Encontrá tu token en <strong style="color:#9ca3af;">mercadopago.com.ar → Tu Negocio → Credenciales</strong>. Usá el token de <em>producción</em>.</p><button onclick="admMpGuardar()" style="width:100%;margin-top:14px;padding:12px;background:#00b1ea;border:none;color:#000;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;">GUARDAR Y ACTIVAR</button><div id="adm-mp-feedback" style="display:none;margin-top:10px;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:700;text-align:center;"></div></div><!-- Info --><div style="background:rgba(0,177,234,0.06);border:1px solid rgba(0,177,234,0.25);border-radius:12px;padding:14px;"><div style="font-size:12px;font-weight:800;color:#00b1ea;margin-bottom:8px;">¿Cómo funciona?</div><ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:7px;"><li style="display:flex;gap:8px;font-size:12px;color:#9ca3af;"><span style="color:#00b1ea;font-weight:800;flex-shrink:0;">1.</span>El cliente elige "Mercado Pago" al hacer su pedido</li><li style="display:flex;gap:8px;font-size:12px;color:#9ca3af;"><span style="color:#00b1ea;font-weight:800;flex-shrink:0;">2.</span>El sistema crea un link de pago por el monto exacto del pedido</li><li style="display:flex;gap:8px;font-size:12px;color:#9ca3af;"><span style="color:#00b1ea;font-weight:800;flex-shrink:0;">3.</span>El cliente es redirigido al checkout de MP para pagar</li><li style="display:flex;gap:8px;font-size:12px;color:#9ca3af;"><span style="color:#00b1ea;font-weight:800;flex-shrink:0;">4.</span>Luego se abre WhatsApp con los datos del pedido</li></ul></div></div><!-- TAB PROMOS --><div id="adm-tab-promos" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">GESTIÓN DE PROMOS</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Editá precios y el día de venta de cada promo. Los cambios se aplican en tiempo real en la tienda.</p><div id="adm-promos-lista"></div></div><!-- TAB CÓDIGOS DE DESCUENTO --><div id="adm-tab-codigos" style="display:none;padding:20px;">
 <h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">CODIGOS DE DESCUENTO</h3>
 <p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Gestioná los códigos de uso interno del personal y los códigos promocionales. Podés activar, desactivar o agregar nuevos.</p>
 
@@ -6131,123 +6372,179 @@ document.getElementById('admin-root') && document.getElementById('admin-root').a
         #zona-alert .za-link { display:block; text-align:center; margin-top:8px; font-size:12px; color:#9ca3af; cursor:pointer; text-decoration:underline; }
     </style><button class="za-close" onclick="cerrarZonaAlert()">×</button><div class="za-title" id="za-title">Dirección fuera de cobertura</div><div class="za-body"  id="za-body">Tu dirección está fuera del área de entrega de esta sucursal.</div><div class="za-suc" id="za-suc-info" style="display:none;"><div class="za-suc-name" id="za-suc-name"></div><div class="za-suc-addr" id="za-suc-addr"></div></div><button class="za-btn" id="za-btn-cambiar" onclick="aplicarSucursalSugerida()" style="display:none;"> Cambiar a esta sucursal
     </button><span class="za-link" onclick="cerrarZonaAlert()">Continuar de todas formas</span></div><script>
-// 
-//  POLÍGONOS DE COBERTURA — Marvel Food Rosario
-//  Definidos como arrays de [lat, lng] en sentido horario
-//  Basados en los mapas de Google My Maps de cada sucursal
-// 
+// ════════════════════════════════════════════════════════════════════
+//  CONFIG — Objeto global con todas las constantes del sistema
+//  Tarea 1: Unificación de Script (Integration Doc §6)
+// ════════════════════════════════════════════════════════════════════
+window.CONFIG = {
+    firebase: {
+        apiKey:            "AIzaSyAeRlE9S5pnEUuhxRXoOX6lMX4Ryky0uSI",
+        authDomain:        "marvel-food-fa570.firebaseapp.com",
+        projectId:         "marvel-food-fa570",
+        storageBucket:     "marvel-food-fa570.firebasestorage.app",
+        messagingSenderId: "351263580699",
+        appId:             "1:351263580699:web:9ba99708a021e5eabecebe",
+        measurementId:     "G-Z7X80SVSX6"
+    },
+    emailjs: {
+        publicKey: 'sATMMVYtIbZLT1tMD',
+        serviceId: 'service_mf',
+        templateId: 'template_mf'
+    },
+    sucursales: {
+        Centro: { id: 'Centro', nombre: 'Pellegrini',  wsp: '5493415256090' },
+        Norte:  { id: 'Norte',  nombre: 'Rondeau',     wsp: '5493415256090' },
+        Sur:    { id: 'Sur',    nombre: 'San Martin',  wsp: '5493415256090' },
+        Funes:  { id: 'Funes',  nombre: 'Funes',       wsp: '5493416107498' }
+    },
+    admins: ['ulises', 'leticia'],
+    collections: {
+        pedidos:       'pedidos_v2',
+        orders:        'orders',          // auditoría de ventas
+        deliveryZones: 'delivery_zones',
+        menu:          'menu_v2',
+        opiniones:     'opiniones',
+        cupones:       'cupones'
+    },
+    geofencing: {
+        cacheMaxAgeMs: 10 * 60 * 1000,   // 10 minutos
+        specialAccessKeywords: ['barrio privado', 'golf club', 'countries', 'country']
+    }
+};
 
-const ZONA_POLIGONOS = {
-    //  CENTRO (Pellegrini 1149) 
-    // Límites exactos trazados en geojson.io — centro-pellegrini
+// ════════════════════════════════════════════════════════════════════
+//  GEO-FENCING v3 — MÓDULO DINÁMICO (reemplaza polígonos estáticos)
+//  Fuente de verdad: Firestore colección "delivery_zones"
+//  Fallback: polígonos estáticos hardcodeados (sin red / primera carga)
+// ════════════════════════════════════════════════════════════════════
+
+// ── Polígonos estáticos de respaldo (idénticos a los originales) ──────────
+// Se usan cuando Firebase no tiene datos o no hay conexión.
+const ZONA_POLIGONOS_FALLBACK = {
     Centro: [
-        [-32.980846, -60.636222],
-        [-32.974077, -60.674032],
-        [-32.962530, -60.670712],
-        [-32.960141, -60.684793],
-        [-32.929202, -60.676726],
-        [-32.931590, -60.663119],
-        [-32.931191, -60.659796],
-        [-32.930390, -60.650935],
-        [-32.938493, -60.637483],
-        [-32.950308, -60.625599],
-        [-32.961734, -60.620544],
-        [-32.959478, -60.630847],
-        [-32.980448, -60.636064],
-        [-32.980846, -60.636222]
+        [-32.980846,-60.636222],[-32.974077,-60.674032],[-32.962530,-60.670712],
+        [-32.960141,-60.684793],[-32.929202,-60.676726],[-32.931590,-60.663119],
+        [-32.931191,-60.659796],[-32.930390,-60.650935],[-32.938493,-60.637483],
+        [-32.950308,-60.625599],[-32.961734,-60.620544],[-32.959478,-60.630847],
+        [-32.980448,-60.636064],[-32.980846,-60.636222]
     ],
-
-    //  NORTE (Rondeau 2430) 
-    // Límites exactos trazados en geojson.io — norte baigorria
     Norte: [
-        [-32.927201, -60.660902],
-        [-32.926954, -60.681241],
-        [-32.911330, -60.692411],
-        [-32.907963, -60.693270],
-        [-32.906281, -60.706160],
-        [-32.893534, -60.716466],
-        [-32.884637, -60.717321],
-        [-32.883435, -60.711019],
-        [-32.874057, -60.701571],
-        [-32.865403, -60.710730],
-        [-32.853615, -60.722186],
-        [-32.846644, -60.716170],
-        [-32.841351, -60.718175],
-        [-32.839184, -60.726193],
-        [-32.834374, -60.724188],
-        [-32.832178, -60.697854],
-        [-32.880788, -60.686682],
-        [-32.927681, -60.660903],
-        [-32.927201, -60.660902]
+        [-32.927201,-60.660902],[-32.926954,-60.681241],[-32.911330,-60.692411],
+        [-32.907963,-60.693270],[-32.906281,-60.706160],[-32.893534,-60.716466],
+        [-32.884637,-60.717321],[-32.883435,-60.711019],[-32.874057,-60.701571],
+        [-32.865403,-60.710730],[-32.853615,-60.722186],[-32.846644,-60.716170],
+        [-32.841351,-60.718175],[-32.839184,-60.726193],[-32.834374,-60.724188],
+        [-32.832178,-60.697854],[-32.880788,-60.686682],[-32.927681,-60.660903],
+        [-32.927201,-60.660902]
     ],
-
-    //  SUR (San Martin 1808) 
-    // Límites exactos trazados en geojson.io — vgg zona sur
     Sur: [
-        [-32.974884, -60.669437],
-        [-32.992458, -60.673639],
-        [-32.991799, -60.665211],
-        [-33.012367, -60.664430],
-        [-33.009093, -60.651153],
-        [-33.016039, -60.649278],
-        [-33.036871, -60.645059],
-        [-33.027180, -60.628179],
-        [-33.036346, -60.616463],
-        [-33.035038, -60.612085],
-        [-33.022983, -60.623651],
-        [-33.024560, -60.634899],
-        [-33.015517, -60.634429],
-        [-33.003328, -60.635527],
-        [-32.990221, -60.636464],
-        [-32.969248, -60.632402],
-        [-32.963711, -60.665710],
-        [-32.975398, -60.669573],
-        [-32.974884, -60.669437]
+        [-32.974884,-60.669437],[-32.992458,-60.673639],[-32.991799,-60.665211],
+        [-33.012367,-60.664430],[-33.009093,-60.651153],[-33.016039,-60.649278],
+        [-33.036871,-60.645059],[-33.027180,-60.628179],[-33.036346,-60.616463],
+        [-33.035038,-60.612085],[-33.022983,-60.623651],[-33.024560,-60.634899],
+        [-33.015517,-60.634429],[-33.003328,-60.635527],[-32.990221,-60.636464],
+        [-32.969248,-60.632402],[-32.963711,-60.665710],[-32.975398,-60.669573],
+        [-32.974884,-60.669437]
     ],
-
-    //  FUNES-FISHERTON (RN9 972) 
-    // Límites exactos trazados en geojson.io — funes fisherton
-    // Incluye: Funes, Fisherton, barrios privados (Kentucky, San Marino, etc.)
     Funes: [
-        [-32.892734, -60.891631],
-        [-32.935459, -60.899966],
-        [-32.950663, -60.894797],
-        [-32.955978, -60.872667],
-        [-32.961300, -60.800767],
-        [-32.940537, -60.809685],
-        [-32.928226, -60.779764],
-        [-32.935228, -60.760203],
-        [-32.927259, -60.746110],
-        [-32.927019, -60.727400],
-        [-32.917358, -60.729707],
-        [-32.917600, -60.755017],
-        [-32.910112, -60.760772],
-        [-32.910595, -60.772570],
-        [-32.922914, -60.772857],
-        [-32.919532, -60.793864],
-        [-32.908423, -60.787246],
-        [-32.892964, -60.797027],
-        [-32.895382, -60.816588],
-        [-32.911564, -60.816010],
-        [-32.906494, -60.855119],
-        [-32.890801, -60.855403],
-        [-32.891285, -60.875817],
-        [-32.898287, -60.877829],
-        [-32.888629, -60.883293],
-        [-32.888871, -60.890768],
-        [-32.892734, -60.891631]
+        [-32.892734,-60.891631],[-32.935459,-60.899966],[-32.950663,-60.894797],
+        [-32.955978,-60.872667],[-32.961300,-60.800767],[-32.940537,-60.809685],
+        [-32.928226,-60.779764],[-32.935228,-60.760203],[-32.927259,-60.746110],
+        [-32.927019,-60.727400],[-32.917358,-60.729707],[-32.917600,-60.755017],
+        [-32.910112,-60.760772],[-32.910595,-60.772570],[-32.922914,-60.772857],
+        [-32.919532,-60.793864],[-32.908423,-60.787246],[-32.892964,-60.797027],
+        [-32.895382,-60.816588],[-32.911564,-60.816010],[-32.906494,-60.855119],
+        [-32.890801,-60.855403],[-32.891285,-60.875817],[-32.898287,-60.877829],
+        [-32.888629,-60.883293],[-32.888871,-60.890768],[-32.892734,-60.891631]
     ]
 };
 
-// Nombre + dirección legible para la UI
+// Alias para compatibilidad con verificarDireccion y código existente
+const ZONA_POLIGONOS = ZONA_POLIGONOS_FALLBACK;
+
+// Nombre + dirección legible para la UI (sin cambios)
 const ZONA_INFO_UI = {
-    Centro: { label: "Centro", direccion: "Pellegrini 1149, Rosario Centro" },
+    Centro: { label: "Centro",           direccion: "Pellegrini 1149, Rosario Centro" },
     Norte:  { label: "Norte — Baigorria", direccion: "Rondeau 2430, Rosario Norte" },
     Sur:    { label: "Sur / V.G.Gálvez", direccion: "San Martin 1808, Rosario Sur" },
     Funes:  { label: "Funes — Fisherton", direccion: "RN9 972, Funes" }
 };
 
-//  Ray-casting para punto en polígono 
+// ── Palabras clave de acceso especial ─────────────────────────────────────
+const _SPECIAL_KEYWORDS = ['barrio privado', 'golf club', 'countries', 'country'];
+function _isSpecialAccess(desc) {
+    if (!desc) return false;
+    const d = desc.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    return _SPECIAL_KEYWORDS.some(k => d.includes(k));
+}
+
+// ── Caché en memoria de las zonas de Firebase ─────────────────────────────
+let _gfZonesCache   = null;   // GeoJSON FeatureCollection
+let _gfCacheLoading = false;
+let _gfCacheWaiters = [];     // promesas pendientes mientras carga
+
+async function _gfLoadZones() {
+    // Si ya está cacheado, retornar
+    if (_gfZonesCache) return _gfZonesCache;
+
+    // Si ya está cargando, esperar
+    if (_gfCacheLoading) {
+        return new Promise(res => _gfCacheWaiters.push(res));
+    }
+
+    // Sin Firebase disponible → retornar null (se usará fallback)
+    if (!window.db) return null;
+
+    _gfCacheLoading = true;
+    try {
+        const snap = await window.db.collection('delivery_zones')
+            .where('active', '==', true).get();
+
+        const features = [];
+        snap.forEach(doc => {
+            const d = doc.data();
+            if (!d.geometry) return;
+            features.push({
+                type: 'Feature',
+                id:   doc.id,
+                properties: {
+                    name:                d.name,
+                    description:         d.description || '',
+                    sucursal:            d.sucursal,
+                    requiresSpecialAccess: !!d.requiresSpecialAccess,
+                    active:              true,
+                },
+                geometry: d.geometry,
+            });
+        });
+
+        if (features.length > 0) {
+            _gfZonesCache = { type: 'FeatureCollection', features };
+            console.log('[GeoFencing] ' + features.length + ' zonas cargadas desde Firebase.');
+        } else {
+            console.warn('[GeoFencing] Sin zonas en Firebase. Usando polígonos estáticos.');
+            _gfZonesCache = null;
+        }
+    } catch(e) {
+        console.warn('[GeoFencing] Error cargando zonas:', e.message);
+        _gfZonesCache = null;
+    } finally {
+        _gfCacheLoading = false;
+        _gfCacheWaiters.forEach(res => res(_gfZonesCache));
+        _gfCacheWaiters = [];
+    }
+    return _gfZonesCache;
+}
+
+// Invalidar caché (llamar después de importar KML o editar zonas)
+window.gfInvalidateCache = function() {
+    _gfZonesCache   = null;
+    _gfCacheLoading = false;
+    _gfCacheWaiters = [];
+    console.log('[GeoFencing] Caché invalidada.');
+};
+
+// ── Ray-casting original (fallback sin Turf) ──────────────────────────────
 function puntoDentroDePoligono(lat, lng, poly) {
     let inside = false;
     for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
@@ -6260,15 +6557,34 @@ function puntoDentroDePoligono(lat, lng, poly) {
     return inside;
 }
 
-//  Encontrar sucursal que cubre un punto 
+// ── sucursalParaPunto: primero Firebase+Turf, fallback estático ───────────
+// Versión SÍNCRONA para compatibilidad con el código existente que NO usa await.
+// Para la versión asíncrona completa con Firebase, usar determinarSucursal().
 function sucursalParaPunto(lat, lng) {
-    for (const key of Object.keys(ZONA_POLIGONOS)) {
-        if (puntoDentroDePoligono(lat, lng, ZONA_POLIGONOS[key])) return key;
+    // Intento 1: usar caché de Firebase si ya está disponible
+    if (_gfZonesCache && window.turf) {
+        const punto = turf.point([lng, lat]);
+        for (const feature of _gfZonesCache.features) {
+            if (!feature.geometry) continue;
+            try {
+                const poly = feature.geometry.type === 'MultiPolygon'
+                    ? turf.multiPolygon(feature.geometry.coordinates)
+                    : turf.polygon(feature.geometry.coordinates);
+                if (turf.booleanPointInPolygon(punto, poly)) {
+                    return feature.properties.sucursal;
+                }
+            } catch(_) {}
+        }
+        return null;
+    }
+    // Fallback: polígonos estáticos (ray-casting)
+    for (const key of Object.keys(ZONA_POLIGONOS_FALLBACK)) {
+        if (puntoDentroDePoligono(lat, lng, ZONA_POLIGONOS_FALLBACK[key])) return key;
     }
     return null;
 }
 
-//  Distancia al centroide del polígono (para el fallback) 
+// ── distanciaAlCentro + sucursalMasCercana (sin cambios) ─────────────────
 function distanciaAlCentro(lat, lng, poly) {
     const cLat = poly.reduce((s, p) => s + p[0], 0) / poly.length;
     const cLng = poly.reduce((s, p) => s + p[1], 0) / poly.length;
@@ -6277,14 +6593,210 @@ function distanciaAlCentro(lat, lng, poly) {
 
 function sucursalMasCercana(lat, lng) {
     let mejor = null, menorDist = Infinity;
-    for (const key of Object.keys(ZONA_POLIGONOS)) {
-        const d = distanciaAlCentro(lat, lng, ZONA_POLIGONOS[key]);
+    for (const key of Object.keys(ZONA_POLIGONOS_FALLBACK)) {
+        const d = distanciaAlCentro(lat, lng, ZONA_POLIGONOS_FALLBACK[key]);
         if (d < menorDist) { menorDist = d; mejor = key; }
     }
     return mejor;
 }
 
-//  Estado interno 
+// ── determinarSucursal: versión ASÍNCRONA completa con Firebase+Turf ──────
+// Retorna { sucursal, zona, requiresSpecialAccess, outOfRange? } | null
+window.determinarSucursal = async function(lat, lng) {
+    const zones = await _gfLoadZones();
+
+    if (zones && window.turf) {
+        const punto = turf.point([lng, lat]);
+        for (const feature of zones.features) {
+            if (!feature.geometry) continue;
+            try {
+                const poly = feature.geometry.type === 'MultiPolygon'
+                    ? turf.multiPolygon(feature.geometry.coordinates)
+                    : turf.polygon(feature.geometry.coordinates);
+                if (turf.booleanPointInPolygon(punto, poly)) {
+                    return {
+                        sucursal:             feature.properties.sucursal,
+                        zona:                 feature.properties.name,
+                        requiresSpecialAccess: feature.properties.requiresSpecialAccess,
+                        description:          feature.properties.description,
+                    };
+                }
+            } catch(_) {}
+        }
+        // Fuera de cobertura — sugerir más cercana
+        const nearest = sucursalMasCercana(lat, lng);
+        return nearest ? { sucursal: nearest, zona: null, requiresSpecialAccess: false, outOfRange: true } : null;
+    }
+
+    // Fallback estático
+    const suc = sucursalParaPunto(lat, lng) || sucursalMasCercana(lat, lng);
+    return suc ? { sucursal: suc, zona: null, requiresSpecialAccess: false, outOfRange: !sucursalParaPunto(lat, lng) } : null;
+};
+
+// ── syncMapData: importar KML a Firestore (solo admins) ───────────────────
+window.syncMapData = async function(kmlSource, adminUser) {
+    const ADMIN_USERS = ['ulises', 'leticia'];
+    const userName = (typeof adminUser === 'string' ? adminUser : adminUser?.name || '').toLowerCase();
+    if (!ADMIN_USERS.includes(userName)) {
+        console.error('[GeoFencing] syncMapData: usuario no autorizado:', userName);
+        return { ok: false, error: 'Sin permisos de administración' };
+    }
+    if (!window.db) return { ok: false, error: 'Firebase no disponible' };
+    if (typeof toGeoJSON === 'undefined') return { ok: false, error: 'toGeoJSON no cargado' };
+
+    const FOLDER_MAP = {
+        'rango envio norte': 'Norte', 'norte': 'Norte', 'baigorria': 'Norte',
+        'mapa zona sur': 'Sur', 'galvez': 'Sur', 'sur': 'Sur',
+        'envio funes': 'Funes', 'funes': 'Funes', 'fisherton': 'Funes',
+        'pellegrini': 'Centro', 'centro': 'Centro',
+    };
+    function inferSucursal(name, folder) {
+        const n = (name||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+        const f = (folder||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+        for (const [k,v] of Object.entries(FOLDER_MAP)) {
+            if (f.includes(k) || n.includes(k)) return v;
+        }
+        return 'Centro';
+    }
+
+    // ── Obtener texto del archivo (File o URL) ─────────────────────────────
+    let fileText, fileName;
+    if (kmlSource instanceof File) {
+        fileText = await kmlSource.text();
+        fileName = kmlSource.name || '';
+    } else {
+        const r = await fetch(kmlSource);
+        fileText = await r.text();
+        fileName = String(kmlSource);
+    }
+
+    // ── Parsear KML o GeoJSON según extensión ─────────────────────────────
+    // Tarea 2: soporte nativo de .geojson sin depender de toGeoJSON
+    let geoJSON;
+    const isGeoJSON = fileName.toLowerCase().endsWith('.geojson')
+        || fileName.toLowerCase().endsWith('.json');
+
+    if (isGeoJSON) {
+        try {
+            geoJSON = JSON.parse(fileText);
+            // Normalizar: si viene como Feature suelto, envolverlo
+            if (geoJSON.type === 'Feature') {
+                geoJSON = { type: 'FeatureCollection', features: [geoJSON] };
+            }
+            console.log('[GeoFencing] syncMapData: archivo GeoJSON detectado — sin necesidad de toGeoJSON');
+        } catch(e) {
+            return { ok: false, error: 'GeoJSON inválido: ' + e.message };
+        }
+    } else {
+        // KML → requiere toGeoJSON
+        if (typeof toGeoJSON === 'undefined') {
+            return { ok: false, error: 'toGeoJSON no cargado — requerido para archivos KML' };
+        }
+        const kmlDOM = new DOMParser().parseFromString(fileText, 'application/xml');
+        geoJSON = toGeoJSON.kml(kmlDOM);
+    }
+
+    const stats = { imported: 0, skipped: 0, errors: [] };
+
+    for (const feature of geoJSON.features) {
+        if (!feature.geometry || !['Polygon','MultiPolygon'].includes(feature.geometry.type)) {
+            stats.skipped++; continue;
+        }
+        const props  = feature.properties || {};
+        const name   = props.name || props.Name || 'Sin nombre';
+        const desc   = props.description || '';
+        const folder = props.folder || '';
+        const docId  = (name).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+                       .replace(/[^a-z0-9]/g,'_').substring(0,60);
+        try {
+            await window.db.collection('delivery_zones').doc(docId).set({
+                name, description: desc,
+                sucursal: inferSucursal(name, folder),
+                requiresSpecialAccess: _isSpecialAccess(desc),
+                active: true,
+                geometry: feature.geometry,
+                updatedAt: new Date().toISOString(),
+                source: isGeoJSON ? 'geojson_import' : 'kml_import',
+            });
+            stats.imported++;
+        } catch(e) { stats.errors.push(name + ': ' + e.message); }
+    }
+    window.gfInvalidateCache();
+    console.log('[GeoFencing] syncMapData:', stats);
+    return { ok: true, ...stats };
+};
+
+// ── renderHeatmap: mapa de calor sobre Google Maps ────────────────────────
+window.renderHeatmap = function(sourceData, mapInstance, opts) {
+    if (!mapInstance || !window.google?.maps?.visualization) {
+        console.warn('[GeoFencing] renderHeatmap: mapa o lib visualization no disponibles');
+        return null;
+    }
+    opts = opts || {};
+    const dataPoints = (sourceData||[])
+        .filter(p => p.lat != null && p.lng != null)
+        .map(p => ({ location: new google.maps.LatLng(p.lat, p.lng), weight: p.weight || 1 }));
+
+    const layer = new google.maps.visualization.HeatmapLayer({
+        data:    dataPoints,
+        map:     mapInstance,
+        radius:  opts.radius  || 30,
+        opacity: opts.opacity || 0.7,
+        gradient: opts.gradient || [
+            'rgba(0,0,0,0)','rgba(0,100,255,.5)','rgba(0,200,255,.7)',
+            'rgba(0,255,100,.8)','rgba(255,200,0,.9)','rgba(255,100,0,1)','rgba(255,0,0,1)'
+        ],
+    });
+    return layer;
+};
+
+// Exponer _gfLoadZones para pre-warm desde initMejoras
+window._gfLoadZones = _gfLoadZones;
+
+// ════════════════════════════════════════════════════════════════════
+//  validarPedidoParaEnvio — corazón de la validación en el checkout
+//  Tarea 7 del Integration Doc: Integration §7
+//  Usa la caché de zonas Firebase + Turf.js para precisión granular.
+//  Si Firebase no tiene zonas o Turf no está cargado, usa fallback síncrono.
+// ════════════════════════════════════════════════════════════════════
+window.validarPedidoParaEnvio = async function(coordenadasCliente) {
+    if (!coordenadasCliente || coordenadasCliente.lat == null || coordenadasCliente.lng == null) {
+        return { valido: false, mensaje: 'No se pudo obtener la ubicación del cliente.' };
+    }
+
+    // Intentar validación precisa con Firebase + Turf
+    try {
+        const result = await window.determinarSucursal(coordenadasCliente.lat, coordenadasCliente.lng);
+        if (result && result.sucursal) {
+            return {
+                valido:   true,
+                sucursal: result.sucursal,
+                zona:     result.zona     || result.sucursal,
+                privado:  result.requiresSpecialAccess || false,
+            };
+        }
+        // Punto fuera de todas las zonas activas
+        return {
+            valido:   false,
+            mensaje:  'Lo sentimos, tu dirección está fuera de nuestra zona de cobertura.',
+            sugerida: sucursalMasCercana(coordenadasCliente.lat, coordenadasCliente.lng),
+        };
+    } catch(e) {
+        console.warn('[validarPedidoParaEnvio] Error en validación Firebase:', e.message);
+        // Fallback síncrono con polígonos estáticos
+        const sucFallback = sucursalParaPunto(coordenadasCliente.lat, coordenadasCliente.lng);
+        if (sucFallback) {
+            return { valido: true, sucursal: sucFallback, zona: sucFallback, privado: false, fallback: true };
+        }
+        return {
+            valido:   false,
+            mensaje:  'No se pudo verificar la zona. Seleccioná tu sucursal manualmente.',
+            sugerida: sucursalMasCercana(coordenadasCliente.lat, coordenadasCliente.lng),
+        };
+    }
+};
+
+// ── Estado interno (sin cambios vs original) ──────────────────────────────
 let _zonaVerifTimeout = null;
 let _sucursalSugerida = null;
 let _coordsVerificadas = null; // { lat, lng }
@@ -6300,11 +6812,8 @@ window.aplicarSucursalSugerida = () => {
     if (sel) {
         sel.value = _sucursalSugerida;
         window.cambiarSucursalPrincipal();
-        // Si hay localidad sugerida también la pre-seleccionamos
-        // c-loc ahora es texto libre; no se pre-selecciona automáticamente
     }
     cerrarZonaAlert();
-    // Scroll suave al formulario
     const cartView = document.getElementById('cart-view');
     if (cartView && cartView.classList.contains('open')) {
         const sucBlock = document.getElementById('checkout-form');
@@ -6312,55 +6821,26 @@ window.aplicarSucursalSugerida = () => {
     }
 };
 
-// ================================================================
-//  DETECCIÓN DE ZONA — v2
+// ════════════════════════════════════════════════════════════════════
+//  DETECCIÓN DE ZONA — v3 (misma lógica v2 + usa Firebase en segundo plano)
 //  Tres capas de detección, en orden de prioridad:
 //  1. Tabla de localidades conocidas (instantáneo, sin red)
 //  2. Geocodificación usando localidad + dirección real
 //  3. Fallback: geocodificar solo la dirección con contexto amplio
-// ================================================================
+// ════════════════════════════════════════════════════════════════════
 
 // Mapa de localidades conocidas → sucursal correcta
-// Clave: texto normalizado (sin tildes, minúsculas)
-// Valor: key de SUC_MAP ('Centro', 'Norte', 'Sur', 'Funes')
 const LOCALIDAD_A_SUCURSAL = {
-    // ── Rosario Zona Sur / V.G.Gálvez ──────────────────────
-    'villa gobernador galvez': 'Sur',
-    'villa gdor galvez':       'Sur',
-    'villa gdor. galvez':      'Sur',
-    'v.g.galvez':              'Sur',
-    'vgg':                     'Sur',
-    'galvez':                  'Sur',
-    'rosario sur':             'Sur',
-    'villa del parque':        'Sur',
-    'coronel bogado':          'Sur',
-
-    // ── Rosario Norte / Baigorria ───────────────────────────
-    'granadero baigorria':     'Norte',
-    'baigorria':               'Norte',
-    'rosario norte':           'Norte',
-    'pueblo esther':           'Norte',
-    'fray luis beltran':       'Norte',
-    'beltran':                 'Norte',
-
-    // ── Funes / Fisherton ──────────────────────────────────
-    'funes':                   'Funes',
-    'fisherton':               'Funes',
-    'barrio kentucky':         'Funes',
-    'kentucky':                'Funes',
-    'barrio palvear':          'Funes',
-    'barrio lagoon':           'Funes',
-    'barrio vida':             'Funes',
-    'palos verdes':            'Funes',
-    'san marino':              'Funes',
-
-    // ── Rosario Centro / Capital ────────────────────────────
-    'rosario':                 'Centro',
-    'rosario centro':          'Centro',
-    'rosario capital':         'Centro',
+    'villa gobernador galvez':'Sur','villa gdor galvez':'Sur','villa gdor. galvez':'Sur',
+    'v.g.galvez':'Sur','vgg':'Sur','galvez':'Sur','rosario sur':'Sur','villa del parque':'Sur','coronel bogado':'Sur',
+    'granadero baigorria':'Norte','baigorria':'Norte','rosario norte':'Norte',
+    'pueblo esther':'Norte','fray luis beltran':'Norte','beltran':'Norte',
+    'funes':'Funes','fisherton':'Funes','barrio kentucky':'Funes','kentucky':'Funes',
+    'barrio palvear':'Funes','barrio lagoon':'Funes','barrio vida':'Funes',
+    'palos verdes':'Funes','san marino':'Funes',
+    'rosario':'Centro','rosario centro':'Centro','rosario capital':'Centro',
 };
 
-// Contexto geográfico por sucursal para geocodificación precisa
 const GEO_CONTEXTO = {
     Centro: 'Rosario Santa Fe Argentina',
     Norte:  'Rosario Norte Santa Fe Argentina',
@@ -6368,56 +6848,28 @@ const GEO_CONTEXTO = {
     Funes:  'Funes Santa Fe Argentina',
 };
 
-/**
- * Normaliza un texto: minúsculas, sin tildes, sin puntos
- */
 function _normalizarTexto(txt) {
     return txt.toLowerCase()
-        .normalize('NFD').replace(/[̀-ͯ]/g, '')  // quitar tildes
-        .replace(/\./g, '')
-        .trim();
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/\./g, '').trim();
 }
 
-/**
- * Capa 1: Detectar sucursal por el texto de localidad.
- * Devuelve la key de SUC_MAP o null si no se reconoce.
- */
 function _sucursalPorLocalidad(localidad) {
     if (!localidad) return null;
     const norm = _normalizarTexto(localidad);
-
-    // Coincidencia exacta
     if (LOCALIDAD_A_SUCURSAL[norm]) return LOCALIDAD_A_SUCURSAL[norm];
-
-    // Coincidencia parcial (el input contiene una de las keys)
     for (const [key, suc] of Object.entries(LOCALIDAD_A_SUCURSAL)) {
         if (norm.includes(key) || key.includes(norm)) return suc;
     }
     return null;
 }
 
-/**
- * Capa 2+3: Geocodificar dirección + localidad con múltiples proveedores.
- * Usa la localidad real para el contexto geográfico.
- */
 async function _geocodificar(direccion, localidad) {
-    // Construir query con localidad si está disponible
-    const contexto = localidad
-        ? localidad + ' Santa Fe Argentina'
-        : 'Rosario Santa Fe Argentina';
-
+    const contexto = localidad ? localidad + ' Santa Fe Argentina' : 'Rosario Santa Fe Argentina';
     const q = encodeURIComponent(direccion + ' ' + contexto);
-
-    // Bounding box ampliado para cubrir toda la zona de entrega
-    // latmin,lonmin,latmax,lonmax → Rosario + Funes + VGG + Baigorria
     const bbox = '-61.3,-33.25,-60.2,-32.7';
-
-    // Proveedor 1: Photon (Komoot)
     try {
-        const r = await fetch(
-            `https://photon.komoot.io/api/?q=${q}&limit=1&bbox=${bbox}`,
-            { signal: AbortSignal.timeout(5000) }
-        );
+        const r = await fetch(`https://photon.komoot.io/api/?q=${q}&limit=1&bbox=${bbox}`, { signal: AbortSignal.timeout(5000) });
         if (r.ok) {
             const d = await r.json();
             if (d.features && d.features.length) {
@@ -6425,29 +6877,19 @@ async function _geocodificar(direccion, localidad) {
                 return { lat, lng };
             }
         }
-    } catch(e) { /* intentar siguiente */ }
-
-    // Proveedor 2: geocode.maps.co
+    } catch(e) {}
     try {
-        const r = await fetch(
-            `https://geocode.maps.co/search?q=${q}&countrycodes=ar&limit=1`,
-            { signal: AbortSignal.timeout(5000) }
-        );
+        const r = await fetch(`https://geocode.maps.co/search?q=${q}&countrycodes=ar&limit=1`, { signal: AbortSignal.timeout(5000) });
         if (r.ok) {
             const d = await r.json();
             if (d && d.length) return { lat: parseFloat(d[0].lat), lng: parseFloat(d[0].lon) };
         }
-    } catch(e) { /* ningún proveedor respondió */ }
-
+    } catch(e) {}
     return null;
 }
 
-/**
- * Muestra el banner de zona sugerida.
- */
 function _mostrarAlertaZona(sucSugerida, textoDir, sucActualId, razon) {
     _sucursalSugerida = sucSugerida;
-
     const zaTitle   = document.getElementById('za-title');
     const zaBody    = document.getElementById('za-body');
     const zaSucInfo = document.getElementById('za-suc-info');
@@ -6456,10 +6898,8 @@ function _mostrarAlertaZona(sucSugerida, textoDir, sucActualId, razon) {
     const zaBtn     = document.getElementById('za-btn-cambiar');
     const alertEl   = document.getElementById('zona-alert');
     if (!alertEl) return;
-
     const sucActualInfo = ZONA_INFO_UI[sucActualId] || { label: sucActualId };
     const sucSugInfo    = ZONA_INFO_UI[sucSugerida]  || { label: sucSugerida, direccion: '' };
-
     zaTitle.textContent = 'Sucursal incorrecta detectada';
     zaBody.innerHTML    = `<strong style="color:#fff;">${textoDir}</strong> corresponde a la zona de <strong style="color:#f59e0b;">${sucSugInfo.label}</strong>, no a <em>${sucActualInfo.label}</em>.${razon ? '<br><small style="color:#9ca3af;font-size:11px;">' + razon + '</small>' : ''}`;
     zaSucName.textContent = sucSugInfo.label;
@@ -6470,90 +6910,71 @@ function _mostrarAlertaZona(sucSugerida, textoDir, sucActualId, razon) {
     alertEl.style.display   = 'block';
 }
 
-/**
- * Verificación principal: combina localidad (texto) + geocodificación GPS.
- * Se llama tanto al tipear dirección COMO al tipear localidad.
- */
 async function verificarDireccion(direccion, localidadOverride) {
     const sucId = document.getElementById('main-sucursal')?.value;
     if (!sucId) return;
-
-    const localidad = localidadOverride
-        || (document.getElementById('c-loc')?.value || '').trim();
-
-    // ── CAPA 1: detección instantánea por texto de localidad ──────────────
+    const localidad = localidadOverride || (document.getElementById('c-loc')?.value || '').trim();
     if (localidad && localidad.length >= 3) {
         const sucPorLoc = _sucursalPorLocalidad(localidad);
         if (sucPorLoc && sucPorLoc !== sucId) {
-            _mostrarAlertaZona(
-                sucPorLoc,
-                localidad,
-                sucId,
-                'Detectado por localidad ingresada'
-            );
-            return; // Ya encontramos, no hace falta geocodificar
+            _mostrarAlertaZona(sucPorLoc, localidad, sucId, 'Detectado por localidad ingresada');
+            return;
         }
-        if (sucPorLoc && sucPorLoc === sucId) {
-            cerrarZonaAlert(); // Localidad coincide con sucursal seleccionada
-            // Igual geocodificamos para verificar la calle exacta
-        }
+        if (sucPorLoc && sucPorLoc === sucId) { cerrarZonaAlert(); }
     }
-
-    // ── CAPA 2: Geocodificación con contexto de localidad ─────────────────
     if (!direccion || direccion.length < 4) return;
-
     try {
         const coords = await _geocodificar(direccion, localidad);
-        if (!coords) return; // Sin resultados, no molestar al usuario
-
+        if (!coords) return;
         const { lat, lng } = coords;
         _coordsVerificadas = { lat, lng };
 
-        // ¿La dirección geocodificada está en el polígono de la sucursal seleccionada?
-        const enZonaActual = puntoDentroDePoligono(lat, lng, ZONA_POLIGONOS[sucId]);
-        if (enZonaActual) {
-            cerrarZonaAlert();
-            return;
+        // ── v3: usar Firebase+Turf si disponible, fallback a estático ────
+        let enZonaActual, sucCubre;
+        if (_gfZonesCache && window.turf) {
+            const punto = turf.point([lng, lat]);
+            enZonaActual = false; sucCubre = null;
+            for (const f of _gfZonesCache.features) {
+                if (!f.geometry) continue;
+                try {
+                    const poly = f.geometry.type === 'MultiPolygon'
+                        ? turf.multiPolygon(f.geometry.coordinates)
+                        : turf.polygon(f.geometry.coordinates);
+                    if (turf.booleanPointInPolygon(punto, poly)) {
+                        sucCubre = f.properties.sucursal;
+                        if (f.properties.sucursal === sucId) enZonaActual = true;
+                        break;
+                    }
+                } catch(_) {}
+            }
+        } else {
+            enZonaActual = puntoDentroDePoligono(lat, lng, ZONA_POLIGONOS[sucId]);
+            sucCubre     = sucursalParaPunto(lat, lng);
         }
 
-        // ¿En qué sucursal está realmente?
-        const sucCubre   = sucursalParaPunto(lat, lng);
+        if (enZonaActual) { cerrarZonaAlert(); return; }
         const sucSugerida = sucCubre || sucursalMasCercana(lat, lng);
-
-        // Si la sucursal sugerida coincide con la seleccionada, no hay error
-        if (sucSugerida === sucId) {
-            cerrarZonaAlert();
-            return;
-        }
-
+        if (sucSugerida === sucId) { cerrarZonaAlert(); return; }
         _mostrarAlertaZona(
             sucSugerida,
             [direccion, localidad].filter(Boolean).join(', '),
             sucId,
-            sucCubre ? 'La sucursal correcta cubre ese punto' : 'Sucursal mas cercana al punto'
+            sucCubre ? 'La sucursal correcta cubre ese punto' : 'Sucursal más cercana al punto'
         );
-
     } catch(e) {
         console.warn('[ZonaCheck] Error:', e.message);
     }
 }
 
-// ── Hooks en los campos de dirección Y localidad ─────────────────────────
 (function hookInputsZona() {
-    const MAX_WAIT = 900; // debounce en ms
-
+    const MAX_WAIT = 900;
     function attachHooks() {
         const cDir = document.getElementById('c-dir');
         const cLoc = document.getElementById('c-loc');
-
         if (!cDir) return setTimeout(attachHooks, 500);
-
-        // Hook dirección
         const onDirChange = () => {
             clearTimeout(_zonaVerifTimeout);
-            _zonaVerifTimeout = setTimeout(() => {
-                verificarDireccion(cDir.value.trim());
-            }, MAX_WAIT);
+            _zonaVerifTimeout = setTimeout(() => { verificarDireccion(cDir.value.trim()); }, MAX_WAIT);
         };
         cDir.addEventListener('input', onDirChange);
         cDir.addEventListener('blur', () => {
@@ -6561,19 +6982,13 @@ async function verificarDireccion(direccion, localidadOverride) {
             const val = cDir.value.trim();
             if (val.length >= 4) verificarDireccion(val);
         });
-
-        // Hook localidad — reaccionar inmediatamente (sin delay largo)
-        // porque la capa 1 no necesita red
         if (cLoc) {
             cLoc.addEventListener('input', () => {
                 clearTimeout(_zonaVerifTimeout);
                 const locVal = cLoc.value.trim();
                 const dirVal = cDir.value.trim();
-                // Capa 1 inmediata si la localidad tiene suficiente texto
                 if (locVal.length >= 3) {
-                    _zonaVerifTimeout = setTimeout(() => {
-                        verificarDireccion(dirVal, locVal);
-                    }, 600);
+                    _zonaVerifTimeout = setTimeout(() => { verificarDireccion(dirVal, locVal); }, 600);
                 }
             });
             cLoc.addEventListener('blur', () => {
@@ -6584,15 +6999,10 @@ async function verificarDireccion(direccion, localidadOverride) {
             });
         }
     }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', attachHooks);
-    } else {
-        attachHooks();
-    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', attachHooks);
+    else attachHooks();
 })();
 
-// ── Re-verificar cuando cambia la sucursal manualmente ───────────────────
 (function hookSucursalChange() {
     function attach() {
         const sel = document.getElementById('main-sucursal');
@@ -6601,16 +7011,11 @@ async function verificarDireccion(direccion, localidadOverride) {
             cerrarZonaAlert();
             const dir = document.getElementById('c-dir')?.value?.trim();
             const loc = document.getElementById('c-loc')?.value?.trim();
-            if (dir || loc) {
-                setTimeout(() => verificarDireccion(dir || '', loc || ''), 300);
-            }
+            if (dir || loc) { setTimeout(() => verificarDireccion(dir || '', loc || ''), 300); }
         });
     }
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', attach);
-    } else {
-        attach();
-    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', attach);
+    else attach();
 })();
 </script><!--  FIN VERIFICACIÓN DE ZONA  --><script>
 // 
@@ -7043,18 +7448,40 @@ function welcomeUsarGPS() {
             btn.style.background = 'rgba(16,185,129,0.2)';
             btn.disabled = false;
 
-            const sucCubre = sucursalParaPunto(lat, lng);
-            const sucSug = sucCubre || sucursalMasCercana(lat, lng);
-            _wsSucursalDetectada = sucSug;
+            // v3: usar determinarSucursal() async (Firebase+Turf) con fallback síncrono
+            (async () => {
+                const result = await window.determinarSucursal(lat, lng);
+                const sucSug = result?.sucursal || sucursalParaPunto(lat, lng) || sucursalMasCercana(lat, lng);
+                _wsSucursalDetectada = sucSug;
 
-            // No habilitamos continuar solo por GPS — usuario DEBE escribir dirección
-            _wsVerificarContinuar();
+                // Mostrar aviso si es barrio privado
+                if (result?.requiresSpecialAccess) {
+                    const resultEl = document.getElementById('ws-zona-result');
+                    if (resultEl) {
+                        resultEl.style.display = 'block';
+                        resultEl.style.background = 'rgba(239,68,68,0.08)';
+                        resultEl.style.border = '1px solid rgba(239,68,68,0.35)';
+                        resultEl.innerHTML = '<div style="display:flex;align-items:center;gap:10px;"><span style="font-size:20px;">🔒</span><div><div style="font-weight:800;color:#ef4444;font-size:13px;">Barrio privado detectado</div><div style="color:#d1d5db;font-size:12px;margin-top:2px;">Zona: <strong style="color:#fff;">' + (result.zona||sucSug) + '</strong></div><div style="color:#9ca3af;font-size:11px;">Nuestro cadete coordinará el acceso</div></div></div>';
+                    }
+                }
+
+                // No habilitamos continuar solo por GPS — usuario DEBE escribir dirección
+                _wsVerificarContinuar();
+            })();
         },
         () => {
             txt.textContent = 'No se pudo obtener la ubicación';
             btn.style.borderColor = '#ef4444';
             btn.style.color = '#ef4444';
             btn.disabled = false;
+            // Fallback: sugerir selección manual de sucursal (Integration Doc §6 — Manejo de Errores)
+            const wsZoneResult = document.getElementById('ws-zona-result');
+            if (wsZoneResult) {
+                wsZoneResult.style.display = 'block';
+                wsZoneResult.style.background = 'rgba(245,158,11,0.06)';
+                wsZoneResult.style.border = '1px solid rgba(245,158,11,0.3)';
+                wsZoneResult.innerHTML = '<div style="display:flex;align-items:center;gap:10px;"><span style="font-size:18px;">📍</span><div><div style="font-weight:800;color:#f59e0b;font-size:13px;">Ubicación no disponible</div><div style="color:#d1d5db;font-size:12px;margin-top:2px;">Escribí tu dirección para detectar la zona, o seleccioná tu sucursal manualmente en el carrito.</div></div></div>';
+            }
         },
         { enableHighAccuracy: true, timeout: 8000 }
     );
@@ -7103,12 +7530,14 @@ function welcomeDirInput() {
                 return;
             }
 
-            const sucCubre = sucursalParaPunto(coords.lat, coords.lng);
-            const sucSug = sucCubre || sucursalMasCercana(coords.lat, coords.lng);
+            // v3: enriquecer con datos de Firebase (zona granular + acceso especial)
+            const gfResult = await window.determinarSucursal(coords.lat, coords.lng);
+            const sucCubre = gfResult?.sucursal || sucursalParaPunto(coords.lat, coords.lng);
+            const sucSug   = sucCubre || sucursalMasCercana(coords.lat, coords.lng);
             _wsSucursalDetectada = sucSug;
             _wsGPS = coords;
 
-            welcomeMostrarResultado(sucSug, [val, locVal].filter(Boolean).join(', '), sucCubre !== null);
+            welcomeMostrarResultado(sucSug, [val, locVal].filter(Boolean).join(', '), sucCubre !== null, gfResult);
         } catch(e) {
             result.innerHTML = '<div style="color:#6b7280;font-size:13px;text-align:center;padding:6px 0;">No se pudo verificar — podés continuar igual</div>';
             _wsSucursalDetectada = null;
@@ -7152,20 +7581,51 @@ window.welcomeLocInput = function() {
     }
 };
 
-function welcomeMostrarResultado(sucId, dir, exacta) {
+function welcomeMostrarResultado(sucId, dir, exacta, gfResult) {
     const result = document.getElementById('ws-zona-result');
-    const info = ZONA_INFO_UI[sucId];
+    const info = ZONA_INFO_UI[sucId] || { label: sucId, direccion: '' };
+    const esPrivado = gfResult?.requiresSpecialAccess === true;
+    const zonaGranular = gfResult?.zona || '';
 
-    if (exacta) {
+    if (esPrivado) {
+        // Barrio privado — aviso especial en rojo
+        result.style.background = 'rgba(239,68,68,0.08)';
+        result.style.border = '1px solid rgba(239,68,68,0.35)';
+        result.innerHTML = `
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:24px;">🔒</span>
+              <div>
+                <div style="font-weight:800;color:#ef4444;font-size:13px;">Barrio privado — acceso especial</div>
+                <div style="color:#d1d5db;font-size:12px;margin-top:2px;">Sucursal: <strong style="color:#fff;">${info.label}</strong></div>
+                ${zonaGranular ? `<div style="color:#9ca3af;font-size:11px;">Zona: ${zonaGranular}</div>` : ''}
+                <div style="color:#9ca3af;font-size:11px;margin-top:3px;">Nuestro cadete coordinará el ingreso</div>
+              </div>
+            </div>`;
+    } else if (exacta) {
         result.style.background = 'rgba(16,185,129,0.08)';
         result.style.border = '1px solid rgba(16,185,129,0.35)';
         result.innerHTML = `
-            <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:22px;color:#10b981;font-weight:800;">OK</span><div><div style="font-weight:800;color:#10b981;font-size:13px;">¡Llegamos a tu zona!</div><div style="color:#d1d5db;font-size:12px;margin-top:2px;">Sucursal: <strong style="color:#fff;">${info.label}</strong></div><div style="color:#9ca3af;font-size:11px;">${info.direccion}</div></div></div>`;
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:22px;color:#10b981;font-weight:800;">✓</span>
+              <div>
+                <div style="font-weight:800;color:#10b981;font-size:13px;">¡Llegamos a tu zona!</div>
+                <div style="color:#d1d5db;font-size:12px;margin-top:2px;">Sucursal: <strong style="color:#fff;">${info.label}</strong></div>
+                ${zonaGranular ? `<div style="color:#9ca3af;font-size:11px;">Zona: ${zonaGranular}</div>` : ''}
+                <div style="color:#9ca3af;font-size:11px;">${info.direccion}</div>
+              </div>
+            </div>`;
     } else {
         result.style.background = 'rgba(245,158,11,0.06)';
         result.style.border = '1px solid rgba(245,158,11,0.3)';
         result.innerHTML = `
-            <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:22px;"></span><div><div style="font-weight:800;color:#f59e0b;font-size:13px;">Sucursal más cercana</div><div style="color:#d1d5db;font-size:12px;margin-top:2px;"><strong style="color:#fff;">${info.label}</strong></div><div style="color:#9ca3af;font-size:11px;">${info.direccion}</div></div></div>`;
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:22px;">📍</span>
+              <div>
+                <div style="font-weight:800;color:#f59e0b;font-size:13px;">Sucursal más cercana</div>
+                <div style="color:#d1d5db;font-size:12px;margin-top:2px;"><strong style="color:#fff;">${info.label}</strong></div>
+                <div style="color:#9ca3af;font-size:11px;">${info.direccion}</div>
+              </div>
+            </div>`;
     }
 
     result.style.display = 'block';
@@ -7334,6 +7794,13 @@ function actualizarBadgePromos() {
         cargarTopProductos();
         cargarResumenOpinionesInicio();
         actualizarBadgePromos();
+        // GeoFencing v3: pre-calentar caché de zonas en background
+        // Así cuando el usuario abre el welcome-screen ya está listo
+        setTimeout(() => {
+            if (window._gfLoadZones) {
+                window._gfLoadZones().catch(() => {});
+            }
+        }, 2000);
     }
     if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', ()=>run());
     else run();
@@ -7545,5 +8012,807 @@ if ('serviceWorker' in navigator) {
     }
 })();
 </script>
+<!-- ═══════════════════════════════════════════════════════════════
+     GEO-FENCING ADMIN — Panel de importación KML (solo ulises/leticia)
+     Se activa desde el panel admin con admAbrirGeoFencing()
+═══════════════════════════════════════════════════════════════ -->
+<div id="gf-import-panel" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);align-items:center;justify-content:center;">
+  <div style="background:#1a1a1a;border:1px solid #333;border-radius:20px;padding:24px;width:90%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,0.8);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div>
+        <div style="font-size:16px;font-weight:800;color:#f59e0b;text-transform:uppercase;letter-spacing:.5px;">GeoFencing Admin</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:2px;">Importar KML → Firebase</div>
+      </div>
+      <button onclick="admCerrarGeoFencing()" style="background:rgba(255,255,255,0.08);border:none;color:#9ca3af;width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;">×</button>
+    </div>
+
+    <!-- Dropzone -->
+    <div id="gf-drop-zone"
+      style="border:2px dashed #333;border-radius:14px;padding:24px;text-align:center;cursor:pointer;transition:.2s;margin-bottom:14px;"
+      onclick="document.getElementById('gf-kml-input').click()"
+      ondragover="event.preventDefault();this.style.borderColor='#f59e0b';this.style.background='rgba(245,158,11,0.06)'"
+      ondragleave="this.style.borderColor='#333';this.style.background=''"
+      ondrop="gfHandleDrop(event)">
+      <div style="font-size:28px;margin-bottom:8px;">📂</div>
+      <div style="font-weight:700;color:#e2e8f0;font-size:14px;" id="gf-drop-label">Arrastrá el KML / GeoJSON o hacé click</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:4px;">MAPA_ENVIOS_MARVEL_FOOD.kml · map.geojson</div>
+    </div>
+    <input type="file" id="gf-kml-input" accept=".kml,.geojson,.json" style="display:none" onchange="gfHandleFile(event)">
+
+    <!-- Opciones -->
+    <div style="margin-bottom:14px;">
+      <label style="font-size:12px;color:#9ca3af;font-weight:700;display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <input type="checkbox" id="gf-overwrite" checked style="accent-color:#f59e0b;">
+        Sobrescribir zonas existentes
+      </label>
+    </div>
+
+    <!-- Resultado -->
+    <div id="gf-import-result" style="display:none;padding:12px;border-radius:10px;margin-bottom:14px;font-size:13px;"></div>
+
+    <!-- Botones -->
+    <div style="display:flex;gap:10px;">
+      <button id="gf-btn-sync" onclick="gfRunSync()" disabled
+        style="flex:1;padding:13px;border:none;border-radius:12px;background:#333;color:#888;font-weight:800;font-size:14px;cursor:not-allowed;transition:.2s;">
+        Sincronizar con Firebase
+      </button>
+    </div>
+
+    <!-- Stats de zonas activas -->
+    <div id="gf-stats" style="margin-top:14px;padding:10px;background:rgba(255,255,255,0.04);border-radius:10px;font-size:12px;color:#9ca3af;text-align:center;">
+      Cargando estadísticas…
+    </div>
+  </div>
+</div>
+
+<script>
+// ── GeoFencing Admin Panel ──────────────────────────────────────────────────
+let _gfPendingFile = null;
+const _GF_ADMINS = ['ulises', 'leticia'];
+
+function _gfCurrentAdmin() {
+    // Detectar usuario admin activo desde el sistema de admin del index
+    const admUser = (window._admCurrentUser || window.admCurrentUser || '').toString().toLowerCase();
+    return admUser;
+}
+
+window.admAbrirGeoFencing = function() {
+    const user = _gfCurrentAdmin();
+    if (!_GF_ADMINS.includes(user)) {
+        alert('Solo ulises y leticia pueden acceder al panel GeoFencing.');
+        return;
+    }
+    document.getElementById('gf-import-panel').style.display = 'flex';
+    gfCargarStats();
+};
+
+window.admCerrarGeoFencing = function() {
+    document.getElementById('gf-import-panel').style.display = 'none';
+    _gfPendingFile = null;
+};
+
+function gfHandleFile(evt) {
+    const file = evt.target.files[0];
+    if (!file) return;
+    _gfPendingFile = file;
+    document.getElementById('gf-drop-label').textContent = '✅ ' + file.name + ' listo';
+    document.getElementById('gf-drop-zone').style.borderColor = '#10b981';
+    const btn = document.getElementById('gf-btn-sync');
+    btn.disabled = false;
+    btn.style.background = '#f59e0b';
+    btn.style.color = '#000';
+    btn.style.cursor = 'pointer';
+}
+
+function gfHandleDrop(evt) {
+    evt.preventDefault();
+    evt.currentTarget.style.borderColor = '#333';
+    evt.currentTarget.style.background = '';
+    const file = Array.from(evt.dataTransfer.files).find(f =>
+        f.name.endsWith('.kml') || f.name.endsWith('.geojson') || f.name.endsWith('.json')
+    );
+    if (!file) { gfShowResult('Solo se aceptan archivos .kml o .geojson', 'error'); return; }
+    // Simular cambio de input
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    document.getElementById('gf-kml-input').files = dt.files;
+    gfHandleFile({ target: { files: [file] } });
+}
+
+async function gfRunSync() {
+    if (!_gfPendingFile) { gfShowResult('Seleccioná un archivo KML o GeoJSON primero.', 'warn'); return; }
+    const user = _gfCurrentAdmin();
+    if (!_GF_ADMINS.includes(user)) { gfShowResult('Sin permisos de administración.', 'error'); return; }
+
+    const btn = document.getElementById('gf-btn-sync');
+    btn.textContent = '⏳ Importando…';
+    btn.disabled = true;
+
+    try {
+        const result = await window.syncMapData(_gfPendingFile, { name: user });
+        if (result.ok) {
+            gfShowResult(
+                `✅ ${result.imported} zonas importadas · ${result.skipped} omitidas${result.errors.length ? ' · ' + result.errors.length + ' errores' : ''}`,
+                'success'
+            );
+            window.gfInvalidateCache();
+            gfCargarStats();
+        } else {
+            gfShowResult('❌ Error: ' + result.error, 'error');
+        }
+    } catch(e) {
+        gfShowResult('❌ ' + e.message, 'error');
+    } finally {
+        btn.textContent = 'Sincronizar con Firebase';
+        btn.disabled = false;
+    }
+}
+
+function gfShowResult(msg, type) {
+    const el = document.getElementById('gf-import-result');
+    const colors = { success:'rgba(16,185,129,0.12)', error:'rgba(239,68,68,0.12)', warn:'rgba(245,158,11,0.12)' };
+    const textColors = { success:'#10b981', error:'#ef4444', warn:'#f59e0b' };
+    el.style.display = 'block';
+    el.style.background = colors[type] || colors.warn;
+    el.style.color = textColors[type] || textColors.warn;
+    el.style.border = '1px solid ' + (textColors[type] || textColors.warn) + '55';
+    el.textContent = msg;
+}
+
+async function gfCargarStats() {
+    const statsEl = document.getElementById('gf-stats');
+    if (!statsEl || !window.db) return;
+    try {
+        const snap = await window.db.collection('delivery_zones')
+            .where('active', '==', true).get();
+        let total = 0, privados = 0;
+        const sucursales = {};
+        snap.forEach(doc => {
+            total++;
+            const d = doc.data();
+            if (d.requiresSpecialAccess) privados++;
+            sucursales[d.sucursal] = (sucursales[d.sucursal] || 0) + 1;
+        });
+        const sucStr = Object.entries(sucursales)
+            .map(([k,v]) => k + ': ' + v).join(' · ');
+        statsEl.innerHTML = total === 0
+            ? '⚠️ Sin zonas en Firebase — importá el KML para empezar'
+            : `🗺️ <strong style="color:#e2e8f0;">${total}</strong> zonas activas · 🔒 ${privados} privados<br><span style="font-size:10px;">${sucStr}</span>`;
+    } catch(e) {
+        statsEl.textContent = 'Error cargando stats: ' + e.message;
+    }
+}
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     GEO-FENCING ADMIN MODULE v3
+     Integrado en el panel admin existente de Marvel Food.
+     · Lazy init Google Maps (solo cuando el tab es visible)
+     · Import KML → Firebase con toGeoJSON + detección de sucursal
+     · DrawingManager para agregar/editar zonas (solo admins)
+     · Heatmap sobre pedidos completados
+     · Validación de sesión admin antes de cualquier escritura en DB
+═══════════════════════════════════════════════════════════════════ -->
+<script>
+(function() {
+'use strict';
+
+// ── Constantes ──────────────────────────────────────────────────────────────
+const GF_ADMINS       = ['ulises', 'leticia'];
+const GF_GMAPS_KEY    = 'YOUR_GMAPS_KEY';   // ← reemplazá con tu clave real
+const GF_COLORS       = { Centro:'#f59e0b', Norte:'#3b82f6', Sur:'#10b981', Funes:'#a855f7' };
+const GF_SPECIAL_KEYS = ['barrio privado', 'kentucy', 'kentucky', 'golf club', 'fisherton priv'];
+
+// ── Estado interno ──────────────────────────────────────────────────────────
+let _gfMapInstance    = null;   // google.maps.Map
+let _gfMapReady       = false;  // Google Maps API cargada
+let _gfMapInitDone    = false;  // Init de mapa ya ejecutado
+let _gfHeatmapLayer   = null;
+let _gfDrawingMgr     = null;
+let _gfPendingFile    = null;
+let _gfPolygons       = [];     // { poly: GMapsPolygon, id, sucursal }
+
+// ── Helpers de seguridad ─────────────────────────────────────────────────────
+
+/**
+ * Verifica que haya una sesión admin activa.
+ * Usa el mismo token de sessionStorage que admCheckPin().
+ * @returns {boolean}
+ */
+function _gfSessionOk() {
+    const tok = sessionStorage.getItem('_mfa_ok');
+    return typeof tok === 'string' && tok.length >= 8;
+}
+
+/**
+ * Verifica si la sesión es válida. Cualquier mutación en Firestore
+ * relacionada con zonas pasa por este guard primero.
+ * @param {string} [requiredUser]  Si se pasa, verifica también el usuario
+ */
+function _gfGuard(requiredUser) {
+    if (!_gfSessionOk()) {
+        gfFeedback('⛔ Sesión expirada — volvé a ingresar al panel admin.', 'error');
+        throw new Error('GF: sesión no válida');
+    }
+    // Nota: cuando implementes Firebase Auth, validá también el UID aquí.
+}
+
+/**
+ * Sanitiza un string para usarlo como ID de documento Firestore.
+ * Solo letras, números y guión bajo. Máx 60 chars.
+ */
+function _gfDocId(str) {
+    return String(str)
+        .toLowerCase()
+        .normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .replace(/[^a-z0-9]/g, '_')
+        .replace(/_+/g, '_')
+        .replace(/^_|_$/g, '')
+        .substring(0, 60);
+}
+
+// ── Detección de sucursal por nombre de folder/zone ─────────────────────────
+const _GF_FOLDER_MAP = {
+    norte: 'Norte', baigorria: 'Norte',
+    sur: 'Sur', galvez: 'Sur', 'zona sur': 'Sur',
+    funes: 'Funes', fisherton: 'Funes',
+    pellegrini: 'Centro', centro: 'Centro',
+};
+
+function _gfInferSucursal(name, folderName) {
+    const normalize = s => (s||'').toLowerCase()
+        .normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
+    const n = normalize(name);
+    const f = normalize(folderName);
+    for (const [key, suc] of Object.entries(_GF_FOLDER_MAP)) {
+        if (f.includes(key) || n.startsWith(key) || n.includes(key)) return suc;
+    }
+    return 'Centro';
+}
+
+function _gfIsSpecial(description) {
+    const d = (description||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+    return GF_SPECIAL_KEYS.some(k => d.includes(k));
+}
+
+// ── Feedback UI ──────────────────────────────────────────────────────────────
+function gfFeedback(msg, type) {
+    const el = document.getElementById('gf-feedback');
+    if (!el) return;
+    const styles = {
+        success: ['rgba(16,185,129,.12)','#10b981','rgba(16,185,129,.25)'],
+        error:   ['rgba(239,68,68,.12)', '#ef4444','rgba(239,68,68,.25)'],
+        warn:    ['rgba(245,158,11,.12)','#f59e0b','rgba(245,158,11,.25)'],
+        info:    ['rgba(59,130,246,.12)','#3b82f6','rgba(59,130,246,.25)'],
+    };
+    const [bg, color, border] = styles[type] || styles.info;
+    el.style.cssText = `display:block;background:${bg};color:${color};border:1px solid ${border};padding:10px 12px;border-radius:10px;font-size:12px;font-weight:700;`;
+    el.textContent = msg;
+    if (type === 'success') setTimeout(() => { el.style.display='none'; }, 4000);
+}
+
+// ── Loader overlay del mapa ──────────────────────────────────────────────────
+function _gfShowLoader(txt) {
+    const l = document.getElementById('gf-map-loader');
+    const t = document.getElementById('gf-loader-txt');
+    if (l) l.style.display = 'flex';
+    if (t) t.textContent = txt || 'Cargando…';
+}
+function _gfHideLoader() {
+    const l = document.getElementById('gf-map-loader');
+    if (l) l.style.display = 'none';
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MOD 6 — LAZY INIT: Google Maps carga solo cuando el tab es abierto
+// ══════════════════════════════════════════════════════════════════════════════
+
+// Callback global que llama Google Maps cuando termina de cargar
+window._gfGoogleMapsReady = function() {
+    _gfMapReady = true;
+    // Si el tab mapa ya estaba visible, inicializar ahora
+    const mapaEl = document.getElementById('adm-tab-mapa');
+    if (mapaEl && mapaEl.style.display === 'flex') {
+        _gfDoInit();
+    }
+};
+
+/**
+ * Dispara la carga del script de Google Maps (una sola vez).
+ * El callback _gfGoogleMapsReady se llama cuando la API está lista.
+ */
+function _gfLoadGoogleMaps() {
+    if (document.getElementById('gf-gmaps-script')) return; // Ya cargando/cargado
+    const s = document.createElement('script');
+    s.id    = 'gf-gmaps-script';
+    s.async = true;
+    s.src   = `https://maps.googleapis.com/maps/api/js?key=${GF_GMAPS_KEY}&libraries=drawing,visualization&callback=_gfGoogleMapsReady`;
+    document.head.appendChild(s);
+}
+
+/**
+ * Punto de entrada lazy: llamado por admSwitchTab cuando tab === 'mapa'.
+ * Garantiza que Google Maps se cargue una sola vez y el init del mapa
+ * ocurra exactamente una vez por sesión.
+ */
+window.gfInitLazy = function() {
+    if (_gfMapInitDone) {
+        // Ya inicializado — solo refrescar lista de zonas
+        _gfRefreshZonesList();
+        return;
+    }
+    _gfShowLoader('Cargando Google Maps…');
+
+    if (_gfMapReady) {
+        _gfDoInit();
+    } else {
+        _gfLoadGoogleMaps();
+        // _gfGoogleMapsReady() llamará _gfDoInit() cuando la API esté lista
+    }
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// INIT DEL MAPA
+// ══════════════════════════════════════════════════════════════════════════════
+
+async function _gfDoInit() {
+    if (_gfMapInitDone) return;
+    _gfMapInitDone = true;
+
+    _gfShowLoader('Inicializando mapa…');
+
+    const mapDiv = document.getElementById('admin-map');
+    if (!mapDiv) { _gfHideLoader(); return; }
+
+    _gfMapInstance = new google.maps.Map(mapDiv, {
+        center:    { lat: -32.9468, lng: -60.6393 },
+        zoom:      12,
+        mapTypeId: 'roadmap',
+        styles:    _GF_DARK_STYLES,
+        disableDefaultUI: false,
+        zoomControl: true,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: true,
+    });
+
+    // DrawingManager (polígonos nuevos) — solo si hay sesión admin
+    if (_gfSessionOk()) {
+        _gfDrawingMgr = new google.maps.drawing.DrawingManager({
+            drawingMode: null,
+            drawingControl: true,
+            drawingControlOptions: {
+                position: google.maps.ControlPosition.TOP_CENTER,
+                drawingModes: [google.maps.drawing.OverlayType.POLYGON],
+            },
+            polygonOptions: {
+                fillColor: '#f59e0b', fillOpacity: 0.25,
+                strokeColor: '#f59e0b', strokeWeight: 2,
+                editable: true, draggable: false,
+            },
+        });
+        _gfDrawingMgr.setMap(_gfMapInstance);
+        google.maps.event.addListener(_gfDrawingMgr, 'polygoncomplete', _gfOnPolygonComplete);
+    }
+
+    // Cargar zonas de Firebase en el mapa
+    await _gfRenderZonesOnMap();
+    _gfHideLoader();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// RENDER ZONAS EN MAPA
+// ══════════════════════════════════════════════════════════════════════════════
+
+async function _gfRenderZonesOnMap() {
+    if (!_gfMapInstance || !window.db) return;
+
+    // Limpiar polígonos anteriores
+    _gfPolygons.forEach(p => p.poly.setMap(null));
+    _gfPolygons = [];
+
+    _gfShowLoader('Cargando zonas desde Firebase…');
+
+    let snap;
+    try {
+        snap = await window.db.collection('delivery_zones').where('active','==',true).get();
+    } catch(e) {
+        _gfHideLoader();
+        gfFeedback('Error cargando zonas: ' + e.message, 'error');
+        return;
+    }
+
+    const bounds = new google.maps.LatLngBounds();
+    let total = 0, privados = 0;
+
+    snap.forEach(doc => {
+        const d = doc.data();
+        if (!d.geometry || d.geometry.type !== 'Polygon') return;
+
+        const color  = GF_COLORS[d.sucursal] || '#888';
+        const coords = d.geometry.coordinates[0].map(([lng, lat]) => ({ lat, lng }));
+        if (!coords.length) return;
+
+        const poly = new google.maps.Polygon({
+            paths:         coords,
+            strokeColor:   d.requiresSpecialAccess ? '#ef4444' : color,
+            strokeOpacity: 0.9,
+            strokeWeight:  2,
+            fillColor:     color,
+            fillOpacity:   d.requiresSpecialAccess ? 0.4 : 0.18,
+            editable:      _gfSessionOk(),
+            map:           _gfMapInstance,
+        });
+
+        coords.forEach(c => bounds.extend(c));
+        total++;
+        if (d.requiresSpecialAccess) privados++;
+
+        // Info window on click
+        const iw = new google.maps.InfoWindow();
+        google.maps.event.addListener(poly, 'click', e => {
+            iw.setContent(`
+                <div style="font-family:sans-serif;font-size:13px;padding:4px;min-width:160px;">
+                  <strong style="font-size:14px;">${_esc(d.name)}</strong><br>
+                  <span style="color:#666;">Sucursal: </span><strong>${_esc(d.sucursal)}</strong>
+                  ${d.requiresSpecialAccess ? '<br><span style="color:#ef4444;font-weight:700;">🔒 Acceso especial</span>' : ''}
+                  ${d.description ? `<br><small style="color:#888;">${_esc(d.description)}</small>` : ''}
+                  ${_gfSessionOk() ? `<br><br><button onclick="gfDeleteZone('${doc.id}')" style="background:#ef4444;color:#fff;border:none;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">🗑 Eliminar</button>` : ''}
+                </div>`);
+            iw.setPosition(e.latLng);
+            iw.open(_gfMapInstance);
+        });
+
+        // Persistir edición de vértices (solo admins)
+        if (_gfSessionOk()) {
+            google.maps.event.addListener(poly.getPath(), 'set_at',    () => _gfPersistEdit(poly, doc.id));
+            google.maps.event.addListener(poly.getPath(), 'insert_at', () => _gfPersistEdit(poly, doc.id));
+        }
+
+        _gfPolygons.push({ poly, id: doc.id, sucursal: d.sucursal });
+    });
+
+    // Ajustar viewport a los polígonos
+    if (total > 0 && !bounds.isEmpty()) _gfMapInstance.fitBounds(bounds);
+
+    // Actualizar stats del sidebar
+    _gfUpdateStats(total, privados);
+    await _gfRefreshZonesList();
+    _gfHideLoader();
+}
+
+// Escape básico para contenido en InfoWindow (previene XSS inline)
+function _esc(s) {
+    return String(s||'')
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Persistir edición de polígono ────────────────────────────────────────────
+async function _gfPersistEdit(polygon, docId) {
+    try { _gfGuard(); } catch(e) { return; }
+    if (!window.db) return;
+    const path   = polygon.getPath().getArray();
+    const coords = path.map(ll => [ll.lng(), ll.lat()]);
+    coords.push(coords[0]); // cerrar anillo
+    try {
+        await window.db.collection('delivery_zones').doc(docId).update({
+            geometry:  { type: 'Polygon', coordinates: [coords] },
+            updatedAt: new Date().toISOString(),
+        });
+        window.gfInvalidateCache && window.gfInvalidateCache();
+        gfFeedback('✓ Zona actualizada.', 'success');
+    } catch(e) {
+        gfFeedback('Error al guardar edición: ' + e.message, 'error');
+    }
+}
+
+// ── Eliminar zona ────────────────────────────────────────────────────────────
+window.gfDeleteZone = async function(docId) {
+    try { _gfGuard(); } catch(e) { return; }
+    if (!confirm('¿Desactivar esta zona de Firebase?')) return;
+    try {
+        await window.db.collection('delivery_zones').doc(docId).update({
+            active: false, updatedAt: new Date().toISOString(),
+        });
+        window.gfInvalidateCache && window.gfInvalidateCache();
+        gfFeedback('Zona desactivada.', 'success');
+        await _gfRenderZonesOnMap();
+    } catch(e) {
+        gfFeedback('Error: ' + e.message, 'error');
+    }
+};
+
+// ── Guardar polígono nuevo dibujado ─────────────────────────────────────────
+async function _gfOnPolygonComplete(polygon) {
+    try { _gfGuard(); } catch(e) { polygon.setMap(null); return; }
+    if (_gfDrawingMgr) _gfDrawingMgr.setDrawingMode(null);
+
+    const name = (prompt('Nombre de la zona (ej: "NORTE 6"):', '') || '').trim();
+    if (!name) { polygon.setMap(null); gfFeedback('Dibujado cancelado — ingresá un nombre.', 'warn'); return; }
+
+    const desc     = (prompt('Descripción (ej: "BARRIO PRIVADO" o dejar vacío):', '') || '').trim();
+    const sucursal = (prompt('Sucursal (Centro/Norte/Sur/Funes):', _gfInferSucursal(name)) || 'Centro').trim();
+
+    const path   = polygon.getPath().getArray();
+    const coords = path.map(ll => [ll.lng(), ll.lat()]);
+    coords.push(coords[0]);
+
+    const docId = _gfDocId(name) + '_' + Date.now();
+    try {
+        await window.db.collection('delivery_zones').doc(docId).set({
+            name, description: desc, sucursal,
+            requiresSpecialAccess: _gfIsSpecial(desc) || _gfIsSpecial(name),
+            active: true,
+            geometry: { type: 'Polygon', coordinates: [coords] },
+            source: 'admin_draw',
+            updatedAt: new Date().toISOString(),
+        });
+        polygon.setMap(null); // eliminar el temporal
+        window.gfInvalidateCache && window.gfInvalidateCache();
+        gfFeedback('✅ Zona "' + name + '" guardada.', 'success');
+        await _gfRenderZonesOnMap();
+    } catch(e) {
+        polygon.setMap(null);
+        gfFeedback('Error al guardar: ' + e.message, 'error');
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MOD 5 — IMPORT KML
+// ══════════════════════════════════════════════════════════════════════════════
+
+window.gfHandleFile = function(evt) {
+    const file = evt.target.files[0];
+    if (!file) return;
+    _gfPendingFile = file;
+    document.getElementById('gf-drop-label').textContent = '✅ ' + file.name;
+    document.getElementById('gf-drop-zone').style.borderColor = '#10b981';
+    const btn = document.getElementById('gf-btn-sync');
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; }
+};
+
+window.gfHandleDrop = function(evt) {
+    evt.preventDefault();
+    evt.currentTarget.classList.remove('over');
+    const file = Array.from(evt.dataTransfer.files).find(f =>
+        f.name.endsWith('.kml') || f.name.endsWith('.geojson') || f.name.endsWith('.json')
+    );
+    if (!file) { gfFeedback('Solo se aceptan archivos .kml o .geojson', 'error'); return; }
+    gfHandleFile({ target: { files: [file] } });
+};
+
+window.gfRunSync = async function() {
+    try { _gfGuard(); } catch(e) { return; }
+    if (!_gfPendingFile) { gfFeedback('Seleccioná un archivo KML o GeoJSON primero.', 'warn'); return; }
+    if (!window.db)       { gfFeedback('Firebase no disponible.', 'error'); return; }
+
+    const btn = document.getElementById('gf-btn-sync');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Importando…'; }
+
+    const isGeoJSONFile = _gfPendingFile.name.endsWith('.geojson') || _gfPendingFile.name.endsWith('.json');
+    gfFeedback(isGeoJSONFile ? 'Procesando GeoJSON…' : 'Procesando KML…', 'info');
+
+    try {
+        // Parsear KML o GeoJSON según extensión (Integration Doc §3)
+        const fileText = await _gfPendingFile.text();
+        let geoJSON;
+
+        if (isGeoJSONFile) {
+            geoJSON = JSON.parse(fileText);
+            if (geoJSON.type === 'Feature') {
+                geoJSON = { type: 'FeatureCollection', features: [geoJSON] };
+            }
+        } else {
+            if (typeof toGeoJSON === 'undefined') {
+                gfFeedback('toGeoJSON no cargado — requerido para archivos KML.', 'error');
+                if (btn) { btn.disabled = false; btn.textContent = '🔄 Sincronizar con Firebase'; }
+                return;
+            }
+            const kmlDOM  = new DOMParser().parseFromString(fileText, 'application/xml');
+            const parseErr = kmlDOM.querySelector('parsererror');
+            if (parseErr) throw new Error('KML inválido: ' + parseErr.textContent.substring(0,80));
+            geoJSON = toGeoJSON.kml(kmlDOM);
+        }
+
+        const overwrite = document.getElementById('gf-overwrite')?.checked !== false;
+
+        let imported = 0, skipped = 0;
+        const errors = [];
+
+        for (const feature of geoJSON.features) {
+            if (!feature.geometry || !['Polygon','MultiPolygon'].includes(feature.geometry.type)) {
+                skipped++; continue;
+            }
+            const props      = feature.properties || {};
+            const name       = (props.name || props.Name || 'Sin nombre').trim();
+            const desc       = (props.description || '').trim();
+            const folderName = (props.folder || '').trim();
+            const sucursal   = _gfInferSucursal(name, folderName);
+            const isSpecial  = _gfIsSpecial(desc) || _gfIsSpecial(name);
+            const docId      = _gfDocId(name);
+
+            const payload = {
+                name, description: desc, sucursal,
+                requiresSpecialAccess: isSpecial,
+                active: true,
+                geometry: feature.geometry,
+                source: isGeoJSONFile ? 'geojson_import' : 'kml_import',
+                updatedAt: new Date().toISOString(),
+            };
+
+            try {
+                if (overwrite) {
+                    await window.db.collection('delivery_zones').doc(docId).set(payload);
+                } else {
+                    const snap = await window.db.collection('delivery_zones').doc(docId).get();
+                    if (snap.exists) { skipped++; continue; }
+                    await window.db.collection('delivery_zones').doc(docId).set(payload);
+                }
+                imported++;
+            } catch(e) {
+                errors.push(name + ': ' + e.message);
+            }
+        }
+
+        window.gfInvalidateCache && window.gfInvalidateCache();
+        window._gfZonesCache = null;
+
+        const msg = `✅ ${imported} zonas importadas · ${skipped} omitidas${errors.length ? ' · ⚠️ ' + errors.length + ' errores' : ''}`;
+        gfFeedback(msg, errors.length ? 'warn' : 'success');
+
+        // Refrescar mapa si está inicializado
+        if (_gfMapInitDone) await _gfRenderZonesOnMap();
+
+    } catch(e) {
+        gfFeedback('❌ ' + e.message, 'error');
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = '↺ Sincronizar con Firebase'; }
+    }
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// HEATMAP
+// ══════════════════════════════════════════════════════════════════════════════
+
+window.gfToggleHeatmap = async function() {
+    if (!_gfMapInstance) { gfFeedback('Abrí el mapa primero.', 'warn'); return; }
+    const btn = document.getElementById('gf-btn-heat');
+
+    if (_gfHeatmapLayer) {
+        _gfHeatmapLayer.setMap(null);
+        _gfHeatmapLayer = null;
+        if (btn) btn.textContent = '🔥 Cargar Heatmap (pedidos)';
+        return;
+    }
+
+    if (!window.google?.maps?.visualization) {
+        gfFeedback('Librería visualization no disponible.', 'error'); return;
+    }
+    if (!window.db) { gfFeedback('Firebase no disponible.', 'error'); return; }
+
+    if (btn) btn.textContent = '⏳ Cargando datos…';
+    gfFeedback('Cargando pedidos completados…', 'info');
+
+    try {
+        const snap = await window.db.collection('pedidos_v2')
+            .where('estado', '==', 'Entregado')
+            .orderBy('fecha', 'desc')
+            .limit(500)
+            .get();
+
+        const points = [];
+        snap.forEach(doc => {
+            const d = doc.data();
+            if (d.coordsGPS) {
+                const [lat, lng] = d.coordsGPS.split(',').map(Number);
+                if (!isNaN(lat) && !isNaN(lng)) points.push({ lat, lng });
+            }
+        });
+
+        if (!points.length) {
+            gfFeedback('Sin pedidos con GPS para el heatmap.', 'warn');
+            if (btn) btn.textContent = '🔥 Cargar Heatmap (pedidos)';
+            return;
+        }
+
+        _gfHeatmapLayer = new google.maps.visualization.HeatmapLayer({
+            data: points.map(p => new google.maps.LatLng(p.lat, p.lng)),
+            map:  _gfMapInstance,
+            radius:  35,
+            opacity: 0.75,
+            gradient: [
+                'rgba(0,0,0,0)','rgba(0,100,255,.5)','rgba(0,200,255,.7)',
+                'rgba(0,255,100,.8)','rgba(255,200,0,.9)','rgba(255,100,0,1)','rgba(255,0,0,1)',
+            ],
+        });
+
+        gfFeedback(`🔥 Heatmap con ${points.length} entregas.`, 'success');
+        if (btn) btn.textContent = '❌ Ocultar Heatmap';
+
+    } catch(e) {
+        gfFeedback('Error cargando heatmap: ' + e.message, 'error');
+        if (btn) btn.textContent = '🔥 Cargar Heatmap (pedidos)';
+    }
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SIDEBAR: stats + lista de zonas
+// ══════════════════════════════════════════════════════════════════════════════
+
+function _gfUpdateStats(total, privados) {
+    const t = document.getElementById('gf-stat-total');
+    const p = document.getElementById('gf-stat-priv');
+    if (t) t.textContent = total;
+    if (p) p.textContent = privados;
+}
+
+async function _gfRefreshZonesList() {
+    const container = document.getElementById('gf-zones-list');
+    if (!container || !window.db) return;
+
+    try {
+        const snap = await window.db.collection('delivery_zones')
+            .where('active','==',true).get();
+
+        if (snap.empty) {
+            container.innerHTML = '<div style="color:#6b7280;font-size:12px;text-align:center;padding:12px 0;">Sin zonas — importá el KML</div>';
+            return;
+        }
+
+        const items = [];
+        snap.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
+        items.sort((a,b) => (a.sucursal||'').localeCompare(b.sucursal||'') || (a.name||'').localeCompare(b.name||''));
+
+        container.innerHTML = items.map(z => {
+            const color   = GF_COLORS[z.sucursal] || '#888';
+            const classes = ['zone-card', z.sucursal?.toLowerCase() || 'centro', z.requiresSpecialAccess ? 'privado' : ''].join(' ');
+            return `<div class="${classes}">
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <span class="gf-zone-dot" style="background:${z.requiresSpecialAccess?'#ef4444':color};"></span>
+                    <strong style="color:#e2e8f0;font-size:11px;">${_esc(z.name)}</strong>
+                </div>
+                <div style="color:#6b7280;font-size:10px;margin-top:3px;margin-left:14px;">${_esc(z.sucursal)}${z.requiresSpecialAccess?' · 🔒':''}</div>
+            </div>`;
+        }).join('');
+
+    } catch(e) {
+        container.innerHTML = '<div style="color:#ef4444;font-size:11px;padding:8px;">Error: ' + _esc(e.message) + '</div>';
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ESTILOS OSCUROS PARA GOOGLE MAPS
+// ══════════════════════════════════════════════════════════════════════════════
+
+const _GF_DARK_STYLES = [
+    { elementType:'geometry',            stylers:[{color:'#1a1a2e'}] },
+    { elementType:'labels.text.stroke',  stylers:[{color:'#16213e'}] },
+    { elementType:'labels.text.fill',    stylers:[{color:'#746855'}] },
+    { featureType:'road', elementType:'geometry',        stylers:[{color:'#2a2a3e'}] },
+    { featureType:'road', elementType:'geometry.stroke', stylers:[{color:'#212121'}] },
+    { featureType:'road.highway', elementType:'geometry', stylers:[{color:'#3c3c5e'}] },
+    { featureType:'water', elementType:'geometry',       stylers:[{color:'#0f2744'}] },
+    { featureType:'water', elementType:'labels.text.fill', stylers:[{color:'#515c6d'}] },
+    { featureType:'poi',     stylers:[{visibility:'off'}] },
+    { featureType:'transit', stylers:[{visibility:'off'}] },
+];
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SEGURIDAD: verificación de sesión periódica
+// Cada 5 min verifica que sessionStorage sigue válido.
+// Si se abre el tab Zonas sin sesión, el DrawingManager nunca se monta.
+// ══════════════════════════════════════════════════════════════════════════════
+setInterval(() => {
+    if (!_gfSessionOk() && _gfDrawingMgr) {
+        _gfDrawingMgr.setMap(null);
+        _gfDrawingMgr = null;
+        console.warn('[GeoFencing] Sesión expirada — DrawingManager desactivado.');
+    }
+}, 5 * 60 * 1000);
+
+})(); // end IIFE
+</script>
+
 <!--  -->
 </body></html>

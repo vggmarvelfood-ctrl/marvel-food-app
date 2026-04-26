@@ -115,6 +115,8 @@ try {
 
  // Avisar al resto de la app que la DB está lista
  document.dispatchEvent(new CustomEvent('firebase:ready', { detail: { db: window.db } }));
+ // Marcar Firebase como inicializado para el watchdog
+ window._firebaseOk = true;
 
  // Tarea 5: Firebase Cloud Messaging (FCM) — inicialización modular
  // VAPID_KEY: reemplazá con tu clave pública de FCM (Firebase Console > Project Settings > Cloud Messaging)
@@ -122,6 +124,11 @@ try {
 
  async function fcmInit() {
  try {
+ // Guard extra: algunos Android WebView crashean con firebase-messaging
+ if (typeof window === 'undefined' || !window.isSecureContext) {
+ console.warn('[FCM] No es contexto seguro, FCM omitido.');
+ return;
+ }
  const { getMessaging, getToken, onMessage } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js');
  const messaging = getMessaging(_app);
  window._fcmMessaging = messaging;
@@ -139,7 +146,11 @@ try {
 
  window._fcmGetToken = async function() {
  try {
- const reg = await navigator.serviceWorker.ready;
+ // Timeout de 10s para navigator.serviceWorker.ready (puede colgar en Android)
+ const reg = await Promise.race([
+ navigator.serviceWorker.ready,
+ new Promise((_, rej) => setTimeout(() => rej(new Error('SW ready timeout')), 10000))
+ ]);
  const token = await getToken(messaging, { vapidKey: FCM_VAPID_KEY, serviceWorkerRegistration: reg });
  return token || null;
  } catch(e) {
@@ -152,9 +163,12 @@ try {
  }
  }
 
- // Inicializar FCM si el browser lo soporta
+ // Inicializar FCM si el browser lo soporta — con guard extra para Android
  if ('serviceWorker' in navigator && 'PushManager' in window) {
- fcmInit();
+ // Usar setTimeout para no bloquear el hilo principal durante la carga inicial
+ setTimeout(function() {
+ try { fcmInit(); } catch(e) { console.warn('[FCM] Error init:', e); }
+ }, 3000);
  }
 
 } catch(e) {
@@ -162,7 +176,60 @@ try {
  window.db = null;
  window.firebase = { firestore: { FieldValue: { serverTimestamp: () => null } } };
 }
-</script><meta charset="utf-8" />
+</script>
+<script>
+// === WATCHDOG: si Firebase no inició en 12s, despachar evento igualmente ===
+(function() {
+ setTimeout(function() {
+ if (!window._firebaseOk) {
+ console.warn('[Watchdog] Firebase no respondió, iniciando app sin DB');
+ window.db = window.db || null;
+ window.firebase = window.firebase || { firestore: { FieldValue: { serverTimestamp: () => null } } };
+ document.dispatchEvent(new CustomEvent('firebase:ready', { detail: { db: null } }));
+ try {
+ var splash = document.getElementById('app-splash');
+ if (splash) { splash.style.opacity = '0'; setTimeout(function(){ splash.style.display='none'; }, 400); }
+ } catch(_) {}
+ }
+ }, 12000);
+})();
+</script><script>
+// === POLYFILL: AbortSignal.timeout para Android WebView / Chrome < 103 ===
+if (typeof AbortSignal !== 'undefined' && !AbortSignal.timeout) {
+  AbortSignal.timeout = function(ms) {
+    var ctrl = new AbortController();
+    setTimeout(function() { ctrl.abort(new DOMException('TimeoutError','TimeoutError')); }, ms);
+    return ctrl.signal;
+  };
+}
+// === POLYFILL: Array.at para Android Chrome < 92 ===
+if (!Array.prototype.at) {
+  Array.prototype.at = function(i) { return i < 0 ? this[this.length + i] : this[i]; };
+}
+// === POLYFILL: Object.hasOwn para Android Chrome < 93 ===
+if (!Object.hasOwn) {
+  Object.hasOwn = function(o, k) { return Object.prototype.hasOwnProperty.call(o, k); };
+}
+</script>
+<script>
+// === HANDLER GLOBAL DE ERRORES — Evita pantalla gris en móvil ===
+window.addEventListener('error', function(e) {
+  console.error('[AppError]', e.message, e.filename, e.lineno);
+  // Si el splash todavía está visible, ocultarlo para no quedar bloqueado
+  try {
+    var splash = document.getElementById('app-splash');
+    if (splash && splash.parentNode) {
+      splash.style.display = 'none';
+    }
+  } catch(_) {}
+});
+window.addEventListener('unhandledrejection', function(e) {
+  console.warn('[UnhandledPromise]', e.reason);
+  // Evitar que promesas rechazadas (e.g. Firebase offline) bloqueen la app
+  e.preventDefault && e.preventDefault();
+});
+</script>
+<meta charset="utf-8" />
 <!-- PWA -->
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="./icon-192x192.png">
@@ -174,7 +241,7 @@ try {
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Marvel Food">
 <link rel="apple-touch-icon" href="./icon-192x192.png">
-<!-- --><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<!-- --><meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=5,viewport-fit=cover"/>
 <!-- Preload primera imagen del hero para mejor LCP en móvil -->
 <link rel="preload" as="image" href="https://i.ibb.co/CsY32Zpc/Hulk-6.jpg" fetchpriority="high">
 <!-- Preconnect: reducir latencia en móvil -->
@@ -202,7 +269,12 @@ try {
  }
 
  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Montserrat', 'Open Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
- body { background-color: var(--bg); color: var(--text); overflow-x: hidden; padding-bottom: 80px; }
+ html { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+ input, textarea, select, button { -webkit-appearance: none; -moz-appearance: none; appearance: none; font-family: inherit; }
+ body { background-color: var(--bg); color: var(--text); overflow-x: hidden; padding-bottom: 80px; 
+ -webkit-font-smoothing: antialiased;
+ -moz-osx-font-smoothing: grayscale;
+ }
 
  @keyframes slideUp { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
  @keyframes modalSlide { from { transform: translateY(100%); } to { transform: translateY(0); } }
@@ -212,6 +284,7 @@ try {
  .hero-slider {
  width: 100vw; height: 100vh; display: flex; overflow-x: auto;
  scroll-snap-type: x mandatory; scrollbar-width: none; position: relative;
+ touch-action: pan-x; -webkit-overflow-scrolling: touch;
  }
  .hero-slider::-webkit-scrollbar { display: none; }
  /* HERO ANIMACIONES */
@@ -219,6 +292,11 @@ try {
  @keyframes heroGlow { 0%,100%{text-shadow:0 0 20px rgba(245,158,11,.6);} 50%{text-shadow:0 0 40px rgba(245,158,11,1),0 0 80px rgba(245,158,11,.4);} }
  @keyframes heroPulseBtn { 0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.5);} 70%{box-shadow:0 0 0 12px rgba(245,158,11,0);} }
  @keyframes heroKenBurns { 0%{transform:scale(1);} 100%{transform:scale(1.08);} }
+ @media (max-width: 400px), (max-device-memory: 2gb) {
+ .hero-slide .hero-bg-img { animation: none !important; }
+ @keyframes heroGlow { 0%,100%{text-shadow:none;} }
+ @keyframes heroPulseBtn { 0%,100%{box-shadow:none;} }
+ }
  @keyframes dotPulse { 0%,100%{opacity:.4;transform:scale(1);} 50%{opacity:1;transform:scale(1.3);} }
 
  .hero-slide {
@@ -297,6 +375,7 @@ try {
  padding: 14px 22px; border-radius: 50px;
  border: 1.5px solid rgba(255,255,255,.35); background: rgba(255,255,255,.07);
  color: #fff; font-weight: 700; font-size: 13px; cursor: pointer;
+ -webkit-backdrop-filter: blur(6px);
  backdrop-filter: blur(6px); transition: background .2s, border-color .2s;
  }
  .hero-btn-secondary:hover, .hero-btn-secondary:active { background:rgba(245,158,11,.15); border-color:var(--primary); }
@@ -321,7 +400,7 @@ try {
  .scroll-indicator svg { width: 30px; height: 30px; }
 
  .top-header { position: fixed; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); z-index: 100; transition: background 0.3s; }
- .top-header.scrolled { background: rgba(18, 18, 18, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
+ .top-header.scrolled { background: rgba(18, 18, 18, 0.95); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
  .brand-container { display: flex; align-items: center; gap: 12px; }
  .brand-logo { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); }
  .brand-name { font-weight: 800; font-size: 18px; color: var(--white); }
@@ -750,7 +829,7 @@ try {
  transform: scale(1.05);
 }
 
- .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(30, 30, 30, 0.95); backdrop-filter: blur(10px); border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; z-index: 500; }
+ .bottom-nav { position: fixed; bottom: 0; bottom: env(safe-area-inset-bottom, 0); left: 0; right: 0; background: rgba(30, 30, 30, 0.95); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; z-index: 500; }
  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: var(--text-light); text-decoration: none; cursor: pointer; font-size: 10px; font-weight: 600; }
  .nav-item svg { width: 22px; height: 22px; }
  .nav-item.active { color: var(--primary); }
@@ -879,7 +958,7 @@ try {
  position: relative;
  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
 }
- .m-close { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.5); color: white; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; z-index: 10; backdrop-filter: blur(4px); }
+ .m-close { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.5); color: white; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; z-index: 10; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
  
  .m-hero { height: 240px; background-size: cover; background-position: center; position: relative; }
  @media (max-height: 700px) { .m-hero { height: 180px; } }
@@ -1439,7 +1518,7 @@ try {
  * 2. Reduce animaciones en modo reducido
  * 3. Evita will-change innecesario
  ================================================================================ */
-@supports not (backdrop-filter: blur(1px)) {
+@supports not (backdrop-filter: blur(1px)) and (not (-webkit-backdrop-filter: blur(1px))) {
  .bottom-nav, .top-header.scrolled {
  background: rgba(18,18,18,0.98) !important;
  backdrop-filter: none !important;

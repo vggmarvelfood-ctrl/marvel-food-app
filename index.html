@@ -8164,7 +8164,11 @@ function gfShowResult(msg, type) {
 
 async function gfCargarStats() {
     const statsEl = document.getElementById('gf-stats');
-    if (!statsEl || !window.db) return;
+    if (!statsEl) return;
+    if (!window.db) {
+        statsEl.textContent = 'Firebase no disponible';
+        return;
+    }
     try {
         const snap = await window.db.collection('delivery_zones')
             .where('active', '==', true).get();
@@ -8339,6 +8343,17 @@ function _gfLoadGoogleMaps() {
  * ocurra exactamente una vez por sesión.
  */
 window.gfInitLazy = function() {
+    // ── Guard: API key sin configurar ────────────────────────────────────────
+    if (!GF_GMAPS_KEY || GF_GMAPS_KEY === 'YOUR_GMAPS_KEY') {
+        _gfShowLoader('');
+        gfFeedback(
+            '⚙️ Configurá tu clave de Google Maps: reemplazá YOUR_GMAPS_KEY en el código ' +
+            '(buscá const GF_GMAPS_KEY) con tu clave real de la Google Cloud Console.',
+            'warn'
+        );
+        _gfMapInitDone = true; // evitar reintentos
+        return;
+    }
     if (_gfMapInitDone) {
         // Ya inicializado — solo refrescar lista de zonas
         _gfRefreshZonesList();
@@ -8346,11 +8361,26 @@ window.gfInitLazy = function() {
     }
     _gfShowLoader('Cargando Google Maps…');
 
+    // Timeout de seguridad: si Maps no responde en 10s mostrar error
+    const _gfMapsTimeout = setTimeout(() => {
+        if (!_gfMapReady) {
+            _gfHideLoader();
+            gfFeedback('❌ Google Maps no respondió. Verificá tu API key y que Maps JavaScript API esté habilitada en Google Cloud Console.', 'error');
+        }
+    }, 10000);
+
     if (_gfMapReady) {
+        clearTimeout(_gfMapsTimeout);
         _gfDoInit();
     } else {
         _gfLoadGoogleMaps();
         // _gfGoogleMapsReady() llamará _gfDoInit() cuando la API esté lista
+        // El timeout anterior cancela el loader si Maps nunca responde
+        window._gfGoogleMapsReady_orig = window._gfGoogleMapsReady;
+        window._gfGoogleMapsReady = function() {
+            clearTimeout(_gfMapsTimeout);
+            window._gfGoogleMapsReady_orig && window._gfGoogleMapsReady_orig();
+        };
     }
 };
 
@@ -8410,8 +8440,8 @@ async function _gfDoInit() {
 async function _gfRenderZonesOnMap() {
     if (!_gfMapInstance || !window.db) return;
 
-    // Limpiar polígonos anteriores
-    _gfPolygons.forEach(p => p.poly.setMap(null));
+    // Limpiar polígonos anteriores con guard
+    _gfPolygons.forEach(p => { try { if (p && p.poly) p.poly.setMap(null); } catch(_) {} });
     _gfPolygons = [];
 
     _gfShowLoader('Cargando zonas desde Firebase…');
@@ -8432,10 +8462,11 @@ async function _gfRenderZonesOnMap() {
         const d = doc.data();
         let geom;
         try { geom = typeof d.geometry === 'string' ? JSON.parse(d.geometry) : d.geometry; } catch(e) { return; }
-        if (!geom || geom.type !== 'Polygon') return;
+        if (!geom || !['Polygon','MultiPolygon'].includes(geom.type)) return;
 
         const color  = GF_COLORS[d.sucursal] || '#888';
-        const coords = geom.coordinates[0].map(([lng, lat]) => ({ lat, lng }));
+        const rawRing = geom.type === 'MultiPolygon' ? geom.coordinates[0][0] : geom.coordinates[0];
+        const coords = rawRing.map(([lng, lat]) => ({ lat, lng }));
         if (!coords.length) return;
 
         const poly = new google.maps.Polygon({
@@ -8502,7 +8533,7 @@ async function _gfPersistEdit(polygon, docId) {
     coords.push(coords[0]); // cerrar anillo
     try {
         await window.db.collection('delivery_zones').doc(docId).update({
-            geometry:  { type: 'Polygon', coordinates: [coords] },
+            geometry:  JSON.stringify({ type: 'Polygon', coordinates: [coords] }),
             updatedAt: new Date().toISOString(),
         });
         window.gfInvalidateCache && window.gfInvalidateCache();
@@ -8549,7 +8580,7 @@ async function _gfOnPolygonComplete(polygon) {
             name, description: desc, sucursal,
             requiresSpecialAccess: _gfIsSpecial(desc) || _gfIsSpecial(name),
             active: true,
-            geometry: { type: 'Polygon', coordinates: [coords] },
+            geometry: JSON.stringify({ type: 'Polygon', coordinates: [coords] }),
             source: 'admin_draw',
             updatedAt: new Date().toISOString(),
         });

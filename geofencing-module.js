@@ -612,7 +612,7 @@ const GeoFencing = (() => {
       return;
     }
     // Crear toast temporal
-    const el = document.createElement('div');
+    const el = document.createElement('div'); 
     Object.assign(el.style, {
       position:'fixed', bottom:'80px', left:'50%', transform:'translateX(-50%)',
       background: type === 'error' ? '#ef4444' : type === 'success' ? '#10b981' : '#f59e0b',

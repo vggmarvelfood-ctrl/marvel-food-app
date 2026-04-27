@@ -2875,10 +2875,10 @@ function _buildUpsellSection() {
  if (!picks.length) return '';
 
  const frases = [
- '🔥 Otros también pidieron',
- '⭐ Los más elegidos para combinar',
- '🍔 Completá tu pedido con',
- '👀 ¿Te faltó algo?',
+ ' Otros también pidieron',
+ ' Los más elegidos para combinar',
+ ' Completá tu pedido con',
+ ' ¿Te faltó algo?',
  ];
  const frase = frases[Math.floor(Math.random() * frases.length)];
 
@@ -2886,7 +2886,7 @@ function _buildUpsellSection() {
  const precio = item.p;
  const imgHtml = item.img
  ? `<img src="${item.img}" alt="${item.n}" loading="lazy" style="width:100%;height:72px;object-fit:cover;display:block;">`
- : `<div style="width:100%;height:72px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:28px;">🍔</div>`;
+ : `<div style="width:100%;height:72px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:28px;"></div>`;
  return `<div class="upsell-card">
  ${imgHtml}
  <div class="upsell-card-body">
@@ -2915,7 +2915,10 @@ window.upsellAdd = function(productId) {
  }
  }
  if (!found) return;
- // Usar openModal si existe, sino agregar directamente
+ // Cerrar el carrito antes de abrir el modal para que quede visible
+ const cv = document.getElementById('cart-view');
+ if (cv && cv.classList.contains('open')) cv.classList.remove('open');
+ // Usar openModal si existe, sino agregar directamente al carrito
  if (typeof openModal === 'function') {
  openModal(found);
  } else {
@@ -3279,7 +3282,7 @@ window.obtenerUbicacionCheckout = async function() {
  navigator.geolocation.getCurrentPosition(async (pos) => {
  _checkoutLat = pos.coords.latitude;
  _checkoutLng = pos.coords.longitude;
- if (statusEl) statusEl.textContent = '✓ Ubicación GPS obtenida';
+ if (statusEl) statusEl.textContent = 'OK Ubicación GPS obtenida';
  // También llamar a la función original para compatibilidad (guarda coordenadasGPS)
  if (typeof obtenerUbicacion === 'function') obtenerUbicacion();
  // Detectar sucursal
@@ -3393,7 +3396,7 @@ function _mostrarZonaBox(sucursal, detalle, precio) {
  box.style.background = 'rgba(239,68,68,0.12)';
  box.style.border = '1px solid rgba(239,68,68,0.4)';
  box.style.color = '#ef4444';
- box.innerHTML = '⚠️ Lo sentimos, no llegamos a tu zona. Podés seleccionar <b>TakeAway</b> o cambiar la dirección.';
+ box.innerHTML = '(!) Lo sentimos, no llegamos a tu zona. Podes seleccionar <b>TakeAway</b> o cambiar la direccion.' + _buildZonaOverride('');
  } else {
  box.style.display = 'none';
  }
@@ -3404,9 +3407,38 @@ function _mostrarZonaBox(sucursal, detalle, precio) {
  box.style.background = 'rgba(16,185,129,0.1)';
  box.style.border = '1px solid rgba(16,185,129,0.35)';
  box.style.color = '#10b981';
- const precioHtml = precio ? `<span class="zona-precio-badge">🛵 Envío: $${precio.toLocaleString('es-AR')}</span>` : '';
- box.innerHTML = `<div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">✓ Sucursal: <b>${NOMBRES[sucursal] || sucursal}</b>${detalle ? ' <span style="opacity:.7;font-weight:500;font-size:11px;">' + detalle + '</span>' : ''}${precioHtml}</div>`;
+ const precioHtml = precio ? `<span class="zona-precio-badge">Envio: $${precio.toLocaleString('es-AR')}</span>` : '';
+ box.innerHTML = `<div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:6px;">Sucursal detectada: <b>${NOMBRES[sucursal] || sucursal}</b>${detalle ? ' <span style="opacity:.7;font-weight:500;font-size:11px;">' + detalle + '</span>' : ''}${precioHtml}</div>` + _buildZonaOverride(sucursal);
 }
+
+// Construye el selector de corrección manual de sucursal
+function _buildZonaOverride(sucursalActual) {
+ return `<div id="zona-override-row" style="margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+  <span style="font-size:11px;color:#9ca3af;font-weight:700;white-space:nowrap;">Corregir sucursal:</span>
+  <select id="zona-override-sel" onchange="aplicarZonaOverride(this.value)"
+    style="flex:1;min-width:150px;padding:6px 10px;background:#1a1a1a;border:1px solid #3a3a3a;border-radius:8px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;outline:none;">
+    <option value="">-- Sin cambios --</option>
+    <option value="Centro" ${sucursalActual==='Centro'?'selected':''}>Rosario Centro (Pellegrini 1149)</option>
+    <option value="Norte" ${sucursalActual==='Norte'?'selected':''}>Rosario Norte (Rondeau 2430)</option>
+    <option value="Sur" ${sucursalActual==='Sur'?'selected':''}>Rosario Sur (San Martin 1808)</option>
+    <option value="Funes" ${sucursalActual==='Funes'?'selected':''}>Funes (RN9 972)</option>
+  </select>
+ </div>`;
+}
+
+// Aplicar corrección manual de zona
+window.aplicarZonaOverride = function(sucursal) {
+ if (!sucursal) return;
+ _checkoutSucursalDetectada = sucursal;
+ // Sincronizar también el selector principal de sucursal del carrito
+ const sel = document.getElementById('main-sucursal');
+ if (sel) { sel.value = sucursal; if (typeof cambiarSucursalPrincipal === 'function') cambiarSucursalPrincipal(); }
+ // Actualizar box con la nueva sucursal
+ _mostrarZonaBox(sucursal, '(ajustado manualmente)', null);
+ if (typeof validarDatosEnvio === 'function') validarDatosEnvio();
+ const t = document.getElementById('toast');
+ if (t) { t.innerText = 'Sucursal cambiada a ' + sucursal; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500); }
+};
 
 // Validar datos y habilitar/deshabilitar botón final
 window.validarDatosEnvio = function() {
@@ -4263,7 +4295,7 @@ function renderPedidoEnCurso() {
  const esCancelado = estado === 'Cancelado';
 
  container.innerHTML = `
- <div class="pedido-en-curso-card"> <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;"> <div style="font-size:13px;font-weight:800;color:var(--white);">PEDIDO EN CURSO</div> <span class="pec-estado ${estado}">${estado === 'Pendiente' ? '⏳ ' : estado === 'Aceptado' ? ' ' : estado === 'Listo' ? ' ' : estado === 'Cancelado' ? ' ' : ' '}${estado}</span> </div> <div style="font-size:12px;color:var(--text-light);margin-bottom:4px;">Hora: ${horaStr} · ${p.sucursal || ''} · ${p.tipo || ''}</div> <div style="font-size:13px;color:var(--white);margin-bottom:12px;line-height:1.5;">${items}</div> <div style="font-size:16px;font-weight:800;color:var(--primary);margin-bottom:12px;">Total: $${(p.total||0).toLocaleString('es-AR')}</div> <div style="display:flex;gap:8px;"> <button onclick="abrirTrackingModal('${last.id}')"
+ <div class="pedido-en-curso-card"> <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;"> <div style="font-size:13px;font-weight:800;color:var(--white);">PEDIDO EN CURSO</div> <span class="pec-estado ${estado}">${estado === 'Pendiente' ? ' ' : estado === 'Aceptado' ? ' ' : estado === 'Listo' ? ' ' : estado === 'Cancelado' ? ' ' : ' '}${estado}</span> </div> <div style="font-size:12px;color:var(--text-light);margin-bottom:4px;">Hora: ${horaStr} · ${p.sucursal || ''} · ${p.tipo || ''}</div> <div style="font-size:13px;color:var(--white);margin-bottom:12px;line-height:1.5;">${items}</div> <div style="font-size:16px;font-weight:800;color:var(--primary);margin-bottom:12px;">Total: $${(p.total||0).toLocaleString('es-AR')}</div> <div style="display:flex;gap:8px;"> <button onclick="abrirTrackingModal('${last.id}')"
  style="flex:1;padding:11px;border-radius:10px;background:var(--primary);border:none;color:#000;font-weight:800;font-size:13px;cursor:pointer;"> Ver detalle
  </button> ${puedeCancelar ? `
  <button onclick="cancelarPedido('${last.id}')"
@@ -8079,7 +8111,7 @@ async function gfRunSync() {
  if (!_GF_ADMINS.includes(user)) { gfShowResult('Sin permisos de administración.', 'error'); return; }
 
  const btn = document.getElementById('gf-btn-sync');
- btn.textContent = '⏳ Importando…';
+ btn.textContent = ' Importando…';
  btn.disabled = true;
 
  try {

@@ -1661,16 +1661,47 @@ if (window.requestIdleCallback) {
 <div id="zona-mapa-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.92);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);"> <div style="position:relative;width:100%;height:100%;display:flex;flex-direction:column;"> <!-- Header del modal --> <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;"> <div> <div id="zona-modal-titulo" style="font-weight:800;font-size:16px;color:var(--primary);text-transform:uppercase;"></div> <div id="zona-modal-subtitulo" style="font-size:12px;color:var(--text-light);margin-top:2px;"></div> </div> <button onclick="cerrarZonaMapa()" style="background:rgba(255,255,255,0.1);border:none;color:var(--white);width:36px;height:36px;border-radius:50%;font-size:22px;font-weight:300;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">×</button> </div> <!-- Precios --> <div id="zona-modal-precios" style="padding:14px 20px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;"></div> <!-- Imagen del mapa — ocupa todo el espacio restante --> <div style="flex:1;overflow:hidden;position:relative;background:#000;"> <img id="zona-modal-img" src="" alt="Mapa de cobertura" loading="lazy" decoding="async"
  style="width:100%;height:100%;object-fit:contain;display:block;" /> <div id="zona-modal-no-img" style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--text-light);"> <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> <span style="font-size:13px;">Mapa no disponible</span> </div> </div> </div>
 </div>
-<div id="tab-perfil" class="tab-page hidden" style="padding: 20px;"><!-- Título de sección --><div style="margin-bottom:20px;"><h2 style="font-weight:800; font-size:22px; color:var(--white); margin:0 0 4px;">CUPONES</h2><p style="color:var(--text-light); font-size:13px; margin:0;">Beneficios disponibles para vos hoy.</p></div><!-- Cupón del día (se rellena por JS) --><div id="cupon-del-dia-box" style="margin-bottom:20px;"></div><!-- Lista de todos los cupones de la semana --><div id="cupones-semana-box"></div></div><div id="tab-ayuda" class="tab-page hidden" style="padding: 20px;"><h2 style="color: var(--primary); font-weight: 800; margin-bottom: 20px; text-transform: uppercase; font-size: 20px;">¿Cómo realizar tu pedido?</h2><div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px;"><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">1. Seleccioná tu Sucursal</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">Elegí la sucursal más cercana para ver el menú y rango de envío correcto.</p></div><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">2. Consultá el Rango de Envío</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">En la pestaña <strong>"Locales"</strong> podés ver los mapas de cobertura y costos.</p></div><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">3. Armá tu Carrito</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">Agregá tus productos y revisá todo en el botón flotante del carrito.</p></div><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">4. Envia tu pedido</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">Envia tu pedido y recibiras un mensaje de confirmación una vez enviado con los datos y horarios.</p></div><h2 style="color: var(--primary); font-weight: 800; margin-top: 15px; margin-bottom: 15px; text-transform: uppercase; font-size: 20px;">¿SABIAS ESTE DATO?</h2><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">¡Podés venir a comer y disfrutar de nuestros espacios!</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">Contamos con 3 sucursales abiertas al público:</p><p style="color: var(--white); font-size: 14px; margin-top: 5px; font-weight: 600;">Rosario, Zona Centro: Pellegrini 1149<br>Funes: RN9 972<br>Cañada de gomez: LAVALLE 907</p></div></div><h3 style="color: var(--white); font-size: 16px; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">Nuestros Medios de Pagos Actuales</h3><div style="background: var(--surface); border-radius: 16px; overflow: hidden; border: 1px solid var(--border);"><table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;"><thead style="background: var(--primary);"><tr><th style="padding: 10px; color: black;">Método</th><th style="padding: 10px; color: black;">Sucursal</th><th style="padding: 10px; color: black;">Envío</th></tr></thead><tbody style="color: var(--text-light);"><tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px; color: var(--white);">Efectivo</td><td style="padding: 10px;color:#10b981;font-weight:700;">Si</td><td style="padding: 10px;color:#10b981;font-weight:700;">Si</td></tr><tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px; color: var(--white);">Débito/Crédito</td><td style="padding: 10px;color:#10b981;font-weight:700;">Si</td><td style="padding: 10px;">—</td></tr><tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px; color: var(--white);">QR Mercado Pago</td><td style="padding: 10px;color:#10b981;font-weight:700;">Si</td><td style="padding: 10px;">—</td></tr><tr><td style="padding: 10px; color: var(--white);">Link Mercado Pago</td><td style="padding: 10px;">—</td><td style="padding: 10px;color:#10b981;font-weight:700;">Si</td></tr></tbody></table></div></div><!-- TAB OPINIONES --><div id="tab-opiniones" class="tab-page hidden" style="padding:20px;padding-bottom:100px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;"><div><h2 style="font-weight:800;font-size:22px;color:var(--white);margin:0 0 4px;">OPINIONES</h2><p style="color:var(--text-light);font-size:13px;margin:0;">Lo que dicen nuestros clientes</p></div></div><!-- Resumen estrellas --><div id="opiniones-resumen" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:20px;display:flex;gap:20px;align-items:center;"><div style="text-align:center;flex-shrink:0;"><div id="op-prom" style="font-size:44px;font-weight:800;color:var(--primary);line-height:1;">—</div><div id="op-stars-avg" style="font-size:20px;margin:4px 0;color:#f59e0b;letter-spacing:2px;"></div><div id="op-count" style="font-size:11px;color:var(--text-light);font-weight:700;">0 reseñas</div></div><div id="op-bars" style="flex:1;display:flex;flex-direction:column;gap:5px;"></div></div><!-- Lista de reseñas --><div id="opiniones-lista"></div></div><!-- MODAL DEJAR OPINIÓN --><div id="opinion-modal" style="
- display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
- z-index:6000;align-items:flex-end;justify-content:center;
-" onclick="if(event.target===this)cerrarModalOpinion()"><div style="background:var(--surface);width:100%;max-width:500px;border-radius:24px 24px 0 0;padding:28px 24px 40px;animation:modalSlide .3s ease-out;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;"><h3 style="font-weight:800;font-size:18px;color:var(--white);margin:0;">Tu Opinión</h3><button onclick="cerrarModalOpinion()" style="background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:20px;font-weight:300;">×</button></div><p style="color:var(--text-light);font-size:13px;margin-bottom:18px;">¿Qué te pareció tu experiencia con Marvel Food?</p><!-- Estrellas --><div style="display:flex;justify-content:center;gap:10px;margin-bottom:20px;"><button class="op-star" onclick="opSetStar(1)" data-v="1" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;"></button><button class="op-star" onclick="opSetStar(2)" data-v="2" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;"></button><button class="op-star" onclick="opSetStar(3)" data-v="3" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;"></button><button class="op-star" onclick="opSetStar(4)" data-v="4" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;"></button><button class="op-star" onclick="opSetStar(5)" data-v="5" style="font-size:36px;background:none;border:none;cursor:pointer;transition:transform .15s;filter:grayscale(1);opacity:.5;"></button></div><div id="op-label" style="text-align:center;font-size:14px;font-weight:700;color:var(--primary);margin-bottom:16px;min-height:20px;"></div><!-- Nombre y Apellido (obligatorio) --><input id="op-nombre" type="text" placeholder="Nombre y apellido *" maxlength="60"
- style="width:100%;padding:13px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:#fff;font-size:14px;margin-bottom:10px;outline:none;box-sizing:border-box;" oninput="opLimpiarError(this)"><!-- Teléfono (obligatorio) --><input id="op-tel" type="tel" placeholder="Teléfono (ej: 3412345678) *" maxlength="20"
- style="width:100%;padding:13px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:#fff;font-size:14px;margin-bottom:10px;outline:none;box-sizing:border-box;" oninput="opLimpiarError(this)"><div id="op-error" style="display:none;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);color:#ef4444;border-radius:8px;padding:9px 13px;font-size:12px;font-weight:700;margin-bottom:10px;"></div><!-- Comentario --><textarea id="op-comentario" placeholder="Contanos tu experiencia (opcional)..." rows="3"
- style="width:100%;padding:13px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:#fff;font-size:14px;resize:none;outline:none;margin-bottom:16px;box-sizing:border-box;"></textarea><button id="op-btn-enviar" onclick="enviarOpinion()" style="
- width:100%;padding:16px;border-radius:12px;border:none;
- background:var(--primary);color:#000;font-weight:800;font-size:15px;cursor:pointer;
- ">Enviar Opinión</button></div></div><!-- TAB PEDIDOS --><div id="tab-pedidos" class="tab-page hidden" style="padding: 20px; padding-bottom: 100px;"><div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;"><div><h2 style="font-weight:800; font-size:22px; color:var(--white); margin:0 0 4px;">MIS PEDIDOS</h2><p style="color:var(--text-light); font-size:13px; margin:0;">Historial de tus últimas órdenes</p></div><button onclick="limpiarHistorialPedidos()" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#ef4444;padding:8px 12px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;"> Limpiar
+<div id="tab-perfil" class="tab-page hidden" style="padding: 20px;"><!-- Título de sección --><div style="margin-bottom:20px;"><h2 style="font-weight:800; font-size:22px; color:var(--white); margin:0 0 4px;">CUPONES</h2><p style="color:var(--text-light); font-size:13px; margin:0;">Beneficios disponibles para vos hoy.</p></div><!-- Cupón del día (se rellena por JS) --><div id="cupon-del-dia-box" style="margin-bottom:20px;"></div><!-- Lista de todos los cupones de la semana --><div id="cupones-semana-box"></div></div><div id="tab-ayuda" class="tab-page hidden" style="padding: 20px;"><h2 style="color: var(--primary); font-weight: 800; margin-bottom: 20px; text-transform: uppercase; font-size: 20px;">¿Cómo realizar tu pedido?</h2><div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px;"><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">1. Seleccioná tu Sucursal</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">Elegí la sucursal más cercana para ver el menú y rango de envío correcto.</p></div><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">2. Consultá el Rango de Envío</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">En la pestaña <strong>"Locales"</strong> podés ver los mapas de cobertura y costos.</p></div><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">3. Armá tu Carrito</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">Agregá tus productos y revisá todo en el botón flotante del carrito.</p></div><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">4. Envia tu pedido</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">Envia tu pedido y recibiras un mensaje de confirmación una vez enviado con los datos y horarios.</p></div><h2 style="color: var(--primary); font-weight: 800; margin-top: 15px; margin-bottom: 15px; text-transform: uppercase; font-size: 20px;">¿SABIAS ESTE DATO?</h2><div style="background: var(--surface); padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary);"><strong style="display: block; color: var(--white); margin-bottom: 5px;">¡Podés venir a comer y disfrutar de nuestros espacios!</strong><p style="color: var(--text-light); font-size: 14px; margin: 0;">Contamos con 3 sucursales abiertas al público:</p><p style="color: var(--white); font-size: 14px; margin-top: 5px; font-weight: 600;">Rosario, Zona Centro: Pellegrini 1149<br>Funes: RN9 972<br>Cañada de gomez: LAVALLE 907</p></div></div><h3 style="color: var(--white); font-size: 16px; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">Nuestros Medios de Pagos Actuales</h3><div style="background: var(--surface); border-radius: 16px; overflow: hidden; border: 1px solid var(--border);"><table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;"><thead style="background: var(--primary);"><tr><th style="padding: 10px; color: black;">Método</th><th style="padding: 10px; color: black;">Sucursal</th><th style="padding: 10px; color: black;">Envío</th></tr></thead><tbody style="color: var(--text-light);"><tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px; color: var(--white);">Efectivo</td><td style="padding: 10px;color:#10b981;font-weight:700;">Si</td><td style="padding: 10px;color:#10b981;font-weight:700;">Si</td></tr><tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px; color: var(--white);">Débito/Crédito</td><td style="padding: 10px;color:#10b981;font-weight:700;">Si</td><td style="padding: 10px;">—</td></tr><tr style="border-bottom: 1px solid var(--border);"><td style="padding: 10px; color: var(--white);">QR Mercado Pago</td><td style="padding: 10px;color:#10b981;font-weight:700;">Si</td><td style="padding: 10px;">—</td></tr><tr><td style="padding: 10px; color: var(--white);">Link Mercado Pago</td><td style="padding: 10px;">—</td><td style="padding: 10px;color:#10b981;font-weight:700;">Si</td></tr></tbody></table></div></div><!-- TAB OPINIONES --><div id="tab-opiniones" class="tab-page hidden" style="padding:20px;padding-bottom:100px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;"><div><h2 style="font-weight:800;font-size:22px;color:var(--white);margin:0 0 4px;">OPINIONES</h2><p style="color:var(--text-light);font-size:13px;margin:0;">Lo que dicen nuestros clientes</p></div></div><!-- Resumen estrellas --><div id="opiniones-resumen" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:20px;display:flex;gap:20px;align-items:center;"><div style="text-align:center;flex-shrink:0;"><div id="op-prom" style="font-size:44px;font-weight:800;color:var(--primary);line-height:1;">—</div><div id="op-stars-avg" style="font-size:20px;margin:4px 0;color:#f59e0b;letter-spacing:2px;"></div><div id="op-count" style="font-size:11px;color:var(--text-light);font-weight:700;">0 reseñas</div></div><div id="op-bars" style="flex:1;display:flex;flex-direction:column;gap:5px;"></div></div><!-- Lista de reseñas --><div id="opiniones-lista"></div></div><!-- MODAL DEJAR OPINIÓN -->
+<style>
+#opinion-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:6000; align-items:flex-end; justify-content:center; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); }
+#opinion-modal .op-sheet { background:var(--surface); width:100%; max-width:500px; border-radius:24px 24px 0 0; padding:28px 24px 44px; animation:modalSlide .3s ease-out; }
+.op-stars-wrap { display:flex; justify-content:center; gap:8px; margin:18px 0 8px; }
+.op-star-btn { font-size:42px; line-height:1; background:none; border:none; cursor:pointer; padding:4px; color:#3a3a3a; transition:transform .15s, color .15s; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none; }
+.op-star-btn.sel { color:#f59e0b; transform:scale(1.15); }
+.op-star-btn:not(.sel):hover { color:#7a5800; }
+</style>
+<div id="opinion-modal" onclick="if(event.target===this)cerrarModalOpinion()">
+<div class="op-sheet">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <h3 style="font-weight:800;font-size:18px;color:var(--white);margin:0;">⭐ Tu Opinión</h3>
+    <button onclick="cerrarModalOpinion()" style="background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:20px;font-weight:300;">×</button>
+  </div>
+  <p style="color:var(--text-light);font-size:13px;margin-bottom:4px;">¿Qué te pareció tu experiencia con Marvel Food?</p>
+  <!-- Estrellas -->
+  <div class="op-stars-wrap">
+    <button class="op-star-btn" data-v="1" onclick="opSetStar(1)">★</button>
+    <button class="op-star-btn" data-v="2" onclick="opSetStar(2)">★</button>
+    <button class="op-star-btn" data-v="3" onclick="opSetStar(3)">★</button>
+    <button class="op-star-btn" data-v="4" onclick="opSetStar(4)">★</button>
+    <button class="op-star-btn" data-v="5" onclick="opSetStar(5)">★</button>
+  </div>
+  <div id="op-label" style="text-align:center;font-size:14px;font-weight:700;color:var(--primary);margin-bottom:16px;min-height:20px;"></div>
+  <!-- Nombre (pre-cargado, editable) -->
+  <input id="op-nombre" type="text" placeholder="Nombre y apellido *" maxlength="60"
+    style="width:100%;padding:13px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:#fff;font-size:14px;margin-bottom:10px;outline:none;box-sizing:border-box;" oninput="opLimpiarError(this)">
+  <!-- Teléfono (pre-cargado, editable) -->
+  <input id="op-tel" type="tel" placeholder="Teléfono (ej: 3412345678) *" maxlength="20"
+    style="width:100%;padding:13px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:#fff;font-size:14px;margin-bottom:10px;outline:none;box-sizing:border-box;" oninput="opLimpiarError(this)">
+  <div id="op-error" style="display:none;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);color:#ef4444;border-radius:8px;padding:9px 13px;font-size:12px;font-weight:700;margin-bottom:10px;"></div>
+  <!-- Comentario -->
+  <textarea id="op-comentario" placeholder="Contanos tu experiencia (opcional)..." rows="3"
+    style="width:100%;padding:13px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:#fff;font-size:14px;resize:none;outline:none;margin-bottom:16px;box-sizing:border-box;"></textarea>
+  <button id="op-btn-enviar" onclick="enviarOpinion()"
+    style="width:100%;padding:16px;border-radius:12px;border:none;background:var(--primary);color:#000;font-weight:800;font-size:15px;cursor:pointer;">
+    Enviar Opinión
+  </button>
+</div>
+</div><!-- TAB PEDIDOS --><div id="tab-pedidos" class="tab-page hidden" style="padding: 20px; padding-bottom: 100px;"><div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;"><div><h2 style="font-weight:800; font-size:22px; color:var(--white); margin:0 0 4px;">MIS PEDIDOS</h2><p style="color:var(--text-light); font-size:13px; margin:0;">Historial de tus últimas órdenes</p></div><button onclick="limpiarHistorialPedidos()" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#ef4444;padding:8px 12px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;"> Limpiar
  </button></div><div id="pedido-en-curso-container"></div><div id="historial-pedidos-lista"></div></div><div class="cart-float" onclick="toggleCart()"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg><span id="cart-badge" class="badge-qty">0</span></div><nav class="bottom-nav"> <div class="nav-item active" onclick="switchTab('tab-inicio', this)"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg> Inicio
  </div> <div class="nav-item" onclick="switchTab('tab-promos', this)" style="position:relative;"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg> Promos
  <span id="badge-promos" style="display:none;position:absolute;top:2px;right:8px;width:8px;height:8px;border-radius:50%;background:#ef4444;border:1.5px solid var(--bg);"></span> </div> <div class="nav-item" id="nav-pedidos" onclick="switchTab('tab-pedidos', this)"> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg> Pedidos
@@ -6887,7 +6918,7 @@ window.opLimpiarError = (el) => {
 };
 const OP_LABELS = { 1:'Muy malo', 2:'Malo', 3:'Regular', 4:'Bueno', 5:'¡Excelente!' };
 
-window.abrirModalOpinion = (pedidoIdOrigen) => {
+window.abrirModalOpinion = async (pedidoIdOrigen) => {
  _opPuntuacion = 0;
  window._opPedidoIdOrigen = pedidoIdOrigen || null;
  opSetStar(0);
@@ -6897,26 +6928,43 @@ window.abrirModalOpinion = (pedidoIdOrigen) => {
  const errDiv = document.getElementById('op-error');
  if (txt) txt.value = '';
  if (errDiv) { errDiv.style.display = 'none'; errDiv.textContent = ''; }
+ if (inp) { inp.value = ''; inp.style.borderColor = ''; }
  if (inpTel) { inpTel.value = ''; inpTel.style.borderColor = ''; }
 
- // Pre-cargar nombre y teléfono desde el último pedido realizado
- if (inp) {
- inp.value = '';
- inp.style.borderColor = '';
+ // Pre-cargar nombre y teléfono: primero desde Firebase si hay pedidoId, sino desde localStorage
  try {
+ let nombre = '', tel = '';
+ // Intentar cargar desde Firebase el pedido real
+ if (pedidoIdOrigen && window.db) {
+ try {
+ const snap = await window.db.collection('pedidos_v2').doc(pedidoIdOrigen).get();
+ if (snap.exists) {
+ const d = snap.data();
+ nombre = d.cliente || d.nombre || '';
+ tel = d.tel || d.telefono || '';
+ }
+ } catch(e) { /* fallback a localStorage */ }
+ }
+ // Fallback: localStorage del último pedido
+ if (!nombre || !tel) {
  const last = JSON.parse(localStorage.getItem('mf_last_pedido') || 'null');
- if (last && last.cliente) {
- inp.value = last.cliente.charAt(0) + last.cliente.slice(1).toLowerCase();
- } else {
+ if (last) {
+ if (!nombre && last.cliente) nombre = last.cliente;
+ if (!tel && last.tel) tel = last.tel;
+ }
+ }
+ // Fallback: campos del formulario de pedido en pantalla
+ if (!nombre) {
  const cNombre = document.getElementById('c-nombre');
- if (cNombre && cNombre.value.trim()) inp.value = cNombre.value.trim();
+ if (cNombre && cNombre.value.trim()) nombre = cNombre.value.trim();
  }
- if (inpTel) {
- const telSrc = (last && last.tel) ? last.tel : (document.getElementById('c-tel')?.value || '');
- if (telSrc) inpTel.value = telSrc.trim();
+ if (!tel) {
+ const cTel = document.getElementById('c-tel');
+ if (cTel && cTel.value.trim()) tel = cTel.value.trim();
  }
+ if (inp && nombre) inp.value = nombre;
+ if (inpTel && tel) inpTel.value = tel;
  } catch(e) { /* sin datos previos */ }
- }
 
  // Mostrar tiempo restante en el botón si aún está en cooldown
  const _coolBtn = document.getElementById('op-btn-enviar');
@@ -6947,13 +6995,8 @@ window.cerrarModalOpinion = () => {
 
 window.opSetStar = (v) => {
  _opPuntuacion = v;
- document.querySelectorAll('.op-star').forEach((s, i) => {
- const lit = i < v;
- s.style.filter = lit ? 'none' : 'grayscale(1)';
- s.style.opacity = lit ? '1' : '0.45';
- s.style.transform = lit ? 'scale(1.2)' : 'scale(1)';
- s.style.color = lit ? '#f59e0b' : 'rgba(245,158,11,0.35)';
- s.classList.toggle('lit', lit);
+ document.querySelectorAll('.op-star-btn').forEach((s, i) => {
+ s.classList.toggle('sel', i < v);
  });
  const lbl = document.getElementById('op-label');
  if (lbl) lbl.textContent = v ? OP_LABELS[v] : '';

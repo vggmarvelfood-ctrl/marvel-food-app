@@ -278,7 +278,8 @@ if (!Object.hasOwn) {
  .hero-slider {
  width: 100vw; height: 100vh; display: flex; overflow-x: auto;
  scroll-snap-type: x mandatory; scrollbar-width: none; position: relative;
- touch-action: pan-x; -webkit-overflow-scrolling: touch;
+ touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch;
+ overscroll-behavior-x: contain;
  }
  .hero-slider::-webkit-scrollbar { display: none; }
  /* HERO ANIMACIONES */
@@ -2233,6 +2234,29 @@ function inicializarHeroSlider() {
  // Pausa al tocar para que el usuario pueda hacer click en "Pedir Ahora" sin que se mueva
  heroSlider.addEventListener('touchstart', () => clearInterval(autoSlideInterval), { passive: true });
  heroSlider.addEventListener('touchend', () => setTimeout(startAutoSlide, 2000), { passive: true });
+
+ // Scroll vertical libre en el slider: si el gesto es más vertical que horizontal, dejar pasar al documento
+ let _hsTouchStartX = 0, _hsTouchStartY = 0;
+ heroSlider.addEventListener('touchstart', function(e) {
+ if (e.touches.length === 1) {
+ _hsTouchStartX = e.touches[0].clientX;
+ _hsTouchStartY = e.touches[0].clientY;
+ }
+ }, { passive: true });
+ heroSlider.addEventListener('touchmove', function(e) {
+ if (e.touches.length !== 1) return;
+ const dx = Math.abs(e.touches[0].clientX - _hsTouchStartX);
+ const dy = Math.abs(e.touches[0].clientY - _hsTouchStartY);
+ // Si el movimiento vertical supera al horizontal → permitir scroll de página
+ if (dy > dx) {
+ heroSlider.style.overflowX = 'hidden';
+ } else {
+ heroSlider.style.overflowX = 'auto';
+ }
+ }, { passive: true });
+ heroSlider.addEventListener('touchend', function() {
+ heroSlider.style.overflowX = 'auto';
+ }, { passive: true });
 }
 
 // Helper: esperar a que Firebase esté disponible (usa evento o polling breve) 
@@ -3402,7 +3426,7 @@ function _mostrarZonaBox(sucursal, detalle, precio) {
 // Construye el selector de corrección manual de sucursal
 function _buildZonaOverride(sucursalActual) {
  return `<div id="zona-override-row" style="margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-  <span style="font-size:11px;color:#9ca3af;font-weight:700;white-space:nowrap;">sucursal:</span>
+  <span style="font-size:11px;color:#9ca3af;font-weight:700;white-space:nowrap;">Corregir sucursal:</span>
   <select id="zona-override-sel" onchange="aplicarZonaOverride(this.value)"
     style="flex:1;min-width:150px;padding:6px 10px;background:#1a1a1a;border:1px solid #3a3a3a;border-radius:8px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;outline:none;">
     <option value="">-- Sin cambios --</option>

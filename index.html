@@ -1236,52 +1236,9 @@ if (!Object.hasOwn) {
  #cart-restore-banner { display:none; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); border-radius:12px; padding:12px 16px; margin:0 20px 15px; }
  /* REORDEN */
  .reorder-btn { width:100%; padding:12px; border-radius:10px; border:1px solid var(--primary); background:rgba(245,158,11,0.1); color:var(--primary); font-weight:700; font-size:13px; cursor:pointer; margin-top:10px; display:flex; align-items:center; justify-content:center; gap:8px; }
- /* RESEÑA */
- #resena-modal { position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:7000; display:none; align-items:center; justify-content:center; padding:20px; }
- #resena-modal.open { display:flex; }
- .resena-sheet { background:var(--surface); border-radius:20px; padding:28px 24px; width:100%; max-width:420px; text-align:center; }
- .stars-row { display:flex; justify-content:center; gap:10px; margin:20px 0; }
- .star-btn { font-size:36px; cursor:pointer; color: rgba(245,158,11,0.35); transition:.15s; line-height:1; }
- .star-btn.lit { color: var(--primary); }
  /* MENU CARD agotado */
  .card-p.agotado { opacity:0.45; pointer-events:none; position:relative; }
  .agotado-badge { position:absolute; top:8px; left:8px; background:#ef4444; color:#fff; font-size:9px; font-weight:800; padding:3px 8px; border-radius:6px; text-transform:uppercase; z-index:2; }
-
- 
- /* SISTEMA DE ESTRELLAS */
- .stars-row {
- display: flex;
- gap: 12px;
- justify-content: center;
- margin: 24px 0;
- padding: 10px 0;
- }
- .star-btn {
- font-size: 40px;
- color: rgba(245,158,11,0.55);
- cursor: pointer;
- transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
- user-select: none;
- -webkit-user-select: none;
- position: relative;
- line-height: 1;
- display: inline-block;
- }
- .star-btn:hover {
- color: rgba(245,158,11,0.7);
- transform: scale(1.2);
- }
- .star-btn.active {
- color: var(--primary);
- opacity: 1 !important;
- transform: scale(1.1);
- animation: starPop 0.3s ease;
- }
- @keyframes starPop {
- 0% { transform: scale(1); }
- 50% { transform: scale(1.3); }
- 100% { transform: scale(1.1); }
- }
 
  /* ANIMACIONES DE TARJETAS */
  @keyframes cardFadeIn {
@@ -3414,7 +3371,7 @@ function _mostrarZonaBox(sucursal, detalle, precio) {
 // Construye el selector de corrección manual de sucursal
 function _buildZonaOverride(sucursalActual) {
  return `<div id="zona-override-row" style="margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-  <span style="font-size:11px;color:#9ca3af;font-weight:700;white-space:nowrap;">Sucursal:</span>
+  <span style="font-size:11px;color:#9ca3af;font-weight:700;white-space:nowrap;">Corregir sucursal:</span>
   <select id="zona-override-sel" onchange="aplicarZonaOverride(this.value)"
     style="flex:1;min-width:150px;padding:6px 10px;background:#1a1a1a;border:1px solid #3a3a3a;border-radius:8px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;outline:none;">
     <option value="">-- Sin cambios --</option>
@@ -4112,15 +4069,6 @@ function actualizarTrackingUI(p, pedidoId) {
  }, 2000);
  }
  }
- // También mostrar modal de reseña interna si no se hizo
- const yaReseno = localStorage.getItem('mf_resena_' + pedidoId);
- if (!yaReseno) {
- const fechaPedido = p.fecha ? (p.fecha.toDate ? p.fecha.toDate() : new Date(p.fecha)) : null;
- const minutosDesde = fechaPedido ? (Date.now() - fechaPedido.getTime()) / 60000 : 999;
- if (minutosDesde < 30) {
- setTimeout(() => mostrarModalResena(pedidoId, p), 2000);
- }
- }
  // Limpiar tracking después de 5 min
  setTimeout(() => {
  bar.innerHTML = '';
@@ -4252,8 +4200,10 @@ window.cancelarPedido = async (pedidoId) => {
  // Toast
  const t = document.getElementById('toast');
  if (t) { t.innerText = 'Pedido anulado'; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
- // Paso 2: invitar a dejar una reseña tras cancelar
- setTimeout(() => mostrarModalResena(pedidoId, null), 1500);
+ // Paso 2: invitar a dejar una opinión tras cancelar
+ if (!localStorage.getItem('mf_opinion_' + pedidoId) && typeof abrirModalOpinion === 'function') {
+ setTimeout(() => { abrirModalOpinion(pedidoId); localStorage.setItem('mf_opinion_' + pedidoId, '1'); }, 1500);
+ }
  } catch(e) {
  alert('No se pudo cancelar el pedido. Comunicate con el local directamente.');
  }
@@ -4273,12 +4223,11 @@ function renderPedidoEnCurso() {
  const p = snap.data();
  const estado = p.estado || 'Pendiente';
  if (estado === 'Entregado') {
- // Mostrar solo botón de reseña, ocultar el card completo
- const yaReseno = localStorage.getItem('mf_resena_' + last.id);
+ const yaReseno = localStorage.getItem('mf_opinion_' + last.id);
  if (!yaReseno) {
  container.innerHTML = `
- <div style="background:var(--surface);border:1px solid rgba(16,185,129,0.4);border-radius:16px;padding:20px;margin-bottom:16px;text-align:center;"> <div style="font-size:32px;margin-bottom:8px;color:#10b981;font-weight:800;">Pedido entregado</div> <p style="color:var(--text-light);font-size:13px;margin-bottom:16px;">Tu pedido fue entregado. Contanos como estuvo!</p> <button onclick="mostrarModalResena('${last.id}', null)"
- style="width:100%;padding:14px;border-radius:12px;border:none;background:var(--primary);color:#000;font-weight:800;font-size:15px;cursor:pointer;"> Dejar mi resena
+ <div style="background:var(--surface);border:1px solid rgba(16,185,129,0.4);border-radius:16px;padding:20px;margin-bottom:16px;text-align:center;"> <div style="font-size:32px;margin-bottom:8px;color:#10b981;font-weight:800;">Pedido entregado</div> <p style="color:var(--text-light);font-size:13px;margin-bottom:16px;">Tu pedido fue entregado. Contanos como estuvo!</p> <button onclick="if(typeof abrirModalOpinion==='function'){abrirModalOpinion('${last.id}');localStorage.setItem('mf_opinion_${last.id}','1');}"
+ style="width:100%;padding:14px;border-radius:12px;border:none;background:var(--primary);color:#000;font-weight:800;font-size:15px;cursor:pointer;"> Dejar mi opinión
  </button> </div>`;
  } else {
  container.innerHTML = '';
@@ -4306,49 +4255,7 @@ function renderPedidoEnCurso() {
  }).catch(() => { container.innerHTML = ''; });
 }
 
-// 5. SISTEMA DE RESEÑAS 
-let resenaActualPedidoId = null;
-let resenaPuntuacion = 0;
-
-function mostrarModalResena(pedidoId, pedido) {
- resenaActualPedidoId = pedidoId;
- resenaPuntuacion = 0;
- setStars(0);
- document.getElementById('resena-comentario').value = '';
- document.getElementById('resena-modal').classList.add('open');
-}
-
-window.setStars = (v) => {
- resenaPuntuacion = v;
- document.querySelectorAll('#stars-row .star-btn').forEach((s, i) => {
- const activo = i < v;
- s.classList.toggle('active', activo);
- // Forzar color inline como fallback si el CSS no aplica
- s.style.color = activo ? '#f59e0b' : 'rgba(245,158,11,0.55)';
- s.style.transform = activo ? 'scale(1.1)' : 'scale(1)';
- });
-};
-
-window.enviarResena = async () => {
- if (!resenaPuntuacion) return alert('Seleccioná al menos 1 estrella.');
- const comentario = document.getElementById('resena-comentario').value.trim();
- const btn = document.getElementById('resena-btn');
- btn.disabled = true; btn.innerText = 'Enviando...';
-
- try {
- await db.collection("resenas").add({
- pedidoId: resenaActualPedidoId,
- puntuacion: resenaPuntuacion,
- comentario,
- fecha: firebase.firestore.FieldValue.serverTimestamp()
- });
- localStorage.setItem('mf_resena_' + resenaActualPedidoId, '1');
- document.getElementById('resena-modal').classList.remove('open');
- const t = document.getElementById('toast');
- if (t) { t.innerText = '¡Gracias por tu reseña!'; t.classList.add('show'); setTimeout(() => { t.classList.remove('show'); t.innerText='¡Agregado al pedido!'; }, 3000); }
- } catch(e) { alert("Error al enviar la reseña: " + e.message); }
- finally { btn.disabled = false; btn.innerText = 'ENVIAR RESEÑA'; }
-};
+// 5. SISTEMA DE RESEÑAS — usa el modal de opinión unificado
 
 // 6. ESTADÍSTICAS DE VENTAS 
 async function registrarVentaStats(items, total, sucursal) {
@@ -6519,7 +6426,7 @@ document.getElementById('admin-root') && document.getElementById('admin-root').a
  onerror="this.style.display='none'"> <div class="pwa-banner-text"> <div class="pwa-banner-title">Bajate ahora nuestra APP Oficial <span> </span></div> <div class="pwa-banner-sub">Pedí más rápido y Sin esperas</div> <div class="pwa-banner-tag">Gratis</div> </div> <button class="pwa-btn-install" id="pwa-btn-install" onclick="pwaTriggerInstall()"> Instalar<br> </button> </div> <button class="pwa-btn-dismiss" onclick="pwaDismissBanner()" title="Cerrar"></button>
 </div><!-- MODAL SEGUIMIENTO --><div id="tracking-modal"><div class="tracking-sheet"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><h2 style="font-weight:800;font-size:18px;color:var(--primary);">TU PEDIDO</h2><button onclick="document.getElementById('tracking-modal').classList.remove('open')" style="background:rgba(255,255,255,0.1);border:none;color:var(--white);width:32px;height:32px;border-radius:50%;font-size:20px;cursor:pointer;font-weight:300;">×</button></div><div id="tracking-cliente" style="color:var(--text-light);font-size:13px;margin-bottom:4px;"></div><div id="tracking-sucursal" style="color:var(--text-light);font-size:12px;margin-bottom:16px;"></div><div class="tracking-progress" id="tracking-progress"></div><div id="tracking-items" style="background:var(--bg);border-radius:10px;padding:12px;margin-bottom:16px;"></div><div id="tracking-total" style="font-size:18px;font-weight:800;color:var(--primary);text-align:right;"></div><div id="tracking-cancel-container"></div>
 <button onclick="cerrarTracking()" style="width:100%;padding:12px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--text-light);font-weight:700;margin-top:12px;cursor:pointer;">CERRAR</button>
-<div id="tracking-anulado-label" style="display:none;text-align:center;padding:10px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;margin-top:8px;"><span style="color:#ef4444;font-weight:800;font-size:14px;letter-spacing:1px;">ANULADO</span></div></div></div><!-- MODAL RESEÑA --><div id="resena-modal"><div class="resena-sheet"><div style="font-size:40px;margin-bottom:8px;"></div><h3 style="font-weight:800;font-size:18px;color:var(--white);margin-bottom:6px;">¿Cómo estuvo tu pedido?</h3><p style="color:var(--text-light);font-size:13px;">Tu opinión nos ayuda a mejorar</p><div class="stars-row" id="stars-row"><span class="star-btn" data-v="1" onclick="setStars(1)"></span><span class="star-btn" data-v="2" onclick="setStars(2)"></span><span class="star-btn" data-v="3" onclick="setStars(3)"></span><span class="star-btn" data-v="4" onclick="setStars(4)"></span><span class="star-btn" data-v="5" onclick="setStars(5)"></span></div><textarea id="resena-comentario" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--white);font-size:13px;resize:none;height:80px;margin-bottom:16px;" placeholder="Comentario opcional..."></textarea><button onclick="enviarResena()" id="resena-btn" style="width:100%;padding:14px;border-radius:10px;border:none;background:var(--primary);color:#000;font-weight:800;font-size:15px;cursor:pointer;">ENVIAR RESEÑA</button><button onclick="document.getElementById('resena-modal').classList.remove('open')" style="width:100%;padding:10px;border-radius:10px;border:none;background:transparent;color:var(--text-light);font-size:13px;margin-top:8px;cursor:pointer;">Ahora no</button></div></div><!-- ADMIN --><div id="admin-root" style="display:none;"><!-- LOGIN --><div id="adm-login-screen"><div class="adm-login-box"><div style="font-size:36px;margin-bottom:8px;"></div><h1>MARVEL FOOD</h1><p>Panel de administración</p><input class="adm-inp" type="password" id="adm-pin" placeholder="PIN de acceso" autocomplete="off"
+<div id="tracking-anulado-label" style="display:none;text-align:center;padding:10px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;margin-top:8px;"><span style="color:#ef4444;font-weight:800;font-size:14px;letter-spacing:1px;">ANULADO</span></div></div></div><!-- ADMIN --><div id="admin-root" style="display:none;"><!-- LOGIN --><div id="adm-login-screen"><div class="adm-login-box"><div style="font-size:36px;margin-bottom:8px;"></div><h1>MARVEL FOOD</h1><p>Panel de administración</p><input class="adm-inp" type="password" id="adm-pin" placeholder="PIN de acceso" autocomplete="off"
  onkeydown="if(event.key==='Enter') admCheckPin()">
 <div id="adm-pin-feedback" style="min-height:18px;font-size:12px;font-weight:700;margin:6px 0 2px;text-align:center;"></div>
 <button class="adm-btn-primary" onclick="admCheckPin()">INGRESAR</button></div></div><!-- PANEL PRINCIPAL --><div id="adm-app" style="display:none;"><!-- Header --><div class="adm-header"><h1>MARVEL <span>ADMIN</span></h1><div style="display:flex;align-items:center;gap:8px;"><span class="adm-badge-live"> EN VIVO</span><span style="color:#9ca3af;font-size:10px;" id="adm-last-update">—</span><button onclick="admLogout()" style="background:transparent;border:1px solid #333;color:#9ca3af;padding:5px 10px;border-radius:8px;font-size:10px;cursor:pointer;">SALIR</button></div></div><!-- Stats --><div class="adm-stats-bar"><div class="adm-stat"><span>Pendientes</span><span id="adm-s-pend">0</span></div><div class="adm-stat"><span>Aceptados</span><span id="adm-s-acep" style="color:#10b981">0</span></div><div class="adm-stat"><span>Listos</span><span id="adm-s-list" style="color:#3b82f6">0</span></div><div class="adm-stat"><span>Hoy</span><span id="adm-s-total" style="color:#fff">0</span></div><div class="adm-stat"><span>Recaudado</span><span id="adm-s-cash" style="color:#10b981">$0</span></div></div><!-- Barra de filtros --><!-- Tabs del admin --><div style="display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);overflow-x:auto;"><button class="adm-tab active" onclick="admSwitchTab('pedidos',this)">Pedidos</button><button class="adm-tab" onclick="admSwitchTab('dashboard',this)">Dashboard</button><button class="adm-tab" onclick="admSwitchTab('menu',this)">Menu</button><button class="adm-tab" onclick="admSwitchTab('promos',this)">Promos</button><button class="adm-tab" onclick="admSwitchTab('cupones',this)">Cupones</button><button class="adm-tab" onclick="admSwitchTab('codigos',this)">Codigos</button><button class="adm-tab" onclick="admSwitchTab('resenas',this)">Reseñas</button><button class="adm-tab" onclick="admSwitchTab('integracion',this)" style="color:#a78bfa;"> Integración</button><button class="adm-tab" onclick="admSwitchTab('mercadopago',this)" style="color:#00b1ea;"> Mercado Pago</button><button class="adm-tab" onclick="admSwitchTab('mapa',this)" style="color:#34d399;"> Zonas de Envío</button></div><!-- TAB PEDIDOS --><div id="adm-tab-pedidos"><div class="adm-filterbar"><!-- Fila 1: Fecha + Sucursal --><div class="adm-filterrow"><div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;"><span style="color:#9ca3af;font-size:11px;font-weight:700;white-space:nowrap;"> FECHA</span><input type="date" id="adm-fecha-filtro" class="adm-date-inp" onchange="admAplicarFiltros()"><button onclick="admFechaHoy()" class="adm-filter-btn" style="white-space:nowrap;padding:5px 10px;">Hoy</button><button onclick="admVerTodoHistorial()" id="btn-todo-historial" class="adm-filter-btn" style="white-space:nowrap;padding:5px 10px;background:rgba(99,102,241,0.15);border-color:#6366f1;color:#a5b4fc;">Todo</button></div><div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;"><span style="color:#9ca3af;font-size:11px;font-weight:700;white-space:nowrap;">SUCURSAL</span><select id="adm-suc-filtro" class="adm-date-inp" onchange="admAplicarFiltros()" style="flex:1;"><option value="">Todas</option><option value="PELLEGRINI">Centro</option><option value="Rondeau">Norte</option><option value="San Martin">Sur</option><option value="Funes">Funes</option></select></div></div><!-- Fila 2: Estado + Tipo + Limpiar --><div class="adm-filterrow" style="margin-top:8px;"><button class="adm-filter-btn active" data-f="Todos" onclick="admFiltroEstado('Todos',this)">Todos</button><button class="adm-filter-btn" data-f="Pendiente" onclick="admFiltroEstado('Pendiente',this)">Pendientes</button><button class="adm-filter-btn f-acep" data-f="Aceptado" onclick="admFiltroEstado('Aceptado',this)">Aceptados</button><button class="adm-filter-btn f-list" data-f="Listo" onclick="admFiltroEstado('Listo',this)">Listos</button><button class="adm-filter-btn f-ent" data-f="Entregado" onclick="admFiltroEstado('Entregado',this)">Entregados</button><button class="adm-filter-btn" data-f="Delivery" onclick="admFiltroEstado('Delivery',this)">Delivery</button><button class="adm-filter-btn" data-f="Retiro" onclick="admFiltroEstado('Retiro',this)">Retiro</button><button onclick="admLimpiarDia()" style="margin-left:auto;background:rgba(239,68,68,.15);border:1px solid #ef4444;color:#ef4444;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">Limpiar día</button></div></div><!-- Lista pedidos --><div class="adm-orders" id="adm-orders"></div></div><!-- /adm-tab-pedidos --><!-- TAB DASHBOARD --><div id="adm-tab-dashboard" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:16px;">MÉTRICAS DEL DÍA</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;"><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Pedidos hoy</div><div id="dash-total" style="font-size:28px;font-weight:800;color:var(--primary);">0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Recaudado</div><div id="dash-cash" style="font-size:22px;font-weight:800;color:#10b981;">$0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Ticket promedio</div><div id="dash-ticket" style="font-size:22px;font-weight:800;color:#3b82f6;">$0</div></div><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Delivery / Retiro</div><div id="dash-tipos" style="font-size:16px;font-weight:800;color:var(--white);">0 / 0</div></div></div><!-- Ventas por hora --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Ventas por hora</div><div id="dash-chart-horas" style="display:flex;align-items:flex-end;gap:4px;height:80px;"></div><div id="dash-chart-labels" style="display:flex;gap:4px;margin-top:4px;"></div></div><!-- Productos más pedidos --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:16px;"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Productos más pedidos hoy</div><div id="dash-top-prods"></div></div><!-- Mapa de calor de zonas --><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);"><div style="font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:12px;">Pedidos por zona</div><div id="dash-zonas"></div></div></div><!-- TAB MENÚ --><div id="adm-tab-menu" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:6px;"> GESTIÓN DE MENÚ</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Pausá productos o editá precios. Los cambios son inmediatos en la tienda.</p><div id="adm-menu-lista" style="display:flex;flex-direction:column;gap:8px;"></div></div><!-- TAB RESEÑAS / OPINIONES --><div id="adm-tab-resenas" style="display:none;padding:20px;"><h3 style="color:var(--primary);font-weight:800;font-size:16px;margin-bottom:4px;">OPINIONES DE CLIENTES</h3><p style="color:#9ca3af;font-size:12px;margin-bottom:16px;">Podés eliminar cualquier opinión que no corresponda. Los cambios son inmediatos.</p><!-- Toggle visibilidad modal opinión --><div id="adm-op-visible-toggle"></div><div style="display:flex;gap:12px;margin-bottom:20px;"><div style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);flex:1;text-align:center;"><div style="font-size:10px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Promedio</div><div id="res-promedio" style="font-size:32px;font-weight:800;color:var(--primary);">—</div><div style="color:#9ca3af;font-size:11px;" id="res-count">0 reseñas</div></div><div id="res-dist" style="flex:2;background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);display:flex;flex-direction:column;gap:5px;justify-content:center;"></div></div><!-- Tabs internas: Pedido / Públicas --><div style="display:flex;gap:8px;margin-bottom:16px;"><button id="adm-res-tab-ped" onclick="admResTab('pedidos')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--primary);background:rgba(245,158,11,.15);color:var(--primary);font-weight:800;font-size:12px;cursor:pointer;">Desde pedido</button><button id="adm-res-tab-pub" onclick="admResTab('publicas')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--border);background:transparent;color:#9ca3af;font-weight:800;font-size:12px;cursor:pointer;">Opiniones públicas</button></div><div id="adm-resenas-lista" style="display:flex;flex-direction:column;gap:10px;"></div></div><!-- TAB INTEGRACIÓN --><div id="adm-tab-integracion" style="display:none;"></div><!-- TAB ZONAS DE ENVÍO -->

@@ -3136,7 +3136,7 @@ window.procesarPedido = async () => {
  if (isDelivery) {
  t += `*Dirección:* ${dir}${ordenDatos.piso ? ' ' + ordenDatos.piso.trim() : ''}%0A`;
  t += `*Localidad:* ${loc || 'Rosario'}%0A`;
- t += `*Sucursal asignada:* ${ordenDatos.sucursal}%0A`;
+
  if (ordenDatos.gps !== 'No provisto') t += `*Ubicación GPS:* http://maps.google.com/maps?q=${ordenDatos.gps}%0A`;
  }
 
@@ -3402,7 +3402,7 @@ function _mostrarZonaBox(sucursal, detalle, precio) {
 // Construye el selector de corrección manual de sucursal
 function _buildZonaOverride(sucursalActual) {
  return `<div id="zona-override-row" style="margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-  <span style="font-size:11px;color:#9ca3af;font-weight:700;white-space:nowrap;">Corregir sucursal:</span>
+  <span style="font-size:11px;color:#9ca3af;font-weight:700;white-space:nowrap;">sucursal:</span>
   <select id="zona-override-sel" onchange="aplicarZonaOverride(this.value)"
     style="flex:1;min-width:150px;padding:6px 10px;background:#1a1a1a;border:1px solid #3a3a3a;border-radius:8px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;outline:none;">
     <option value="">-- Sin cambios --</option>

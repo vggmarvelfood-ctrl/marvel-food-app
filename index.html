@@ -2073,6 +2073,14 @@ const SUC_MAP = {
 
 let menuOverrides = {}; // precios/disponibilidad dinámicos desde Firebase
 
+// ZONA_INFO_UI: mapa de sucursal → label y dirección para mostrar en UI
+const ZONA_INFO_UI = {
+ Centro: { label: "Rosario Centro", direccion: "Pellegrini 1149, Rosario" },
+ Norte:  { label: "Rosario Norte",  direccion: "Rondeau 2430, Rosario" },
+ Sur:    { label: "Rosario Sur",    direccion: "San Martín 1808, Rosario" },
+ Funes:  { label: "Funes",          direccion: "RN9 972, Funes" }
+};
+
 const MENU = [
  {
  cat: "Hamburguesas",
@@ -2136,7 +2144,7 @@ const MENU = [
  {
  cat: "Ensaladas",
  items: [
- { id: 26, n: "Ensalada Kang", p: 9500, d: "Tomate cherry, cebolla morada, salsa kang, lechuga, pollo, jamón, queso y huevo.", img: "https://i.ibb.co/TM2GDnzT/Ensalada.png", ings: ["Pollo", "Huevo", "Jamón", "Queso", "Salsa Kang"] }
+ { id: 29, n: "Ensalada Kang", p: 9500, d: "Tomate cherry, cebolla morada, salsa kang, lechuga, pollo, jamón, queso y huevo.", img: "https://i.ibb.co/TM2GDnzT/Ensalada.png", ings: ["Pollo", "Huevo", "Jamón", "Queso", "Salsa Kang"] }
  ]
  }
 ];
@@ -2321,7 +2329,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
  // OPTIMIZACIÓN: header cacheado fuera del scroll 
  (function() {
- const _header = document.getElementById('header');
+ const _header = document.querySelector('.top-header');
  if (!_header) return;
  window.addEventListener('scroll', () => {
  if (window.scrollY > 50) _header.classList.add('scrolled');
@@ -2622,66 +2630,7 @@ window.toggleExt = (id) => {
  function updateCartUI() { document.getElementById('cart-badge').innerText = carrito.reduce((s,i)=>s+i.cant,0); }
  window.toggleVuelto = () => document.getElementById('vuelto-box').style.display = (document.getElementById('p-metodo').value === 'Efectivo') ? 'block' : 'none';
 
-function actualizarTotales() {
- // 1. Calcular Subtotal (Suma de productos en el carrito)
- let subtotal = carrito.reduce((acc, item) => acc + item.totalItem, 0);
- // 2. Obtener Costo de Envío (según sucursal y localidad seleccionada)
- // Asumimos que guardas la localidad en una variable global o la sacas del DOM
- const selectLoc = document.getElementById('select-localidad');
- let envio = 0;
- if (selectLoc && selectLoc.value) {
- envio = parseInt(selectLoc.value) || 0;
- }
-
- // 3. Calcular Descuento
- let descuentoTotal = 0;
- let textoDescuento = "";
-
- if (cuponAplicado) {
- if (cuponAplicado.tipo === "porcentaje") {
- descuentoTotal = subtotal * cuponAplicado.valor;
- textoDescuento = `-${cuponAplicado.valor * 100}%`;
- } else if (cuponAplicado.tipo === "regalo") {
- // Si es un regalo (papas, bebida), el descuento es $0 pero lo mostramos
- textoDescuento = "¡REGALO!";
- }
- }
-
- // 4. Calcular Total Final
- const totalFinal = subtotal + envio - descuentoTotal;
-
- // 5. Renderizar en el HTML (Asegúrate de tener estos IDs en tu carrito)
- const subtotalEl = document.getElementById('cart-subtotal');
- const envioEl = document.getElementById('cart-envio');
- const descEl = document.getElementById('cart-descuento');
- const totalEl = document.getElementById('cart-total');
-
- if (subtotalEl) subtotalEl.innerText = `$${subtotal.toLocaleString()}`;
- if (envioEl) envioEl.innerText = `$${envio.toLocaleString()}`;
- 
- if (descEl) {
- if (cuponAplicado) {
- descEl.parentElement.style.display = "flex"; // Mostramos la fila de descuento
- descEl.innerText = (descuentoTotal > 0) ? `-$${descuentoTotal.toLocaleString()}` : textoDescuento;
- descEl.style.color = "var(--primary)";
- } else {
- descEl.parentElement.style.display = "none"; // Ocultamos si no hay cupón
- }
- }
-
- if (totalEl) totalEl.innerText = `$${Math.max(0, totalFinal).toLocaleString()}`;
-
- // 6. Actualizar la lista de productos
- renderCartItems();
- 
- // Actualizar el numerito del icono del carrito (badge)
- const cartBadge = document.getElementById('cart-count');
- if (cartBadge) {
- const totalItems = cart.reduce((acc, item) => acc + item.q, 0);
- cartBadge.innerText = totalItems;
- cartBadge.style.display = totalItems > 0 ? "flex" : "none";
- }
-}
+// actualizarTotales: eliminada (código muerto — usaba cart/item.q/cart-count incorrectos)
 
 function obtenerHorarioEstimado(esEnvio) {
  const ahora = new Date();
@@ -3160,7 +3109,7 @@ window.procesarPedido = async () => {
  if (isDelivery) {
  t += `*Dirección:* ${dir}${ordenDatos.piso ? ' ' + ordenDatos.piso.trim() : ''}%0A`;
  t += `*Localidad:* ${loc || 'Rosario'}%0A`;
-
+ t += `*Sucursal asignada:* ${ordenDatos.sucursal}%0A`;
  if (ordenDatos.gps !== 'No provisto') t += `*Ubicación GPS:* http://maps.google.com/maps?q=${ordenDatos.gps}%0A`;
  }
 
@@ -3218,7 +3167,7 @@ window.procesarPedido = async () => {
 // Variables de geofencing para checkout
 let _checkoutLat = null, _checkoutLng = null;
 let _checkoutSucursalDetectada = null;
-let _checkoutFueraDeCovbertura = false;
+let _checkoutFueraDeCoberturaActivo = false;
 let _checkoutEnvioPrecio = 0; // precio de envío detectado según zona
 
 // Paso 1 → Paso 2: ir a pagar

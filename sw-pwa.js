@@ -195,7 +195,7 @@ window.pwaDismissBanner = () => {
 
 if ('serviceWorker' in navigator) {
  window.addEventListener('load', () => {
- navigator.serviceWorker.register('./sw.js?v=7')
+ navigator.serviceWorker.register('./sw.js?v=8')
  .then(r => console.log('[SW] Registrado. Scope:', r.scope))
  .catch(e => console.warn('[SW] Error:', e));
  });

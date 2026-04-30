@@ -6,7 +6,7 @@ import {
  onSnapshot, query, where, orderBy, limit, serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import {
- getAuth, signInWithPopup, GoogleAuthProvider,
+ getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider,
  onAuthStateChanged, signOut
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
@@ -120,59 +120,66 @@ try {
  const _auth = getAuth(_app);
  const _googleProvider = new GoogleAuthProvider();
 
- // Verificar rol admin en Firestore
+ // Verificar rol admin en Firestore y abrir panel
  async function _verificarRol(uid) {
-   const snap = await getDoc(doc(_rawDb, 'usuarios', uid));
-   if (snap.exists() && snap.data().rol === 'admin') {
-     console.log('[Auth] Acceso concedido. UID:', uid);
-     document.getElementById('adm-login-screen').style.display = 'none';
-     document.getElementById('adm-app').style.display = 'block';
-     // admIniciar() es el nombre real en app.js (admInit no existe)
-     if (typeof admFechaHoy === 'function') admFechaHoy();
-     if (typeof admIniciar === 'function') admIniciar();
-     else if (typeof admInit === 'function') admInit();
-   } else {
-     alert('Acceso denegado: no tenés permisos de administrador.\nUID para configurar en Firestore: ' + uid);
-     await signOut(_auth);
+   try {
+     const snap = await getDoc(doc(_rawDb, 'usuarios', uid));
+     if (snap.exists() && snap.data().rol === 'admin') {
+       console.log('[Auth] Acceso concedido. UID:', uid);
+       _concederAccesoAdmin();
+     } else {
+       alert('Acceso denegado: no tenés permisos de administrador.\nUID para configurar en Firestore: ' + uid);
+       await signOut(_auth);
+     }
+   } catch(e) {
+     console.error('[Auth] Error verificando rol:', e);
    }
  }
 
- // Login con Google
+ // Login con Google — usa redirect para evitar problemas de COOP en Vercel/producción.
+ // signInWithPopup falla con Cross-Origin-Opener-Policy en dominios de producción.
+ // El resultado se procesa al volver a la página via getRedirectResult().
  window.admGoogleLogin = async function() {
    const btn = document.getElementById('adm-google-btn');
-   if (btn) { btn.disabled = true; btn.textContent = 'Conectando...'; }
+   const pf  = document.getElementById('adm-pin-feedback');
+   if (btn) { btn.disabled = true; btn.textContent = 'Redirigiendo...'; }
+   if (pf)  { pf.textContent = 'Redirigiendo a Google...'; pf.style.color = '#10b981'; }
    try {
-     const result = await signInWithPopup(_auth, _googleProvider);
-     console.log('[Auth] UID del usuario:', result.user.uid);
-     await _verificarRol(result.user.uid);
+     await signInWithRedirect(_auth, _googleProvider);
+     // El browser navega a Google — el código de acá no se ejecuta
    } catch (err) {
-     console.error('[Auth] Error login:', err);
-     // Error específico: dominio no autorizado en Firebase Console
+     console.error('[Auth] Error redirect:', err);
      if (err.code === 'auth/unauthorized-domain') {
-       const domain = window.location.hostname;
-       alert(
-         '⚠️ Dominio no autorizado en Firebase.\n\n' +
-         'Seguí estos pasos:\n' +
-         '1. Abrí Firebase Console → Authentication → Settings → Authorized domains\n' +
-         '2. Agregá el dominio: ' + domain + '\n' +
-         '3. Guardá y volvé a intentar.'
-       );
+       alert('⚠️ Dominio no autorizado en Firebase.\nFirebase Console → Authentication → Settings → Authorized domains\nAgregá: ' + window.location.hostname);
      } else {
        alert('Error al iniciar sesión: ' + err.message);
      }
-   } finally {
      if (btn) { btn.disabled = false; btn.textContent = 'Ingresar con Google'; }
    }
  };
 
- // Cerrar sesión Google (complementa el admLogout existente)
+ // Cerrar sesión Google
  window.admGoogleLogout = async function() {
    try { await signOut(_auth); } catch(e) {}
  };
 
- // Observador de sesión: mantiene el panel abierto al recargar
+ // Procesar resultado del redirect al volver de Google
+ getRedirectResult(_auth).then(result => {
+   if (result && result.user) {
+     console.log('[Auth] Redirect OK. UID:', result.user.uid);
+     _verificarRol(result.user.uid);
+   }
+ }).catch(err => {
+   if (err.code && err.code !== 'auth/no-current-user') {
+     console.error('[Auth] getRedirectResult error:', err.code, err.message);
+   }
+ });
+
+ // Observador de sesión: si ya tiene sesión activa (recargó la página), verificar rol
  onAuthStateChanged(_auth, (user) => {
-   if (user) { _verificarRol(user.uid); }
+   if (user && sessionStorage.getItem('_mfa_ok')) {
+     _verificarRol(user.uid);
+   }
  });
 
  // Tarea 5: Firebase Cloud Messaging (FCM) — inicialización modular
@@ -271,10 +278,9 @@ async function _verificarRolConClaims(user) {
 }
 
 function _concederAccesoAdmin() {
-  // Verificar que el PIN fue validado en esta sesión antes de abrir el panel
+  // Verificar que el PIN fue validado antes de abrir el panel
   if (!sessionStorage.getItem('_mfa_ok')) {
-    console.warn('[Auth] Google OK pero PIN no verificado. Acceso denegado.');
-    alert('Por seguridad, primero ingresá el PIN de acceso.');
+    console.warn('[Auth] Google OK pero PIN no verificado. Redirigiendo a login.');
     return;
   }
   window.__IS_ADMIN__ = true;
@@ -282,7 +288,6 @@ function _concederAccesoAdmin() {
   const adminApp    = document.getElementById('adm-app');
   if (loginScreen) loginScreen.style.display = 'none';
   if (adminApp)    adminApp.style.display = 'block';
-  // admIniciar() es el nombre real en app.js
   if (typeof admFechaHoy === 'function') admFechaHoy();
   if (typeof admIniciar === 'function') admIniciar();
   else if (typeof admInit === 'function') admInit();

@@ -902,7 +902,7 @@ function actualizarBadgePromos() {
  function run(t) {
  t = t||0;
  if (!window.db) { if(t<30) setTimeout(function(){run(t+1);}, 300); return; }
- cargarTopProductos();
+ if (window.__IS_ADMIN__) cargarTopProductos(); // solo admins pueden leer pedidos_v2
  cargarResumenOpinionesInicio();
  actualizarBadgePromos();
  // GeoFencing v3: pre-calentar caché de zonas en background

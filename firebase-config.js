@@ -166,16 +166,11 @@ try {
  };
 
  // Observador de sesión: si ya tiene sesión activa (recargó la página), verificar rol
-onAuthStateChanged(_auth, (user) => {
-  if (user && sessionStorage.getItem('_mfa_ok')) {
-    // Solo verificar rol si hay sesión activa Y pin verificado
-    _verificarRolConClaims(user);
-  } else if (!user) {
-    // Usuario deslogueado: limpiar estado
-    window.__IS_ADMIN__ = false;
-  }
-  // NO iniciar listeners de Firestore aquí si no hay user
-});
+ onAuthStateChanged(_auth, (user) => {
+   if (user && sessionStorage.getItem('_mfa_ok')) {
+     _verificarRol(user.uid);
+   }
+ });
 
  // Tarea 5: Firebase Cloud Messaging (FCM) — inicialización modular
  // VAPID_KEY: reemplazá con tu clave pública de FCM (Firebase Console > Project Settings > Cloud Messaging)
@@ -224,105 +219,82 @@ onAuthStateChanged(_auth, (user) => {
  }, 3000);
  }
 
-} catch(e) {
- console.error('[Firebase] Error de inicialización modular:', e);
- window.db = null;
- window.firebase = { firestore: { FieldValue: { serverTimestamp: () => null } } };
-}
-// ═══════════════════════════════════════════════════════════════════
-//  MEJORA 1 — Custom Claims + Route Guard robusto
-//  En lugar de confiar solo en Firestore, verificamos el token del
-//  usuario para detectar el custom claim "admin: true".
-//  Fallback a Firestore si el claim aún no está propagado.
-// ═══════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════
+  //  Custom Claims + Route Guard robusto
+  //  NOTA: estas funciones están DENTRO del try para acceder a _rawDb y _auth
+  // ═══════════════════════════════════════════════════════════════════
 
-/**
- * Verifica si el usuario tiene el custom claim "admin:true" en su token.
- * Si el claim no existe aún, hace fallback a la colección "usuarios" de Firestore.
- * De esta forma la lógica de roles nunca depende solo del frontend.
- */
-async function _verificarRolConClaims(user) {
-  try {
-    // Forzar refresco del token para obtener los claims más recientes
-    const tokenResult = await user.getIdTokenResult(true);
-    const claims = tokenResult.claims || {};
-
-    if (claims.admin === true) {
-      console.log('[Auth] Custom claim admin=true verificado. UID:', user.uid);
-      _concederAccesoAdmin();
+  function _concederAccesoAdmin() {
+    if (!sessionStorage.getItem('_mfa_ok')) {
+      console.warn('[Auth] Google OK pero PIN no verificado. Acceso denegado.');
       return;
     }
+    window.__IS_ADMIN__ = true;
+    const loginScreen = document.getElementById('adm-login-screen');
+    const adminApp    = document.getElementById('adm-app');
+    if (loginScreen) loginScreen.style.display = 'none';
+    if (adminApp)    adminApp.style.display = 'block';
+    if (typeof admFechaHoy === 'function') admFechaHoy();
+    if (typeof admIniciar === 'function') admIniciar();
+    else if (typeof admInit === 'function') admInit();
+    setTimeout(() => {
+      const firstTab = document.querySelector('.adm-tab');
+      if (typeof admSwitchTab === 'function' && firstTab) admSwitchTab('pedidos', firstTab);
+    }, 150);
+  }
 
-    // Fallback: verificar rol en Firestore (compatibilidad hacia atrás)
-    const snap = await getDoc(doc(_rawDb, 'usuarios', user.uid));
-    if (snap.exists() && snap.data().rol === 'admin') {
-      console.log('[Auth] Rol admin verificado vía Firestore. UID:', user.uid);
-      _concederAccesoAdmin();
-    } else {
-      alert(
-        'Acceso denegado: no tenés permisos de administrador.\n' +
-        'UID para configurar en Firestore o Firebase Functions: ' + user.uid
-      );
-      const { signOut: _so } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
-      await _so(_auth);
+  /**
+   * Verifica el rol admin: primero por custom claim del token,
+   * con fallback a la colección "usuarios" en Firestore.
+   * _rawDb y _auth están disponibles porque esta función vive dentro del try.
+   */
+  async function _verificarRolConClaims(user) {
+    try {
+      const tokenResult = await user.getIdTokenResult(true);
+      const claims = tokenResult.claims || {};
+
+      if (claims.admin === true) {
+        console.log('[Auth] Custom claim admin=true verificado. UID:', user.uid);
+        _concederAccesoAdmin();
+        return;
+      }
+
+      // Fallback: verificar rol en Firestore
+      const snap = await getDoc(doc(_rawDb, 'usuarios', user.uid));
+      if (snap.exists() && snap.data().rol === 'admin') {
+        console.log('[Auth] Rol admin verificado vía Firestore. UID:', user.uid);
+        _concederAccesoAdmin();
+      } else {
+        alert(
+          'Acceso denegado: no tenés permisos de administrador.\n' +
+          'UID para configurar: ' + user.uid
+        );
+        await signOut(_auth);
+      }
+    } catch (err) {
+      console.error('[Auth] Error verificando rol:', err);
+      alert('Error al verificar permisos: ' + err.message);
     }
-  } catch (err) {
-    console.error('[Auth] Error verificando rol:', err);
-    alert('Error al verificar permisos: ' + err.message);
   }
-}
 
-function _concederAccesoAdmin() {
-  if (!sessionStorage.getItem('_mfa_ok')) {
-    console.warn('[Auth] Google OK pero PIN no verificado. Acceso denegado.');
-    return;
-  }
-  window.__IS_ADMIN__ = true;
-  const loginScreen = document.getElementById('adm-login-screen');
-  const adminApp    = document.getElementById('adm-app');
-  if (loginScreen) loginScreen.style.display = 'none';
-  if (adminApp)    adminApp.style.display = 'block';
-  if (typeof admFechaHoy === 'function') admFechaHoy();
-  if (typeof admIniciar === 'function') admIniciar();
-  else if (typeof admInit === 'function') admInit();
-  setTimeout(() => {
-    const firstTab = document.querySelector('.adm-tab');
-    if (typeof admSwitchTab === 'function' && firstTab) admSwitchTab('pedidos', firstTab);
-  }, 150);
-}
-
-/**
- * Route Guard: intercepta cualquier intento de mostrar #admin-root
- * sin una sesión válida con rol admin.
- * Se ejecuta en cada carga de página y también en cambios de hash.
- */
-function _routeGuard() {
-  const adminRoot = document.getElementById('admin-root');
-  if (!adminRoot) return;
-
-  // Si el panel está visible pero no hay usuario autenticado → ocultar
-  const authInstance = window._firebaseAuth;
-  if (!authInstance) return;
-
-  import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js')
-    .then(({ onAuthStateChanged }) => {
-      onAuthStateChanged(authInstance, (user) => {
-        if (!user && adminRoot.style.display !== 'none') {
-          console.warn('[RouteGuard] Panel admin visible sin sesión. Ocultando.');
-          adminRoot.style.display = 'none';
-          const loginScreen = document.getElementById('adm-login-screen');
-          if (loginScreen) loginScreen.style.display = 'block';
-        }
-      });
+  /**
+   * Route Guard: oculta el panel admin si no hay sesión activa.
+   */
+  function _routeGuard() {
+    const adminRoot = document.getElementById('admin-root');
+    if (!adminRoot) return;
+    onAuthStateChanged(_auth, (user) => {
+      if (!user && adminRoot.style.display !== 'none') {
+        console.warn('[RouteGuard] Panel admin visible sin sesión. Ocultando.');
+        adminRoot.style.display = 'none';
+        const loginScreen = document.getElementById('adm-login-screen');
+        if (loginScreen) loginScreen.style.display = 'block';
+      }
     });
-}
+  }
 
-// Exponer el auth para el RouteGuard y para admGoogleLogout
-// (se asigna después de inicializar _auth arriba)
-if (typeof _auth !== 'undefined') {
+  // Exponer auth y funciones al scope global
   window._firebaseAuth = _auth;
-  // Reemplazar _verificarRol con la versión con Claims
-  // (sobrescribimos la función original definida más arriba)
   window._verificarRol = _verificarRolConClaims;
 
   // Ejecutar RouteGuard al cargar
@@ -331,4 +303,9 @@ if (typeof _auth !== 'undefined') {
   } else {
     _routeGuard();
   }
+
+} catch(e) {
+  console.error('[Firebase] Error de inicialización modular:', e);
+  window.db = null;
+  window.firebase = { firestore: { FieldValue: { serverTimestamp: () => null } } };
 }

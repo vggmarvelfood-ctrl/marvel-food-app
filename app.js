@@ -2734,18 +2734,18 @@ async function admCheckPin() {
  const hash = await _sha256(input.value.trim());
  if (hash === _ADM_HASH) {
  _admFailCount = 0;
- // Guardar que el PIN fue validado — se conserva durante el redirect a Google
  sessionStorage.setItem('_mfa_ok', hash.slice(0,16));
  window.__IS_ADMIN__ = true;
  input.value = '';
  const pf = document.getElementById('adm-pin-feedback');
- // Lanzar Google Login (redirect) para crear sesión Firebase Auth
- // que las reglas de Firestore necesitan para esAdmin()
+ // PIN correcto → lanzar Google Login (popup) para crear sesión Firebase Auth.
+ // Sin sesión Auth, las reglas de Firestore (esAdmin()) rechazan todo.
+ // El warning COOP del popup es inofensivo — no bloquea nada.
  if (typeof admGoogleLogin === 'function') {
-   if (pf) { pf.textContent = 'PIN correcto. Verificando con Google...'; pf.style.color = '#10b981'; }
-   setTimeout(() => admGoogleLogin(), 300);
+   if (pf) { pf.textContent = 'PIN correcto ✓ — autenticá tu cuenta Google...'; pf.style.color = '#10b981'; }
+   admGoogleLogin();
  } else {
-   // Fallback: firebase-config.js no cargó — abrir sin auth (funciones limitadas)
+   // Fallback: firebase-config.js no cargó aún
    if (pf) { pf.textContent = 'PIN correcto.'; pf.style.color = '#10b981'; }
    document.getElementById('adm-login-screen').style.display = 'none';
    document.getElementById('adm-app').style.display = 'block';
@@ -2854,10 +2854,11 @@ function admIniciar() {
 
  admUnsubscribe = query.onSnapshot(procesar, err => {
  console.warn('Query con fecha falló, usando fallback:', err.message);
- // fallback sin filtro de fecha
  admUnsubscribe = db.collection("pedidos_v2")
  .orderBy("fecha", "desc").limit(500)
- .onSnapshot(procesar);
+ .onSnapshot(procesar, err2 => {
+   console.error('[admIniciar] Fallback también falló:', err2.message);
+ });
  });
 }
 
@@ -2892,7 +2893,8 @@ function admActualizarStats() {
  g('adm-s-acep').innerText = admPedidos.filter(p => p.estado === 'Aceptado').length;
  g('adm-s-list').innerText = admPedidos.filter(p => p.estado === 'Listo').length;
  g('adm-s-total').innerText = admPedidos.length;
- g('adm-s-cash').innerText = '$' + admPedidos.reduce((a, p) => a + (p.total || 0), 0).toLocaleString('es-AR');
+ const _pedValidosStat = window._filtrarPedidosParaMetricas ? window._filtrarPedidosParaMetricas(admPedidos) : admPedidos;
+ g('adm-s-cash').innerText = '$' + _pedValidosStat.reduce((a, p) => a + (p.total || 0), 0).toLocaleString('es-AR');
 }
 
 // FILTROS 

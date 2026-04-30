@@ -4,6 +4,11 @@
 // 
 let _pwaPrompt = null;
 
+// Detectar plataforma
+function _pwaEsIOS() {
+  return /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+}
+
 // Verificar si ya está corriendo como app instalada 
 function _pwaEsInstalada() {
  return window.matchMedia('(display-mode: standalone)').matches
@@ -21,6 +26,14 @@ function _pwaMostrarBanner() {
  if (_pwaEsInstalada()) return;
  const banner = document.getElementById('pwa-install-banner');
  if (!banner) return;
+
+ // En iOS: cambiar texto del botón a instrucciones nativas
+ if (_pwaEsIOS()) {
+   const btnInstall = document.getElementById('pwa-btn-install');
+   if (btnInstall) {
+     btnInstall.innerHTML = 'Agregar<br>al inicio';
+   }
+ }
  banner.classList.add('visible');
 }
 
@@ -56,13 +69,24 @@ function _pwaToastHide() {
  if (el) { el.style.opacity='0'; el.style.transform='translateX(-50%) translateY(20px)'; }
 }
 
-// Evento: el navegador dice que se puede instalar 
+// Evento: el navegador dice que se puede instalar (Android/Chrome)
 window.addEventListener('beforeinstallprompt', (e) => {
  e.preventDefault();
  _pwaPrompt = e;
  // Mostrar banner siempre (a los 2s de cargar la página)
  setTimeout(_pwaMostrarBanner, 2000);
 });
+
+// iOS: no hay beforeinstallprompt → mostrar banner con instrucciones nativas
+// Solo si no está ya instalada y el usuario no lo descartó antes
+(function _pwaIOSFallback() {
+ if (_pwaEsInstalada()) return;
+ if (!_pwaEsIOS()) return;
+ // Mostrar a los 3 segundos en iOS
+ setTimeout(function() {
+   if (!_pwaEsInstalada()) _pwaMostrarBanner();
+ }, 3000);
+})();
 
 // Evento: se abre el carrito → mostrar banner también 
 // Parchamos toggleCart para mostrar el banner al abrir el carrito
@@ -94,8 +118,18 @@ window.addEventListener('appinstalled', () => {
 
 // Botón "Instalar" del banner 
 window.pwaTriggerInstall = async () => {
+ // iOS: mostrar instrucciones nativas (no hay API de instalación)
+ if (_pwaEsIOS()) {
+   _pwaToast(
+     '📱 En Safari: tocá <strong>compartir</strong> (□↑) → <strong>"Agregar a pantalla de inicio"</strong>',
+     'info'
+   );
+   setTimeout(() => _pwaToastHide(), 7000);
+   return;
+ }
+
  if (!_pwaPrompt) {
- // Sin prompt nativo (iOS / ya instalada / etc), mostrar instrucciones
+ // Sin prompt nativo (ya instalada / navegador no compatible)
  _pwaToast(' Tocá el menú del navegador → "Agregar a pantalla de inicio"', 'info');
  setTimeout(() => _pwaToastHide(), 5000);
  return;

@@ -166,11 +166,16 @@ try {
  };
 
  // Observador de sesión: si ya tiene sesión activa (recargó la página), verificar rol
- onAuthStateChanged(_auth, (user) => {
-   if (user && sessionStorage.getItem('_mfa_ok')) {
-     _verificarRol(user.uid);
-   }
- });
+onAuthStateChanged(_auth, (user) => {
+  if (user && sessionStorage.getItem('_mfa_ok')) {
+    // Solo verificar rol si hay sesión activa Y pin verificado
+    _verificarRolConClaims(user);
+  } else if (!user) {
+    // Usuario deslogueado: limpiar estado
+    window.__IS_ADMIN__ = false;
+  }
+  // NO iniciar listeners de Firestore aquí si no hay user
+});
 
  // Tarea 5: Firebase Cloud Messaging (FCM) — inicialización modular
  // VAPID_KEY: reemplazá con tu clave pública de FCM (Firebase Console > Project Settings > Cloud Messaging)

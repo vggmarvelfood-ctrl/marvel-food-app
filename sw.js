@@ -4,8 +4,8 @@
 //              Network-First para Firebase / API
 // ============================================================
 
-const CACHE_NAME   = 'marvel-food-v7';
-const IMG_CACHE    = 'marvel-food-img-v7';
+const CACHE_NAME   = 'marvel-food-v8';
+const IMG_CACHE    = 'marvel-food-img-v8';
 
 // Activos del shell de la app (siempre disponibles offline)
 const SHELL_ASSETS = [

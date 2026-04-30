@@ -147,16 +147,25 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // 4. Fuentes de Google: Cache-First
+  // 4. Fuentes de Google: Cache-First con modo CORS explícito
+  //    Sin { mode: 'cors' } el browser devuelve una respuesta "opaca"
+  //    que no puede usarse para CSS y genera ERR_FAILED.
   if (url.hostname.includes('fonts.googleapis.com') ||
       url.hostname.includes('fonts.gstatic.com')) {
     event.respondWith(
       caches.open(CACHE_NAME).then(async cache => {
         const cached = await cache.match(request);
         if (cached) return cached;
-        const fresh = await fetch(request);
-        cache.put(request, fresh.clone());
-        return fresh;
+        try {
+          const fresh = await fetch(request, { mode: 'cors', credentials: 'omit' });
+          if (fresh.ok) {
+            const toCache = fresh.clone();
+            cache.put(request, toCache);
+          }
+          return fresh;
+        } catch {
+          return new Response('', { status: 503 });
+        }
       })
     );
     return;

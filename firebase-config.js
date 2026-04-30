@@ -127,7 +127,10 @@ try {
      console.log('[Auth] Acceso concedido. UID:', uid);
      document.getElementById('adm-login-screen').style.display = 'none';
      document.getElementById('adm-app').style.display = 'block';
-     if (typeof admInit === 'function') admInit();
+     // admIniciar() es el nombre real en app.js (admInit no existe)
+     if (typeof admFechaHoy === 'function') admFechaHoy();
+     if (typeof admIniciar === 'function') admIniciar();
+     else if (typeof admInit === 'function') admInit();
    } else {
      alert('Acceso denegado: no tenés permisos de administrador.\nUID para configurar en Firestore: ' + uid);
      await signOut(_auth);
@@ -144,7 +147,19 @@ try {
      await _verificarRol(result.user.uid);
    } catch (err) {
      console.error('[Auth] Error login:', err);
-     alert('Error al iniciar sesión: ' + err.message);
+     // Error específico: dominio no autorizado en Firebase Console
+     if (err.code === 'auth/unauthorized-domain') {
+       const domain = window.location.hostname;
+       alert(
+         '⚠️ Dominio no autorizado en Firebase.\n\n' +
+         'Seguí estos pasos:\n' +
+         '1. Abrí Firebase Console → Authentication → Settings → Authorized domains\n' +
+         '2. Agregá el dominio: ' + domain + '\n' +
+         '3. Guardá y volvé a intentar.'
+       );
+     } else {
+       alert('Error al iniciar sesión: ' + err.message);
+     }
    } finally {
      if (btn) { btn.disabled = false; btn.textContent = 'Ingresar con Google'; }
    }
@@ -260,7 +275,10 @@ function _concederAccesoAdmin() {
   const adminApp    = document.getElementById('adm-app');
   if (loginScreen) loginScreen.style.display = 'none';
   if (adminApp)    adminApp.style.display = 'block';
-  if (typeof admInit === 'function') admInit();
+  // admIniciar() es el nombre real en app.js
+  if (typeof admFechaHoy === 'function') admFechaHoy();
+  if (typeof admIniciar === 'function') admIniciar();
+  else if (typeof admInit === 'function') admInit();
 }
 
 /**

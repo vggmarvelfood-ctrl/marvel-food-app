@@ -2734,27 +2734,22 @@ async function admCheckPin() {
  const hash = await _sha256(input.value.trim());
  if (hash === _ADM_HASH) {
  _admFailCount = 0;
+ // Guardar que el PIN fue validado — se conserva durante el redirect a Google
  sessionStorage.setItem('_mfa_ok', hash.slice(0,16));
  window.__IS_ADMIN__ = true;
-
- // PIN correcto — ahora necesitamos sesión Firebase Auth para que
- // las reglas de Firestore (esAdmin()) puedan verificar el rol.
- // Si ya hay sesión Google activa, abrir el panel directamente.
- // Si no, lanzar Google Login automáticamente.
+ input.value = '';
  const pf = document.getElementById('adm-pin-feedback');
+ // Lanzar Google Login (redirect) para crear sesión Firebase Auth
+ // que las reglas de Firestore necesitan para esAdmin()
  if (typeof admGoogleLogin === 'function') {
-   // Mostrar feedback mientras se abre el popup de Google
-   if (pf) { pf.textContent = 'PIN correcto. Verificando cuenta Google...'; pf.style.color = '#10b981'; }
-   input.value = '';
-   // Pequeño delay para que el usuario vea el mensaje
-   setTimeout(() => { admGoogleLogin(); }, 400);
+   if (pf) { pf.textContent = 'PIN correcto. Verificando con Google...'; pf.style.color = '#10b981'; }
+   setTimeout(() => admGoogleLogin(), 300);
  } else {
-   // firebase-config.js aún no cargó — fallback directo (sin auth)
-   if (pf) { pf.textContent = 'PIN correcto. Cargando...'; pf.style.color = '#10b981'; }
+   // Fallback: firebase-config.js no cargó — abrir sin auth (funciones limitadas)
+   if (pf) { pf.textContent = 'PIN correcto.'; pf.style.color = '#10b981'; }
    document.getElementById('adm-login-screen').style.display = 'none';
    document.getElementById('adm-app').style.display = 'block';
-   admFechaHoy();
-   admIniciar();
+   admFechaHoy(); admIniciar();
    setTimeout(() => { admSwitchTab('pedidos', document.querySelector('.adm-tab')); }, 100);
  }
  } else {
@@ -2862,9 +2857,7 @@ function admIniciar() {
  // fallback sin filtro de fecha
  admUnsubscribe = db.collection("pedidos_v2")
  .orderBy("fecha", "desc").limit(500)
- .onSnapshot(procesar, err2 => {
-   console.error('[admIniciar] Fallback también falló:', err2.message);
- });
+ .onSnapshot(procesar);
  });
 }
 
@@ -2899,8 +2892,7 @@ function admActualizarStats() {
  g('adm-s-acep').innerText = admPedidos.filter(p => p.estado === 'Aceptado').length;
  g('adm-s-list').innerText = admPedidos.filter(p => p.estado === 'Listo').length;
  g('adm-s-total').innerText = admPedidos.length;
- const _pedValidosStat = window._filtrarPedidosParaMetricas ? window._filtrarPedidosParaMetricas(admPedidos) : admPedidos;
- g('adm-s-cash').innerText = '$' + _pedValidosStat.reduce((a, p) => a + (p.total || 0), 0).toLocaleString('es-AR');
+ g('adm-s-cash').innerText = '$' + admPedidos.reduce((a, p) => a + (p.total || 0), 0).toLocaleString('es-AR');
 }
 
 // FILTROS 

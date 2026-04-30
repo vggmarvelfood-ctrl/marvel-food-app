@@ -2735,6 +2735,7 @@ async function admCheckPin() {
  if (hash === _ADM_HASH) {
  _admFailCount = 0;
  sessionStorage.setItem('_mfa_ok', hash.slice(0,16));
+ window.__IS_ADMIN__ = true; // FIX: marcar sesión admin para bloquear lógica de cliente
  document.getElementById('adm-login-screen').style.display = 'none';
  document.getElementById('adm-app').style.display = 'block';
  admFechaHoy();
@@ -2846,10 +2847,12 @@ function admIniciar() {
 
  admUnsubscribe = query.onSnapshot(procesar, err => {
  console.warn('Query con fecha falló, usando fallback:', err.message);
- // fallback sin filtro de fecha
+ // fallback sin filtro de fecha — con error handler para no dejar promesas sin capturar
  admUnsubscribe = db.collection("pedidos_v2")
  .orderBy("fecha", "desc").limit(500)
- .onSnapshot(procesar);
+ .onSnapshot(procesar, err2 => {
+   console.error('[admIniciar] Fallback también falló:', err2.message);
+ });
  });
 }
 
@@ -2884,7 +2887,8 @@ function admActualizarStats() {
  g('adm-s-acep').innerText = admPedidos.filter(p => p.estado === 'Aceptado').length;
  g('adm-s-list').innerText = admPedidos.filter(p => p.estado === 'Listo').length;
  g('adm-s-total').innerText = admPedidos.length;
- g('adm-s-cash').innerText = '$' + admPedidos.reduce((a, p) => a + (p.total || 0), 0).toLocaleString('es-AR');
+ const _pedValidosStat = window._filtrarPedidosParaMetricas ? window._filtrarPedidosParaMetricas(admPedidos) : admPedidos;
+ g('adm-s-cash').innerText = '$' + _pedValidosStat.reduce((a, p) => a + (p.total || 0), 0).toLocaleString('es-AR');
 }
 
 // FILTROS 
@@ -4631,8 +4635,10 @@ function admResTab(tab) {
 
 async function admCargarResenas() {
  const g = id => document.getElementById(id);
- const col = _admResTabActual === 'publicas' ? 'opiniones' : 'resenas';
+ const col = 'opiniones'; // FIX: 'resenas' no existe en Firestore rules — ambas tabs usan 'opiniones'
  const campoEst = _admResTabActual === 'publicas' ? 'estrellas' : 'puntuacion';
+ // La tab "pedidos" filtra por opiniones que tienen campo 'fuente':'pedido' o tienen 'puntuacion'
+ // La tab "publicas" muestra las que tienen 'estrellas' (subidas por el cliente directamente)
  if (g('adm-resenas-lista')) g('adm-resenas-lista').innerHTML = '<p style="color:#9ca3af;padding:20px;text-align:center;">Cargando reseñas...</p>';
 
  // Cargar y renderizar toggle de visibilidad del modal de opiniones
@@ -4657,18 +4663,32 @@ async function admCargarResenas() {
  }
  const rs = [];
  snap.forEach(d => rs.push({id:d.id,...d.data()}));
- // Ordenar en cliente por fecha desc
- rs.sort((a,b) => {
+ // FIX: filtrar por tab — ambas usan coleccion 'opiniones', diferenciamos en cliente
+ let rsFiltrado = rs;
+ if (_admResTabActual === 'pedidos') {
+   rsFiltrado = rs.filter(r => r.puntuacion != null || r.fuente === 'pedido');
+ } else {
+   rsFiltrado = rs.filter(r => r.estrellas != null || r.fuente === 'publica' || (r.puntuacion == null && !r.fuente));
+ }
+ rsFiltrado.sort((a,b) => {
  const fa = a.fecha ? (a.fecha.toDate ? a.fecha.toDate() : new Date(a.fecha)) : new Date(0);
  const fb = b.fecha ? (b.fecha.toDate ? b.fecha.toDate() : new Date(b.fecha)) : new Date(0);
  return fb - fa;
  });
- const prom = rs.length?(rs.reduce((a,r)=>a+(r[campoEst]||0),0)/rs.length).toFixed(1):null;
+
+
+
+
+
+
+
+
+ const prom = rsFiltrado.length?(rsFiltrado.reduce((a,r)=>a+(r[campoEst]||0),0)/rsFiltrado.length).toFixed(1):null;
  if(g('res-promedio')) g('res-promedio').innerText = prom ? prom : '--';
- if(g('res-count')) g('res-count').innerText = rs.length + ' reseñas';
+ if(g('res-count')) g('res-count').innerText = rsFiltrado.length + ' reseñas';
 
  const dist={1:0,2:0,3:0,4:0,5:0};
- rs.forEach(r=>{if(r[campoEst])dist[r[campoEst]]++;});
+ rsFiltrado.forEach(r=>{if(r[campoEst])dist[r[campoEst]]++;});
  const md=Math.max(...Object.values(dist),1);
  if(g('res-dist')) g('res-dist').innerHTML=[5,4,3,2,1].map(s=> '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">' +
  '<span style="font-size:10px;color:#f59e0b;width:18px;">'+s+'</span>' +
@@ -4677,11 +4697,11 @@ async function admCargarResenas() {
  ).join('');
 
  if(g('adm-resenas-lista')) {
- if (!rs.length) {
+ if (!rsFiltrado.length) {
  g('adm-resenas-lista').innerHTML='<div style="text-align:center;padding:40px;color:#9ca3af;">Aún no hay reseñas.</div>';
  return;
  }
- g('adm-resenas-lista').innerHTML = rs.map(r => {
+ g('adm-resenas-lista').innerHTML = rsFiltrado.map(r => {
  const f = r.fecha?(r.fecha.toDate?r.fecha.toDate():new Date(r.fecha)).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}):'--';
  const est = r[campoEst] || 0;
  const stars = ''.repeat(est) + ''.repeat(5-est);

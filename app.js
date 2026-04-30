@@ -4793,7 +4793,10 @@ setInterval(() => {
 
 // 4. DevTools detection — warn but don't block (avoid false positives on legit users)
 // Log suspicious activity to Firebase
+// SOLO para admins — evita escrituras a Firestore desde clientes públicos
+// que generan 400 Bad Request en el canal de escritura.
 (function _devtoolsTrap() {
+ if (!window.__IS_ADMIN__) return; // clientes normales no loguean DevTools
  let _devOpen = false;
  const _threshold = 160;
  setInterval(() => {
@@ -4801,7 +4804,6 @@ setInterval(() => {
  const heightDiff = window.outerHeight - window.innerHeight > _threshold;
  if ((widthDiff || heightDiff) && !_devOpen) {
  _devOpen = true;
- // Log to Firebase if DB available (non-blocking)
  try {
  if (window.db) {
  window.db.collection('_sec_log').add({

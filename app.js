@@ -614,7 +614,11 @@ function _buildCardHtml(p, precioFinal, agotado) {
  .replace(/&/g, '&amp;').replace(/'/g, '&#39;');
  const onClickAttr = agotado ? '' : `onclick='openModal(${_safeJson})'`;
  // width + height: el navegador calcula el aspect-ratio antes del CSS -> menos CLS.
- return `<div class="card-p${agotado ? ' agotado' : ''}" ${onClickAttr}>${agotado ? '<div class="agotado-badge">Agotado</div>' : ''}<div class="p-img-wrapper"><img class="p-img" src="${p.img}" alt="${p.n}" width="200" height="200" loading="lazy" decoding="async"></div><div class="p-txt"><div><h3>${p.n}</h3><p>${p.d}</p></div><div class="p-action-row"><span class="p-price">$${precioFinal.toLocaleString()}</span><button class="add-btn">+</button></div></div></div>`;
+ const _imgSrc = (p.img && p.img !== 'undefined') ? p.img : '';
+ const _imgHtml = _imgSrc
+   ? `<img class="p-img" src="${_imgSrc}" alt="${p.n}" width="200" height="200" loading="lazy" decoding="async" onerror="this.style.display='none'">`
+   : `<div class="p-img p-img--placeholder" aria-hidden="true"></div>`;
+ return `<div class="card-p${agotado ? ' agotado' : ''}" ${onClickAttr}>${agotado ? '<div class="agotado-badge">Agotado</div>' : ''}<div class="p-img-wrapper">${_imgHtml}</div><div class="p-txt"><div><h3>${p.n}</h3><p>${p.d}</p></div><div class="p-action-row"><span class="p-price">$${precioFinal.toLocaleString()}</span><button class="add-btn">+</button></div></div></div>`;
 }
 
 function _renderNextBatch() {
@@ -1154,29 +1158,52 @@ window.procesarPedido = async () => {
  const ordenDatos = {
  cliente: nombre.toUpperCase(), 
  tel, 
- sucursal: SUC_MAP[sucId].n, 
+ sucursal: SUC_MAP[sucId].n,
+ sucursalId: sucId,                    // FIX: ID corto ("Centro"|"Norte"|"Sur"|"Funes")
  tipo: isDelivery ? 'Delivery' : 'Retiro',
- horarioEstimado: horarioEstimadoFinal, // <-- Guardado en Firebase
+ horarioEstimado: horarioEstimadoFinal,
  loc: isDelivery ? loc : 'N/A', 
  dir: isDelivery ? dir : 'N/A', 
  gps: (typeof coordenadasGPS !== 'undefined' && coordenadasGPS) || 'No provisto',
  piso: isDelivery ? `${document.getElementById('c-piso').value} ${document.getElementById('c-depto').value}` : '',
- items: carrito, 
+ obs: '',                               // FIX: campo presente desde el inicio (editable desde admin)
+ // FIX: mapeo explícito — elimina campo 'img' (~80 chars/ítem innecesarios en Firestore)
+ // y garantiza que nunca lleguen campos undefined/circulares al documento.
+ items: carrito.map(i => ({
+   id: i.id,
+   n: i.n,
+   cant: i.cant,
+   p: i.p,
+   totalItem: i.totalItem,
+   sin: Array.isArray(i.sin) ? i.sin : [],
+   con: Array.isArray(i.con) ? i.con.map(x => ({ id: x.id || '', n: x.n || '', p: x.p || 0 })) : [],
+   obs: i.obs || ''
+ })),
  subtotal: sub,
  envio: envio,
  descuento: montoDescuento,
  cuponUsado: detalleCupon,
+ // FIX: persistir código interno para trazabilidad en el panel admin
+ codigoInterno: codigoInternoAplicado
+   ? { codigo: codigoInternoAplicado.codigo, nombre: codigoInternoAplicado.nombre, tipo: codigoInternoAplicado.tipo }
+   : null,
  total: total, 
  pago,
  vuelto: (pago === 'Efectivo' && vuelto > 0) ? vuelto : 0,
  estado: "Pendiente", 
- fecha: firebase.firestore.FieldValue.serverTimestamp()
+ fecha: firebase.firestore.FieldValue.serverTimestamp(),
+ fechaISO: new Date().toISOString()    // FIX: string legible para exports/webhooks sin .toDate()
  };
 
  try {
  document.body.style.cursor = 'wait'; 
 
- const docRef = await db.collection("pedidos_v2").add(ordenDatos);
+ // FIX: Ya no usamos JSON.parse/JSON.stringify porque pierde serverTimestamp()
+ // y el mapeo explícito de items en ordenDatos ya garantiza datos limpios.
+ // Solo hacemos una copia shallow para no mutar el objeto original.
+ const _pedidoLimpio = { ...ordenDatos };
+
+ const docRef = await db.collection("pedidos_v2").add(_pedidoLimpio);
  const pedidoId = docRef.id;
 
  // Auditoría de ventas en colección 'orders' (Tarea 3) 
@@ -1190,6 +1217,7 @@ window.procesarPedido = async () => {
  ).add({
  pedidoId,
  sucursal: ordenDatos.sucursal,
+ sucursalId: ordenDatos.sucursalId,   // FIX: agregar ID corto para queries exactas
  tipo: ordenDatos.tipo,
  total: total,
  subtotal: sub,
@@ -1198,7 +1226,7 @@ window.procesarPedido = async () => {
  itemCount: carrito.length,
  gps: ordenDatos.gps,
  // Productos (sólo nombre + cantidad para estadísticas)
- productos: carrito.map(i => ({ n: i.n, cant: i.cant, precio: i.p })),
+ productos: carritoSnapshot.map(i => ({ n: i.n, cant: i.cant, precio: i.p })),
  zona: (typeof _wsSucursalDetectada !== 'undefined' ? _wsSucursalDetectada : null),
  fecha: firebase.firestore.FieldValue.serverTimestamp(),
  fechaISO: new Date().toISOString(),
@@ -1288,8 +1316,9 @@ window.procesarPedido = async () => {
  _integNotificar('nuevo_pedido', { ...ordenDatos, id: pedidoId });
  }
 
- // Registrar venta para estadísticas
- registrarVentaStats(carrito, total, SUC_MAP[sucId].n);
+ // FIX: usar carritoSnapshot (capturado ANTES del vaciado) y sucursalId en lugar
+ // del array ya vacío que se estaba pasando. Antes siempre llegaba [] a stats.
+ registrarVentaStats(carritoSnapshot, total, sucId);
 
  // --- Generar Mensaje de WhatsApp ---
  let t = `*NUEVO PEDIDO | MARVEL FOOD*%0A---------------------------%0A`;
@@ -1313,7 +1342,9 @@ window.procesarPedido = async () => {
  // Bloque 2: pago y cupón
  t += `*Pago:* ${pago}%0A`;
  if (pago === 'Efectivo' && vuelto > 0) {
- t += `*Abona con:* $${vuelto} (Vuelto: $${vuelto - total})%0A`;
+ // FIX: era (vuelto - total) que daba negativo. El vuelto que devuelve el local
+ // es lo que le sobra al cliente: lo que abona (vuelto) menos lo que debe (total).
+ t += `*Abona con:* $${vuelto.toLocaleString('es-AR')} (Vuelto: $${(vuelto - total).toLocaleString('es-AR')})%0A`;
  }
  // Bug fix: usar detalleCupon (capturado antes de nullificar cuponAplicado)
  if (detalleCupon && detalleCupon !== 'Ninguno') {
@@ -1871,7 +1902,7 @@ function obtenerCuponDelDia() {
  // Bug fix: usar &#39; + &amp; igual que _buildCardHtml para evitar HTML inválido en Safari/FF.
  container.innerHTML = promosVisibles.map(item => {
  const _safeJson = JSON.stringify(item).replace(/&/g, '&amp;').replace(/'/g, '&#39;');
- return `<div class="promo-card"><div class="badge-promo">${item.diaVenta === 2 ? 'SOLO POR HOY' : 'PROMO'}</div><img src="${item.img}" width="400" height="140" style="width:100%; height:140px; object-fit:cover; border-radius:10px; margin-bottom:10px;" loading="lazy" decoding="async"><h3 style="font-size:16px; font-weight:800;">${item.n}</h3><p style="font-size:12px; color:var(--text-light); margin: 5px 0;">${item.d}</p><div class="price-container"><span class="old-price">$${item.pOriginal.toLocaleString()}</span><span class="new-price">$${item.p.toLocaleString()}</span></div><button class="btn-action" onclick='openModal(${_safeJson})' style="margin-top:12px; padding:10px; font-size:13px;"> AGREGAR PROMO</button></div>`;
+ return `<div class="promo-card"><div class="badge-promo">${item.diaVenta === 2 ? 'SOLO POR HOY' : 'PROMO'}</div>${(item.img && item.img !== 'undefined') ? `<img src="${item.img}" width="400" height="140" style="width:100%; height:140px; object-fit:cover; border-radius:10px; margin-bottom:10px;" loading="lazy" decoding="async" onerror="this.style.display='none'">` : ''}<h3 style="font-size:16px; font-weight:800;">${item.n}</h3><p style="font-size:12px; color:var(--text-light); margin: 5px 0;">${item.d}</p><div class="price-container"><span class="old-price">$${item.pOriginal.toLocaleString()}</span><span class="new-price">$${item.p.toLocaleString()}</span></div><button class="btn-action" onclick='openModal(${_safeJson})' style="margin-top:12px; padding:10px; font-size:13px;"> AGREGAR PROMO</button></div>`;
  }).join('');
  }
 
@@ -2066,57 +2097,154 @@ window.obtenerHorarioEstimado = (esDelivery) => {
 // 
 // NUEVAS FUNCIONALIDADES — Marvel Food
 // 
+// ═══════════════════════════════════════════════════════════════════
+//  1. MENU OVERRIDES (precios/disponibilidad desde Firebase)
+//
+//  Mejoras v2:
+//  · Las 3 consultas corren en PARALELO (Promise.allSettled) → más rápido
+//    y un fallo de permisos en una no bloquea a las otras dos.
+//  · Guard anti-doble-init: el onSnapshot se registra solo una vez aunque
+//    cargarMenuOverrides sea llamada múltiples veces.
+//  · Tras aplicar promos/cupones se refresca la UI de inmediato
+//    (renderPromosCatalog + actualizarVistasPerfil) sin esperar interacción.
+//  · Fallback por timeout: si Firebase tarda más de 6s renderizamos con
+//    los datos hardcodeados para que el cliente nunca vea el menú vacío.
+//  · Logs diagnósticos con prefijo [MenuOverrides] fáciles de filtrar.
+// ═══════════════════════════════════════════════════════════════════
 
-// 1. MENU OVERRIDES (precios/disponibilidad desde Firebase) 
+let _menuOverridesListenerActivo = false; // guard anti-doble-suscripción
+
+// ── Helper: aplica overrides de promos al array PROMOS_DATA ──────────────
+function _aplicarPromosOverride(ov) {
+  if (!ov || typeof ov !== 'object') return;
+  const CAMPOS_PROMO = ['p', 'pOriginal', 'diaVenta', 'n', 'd', 'img'];
+
+  // 1. Actualizar promos base existentes
+  PROMOS_DATA.forEach(p => {
+    const over = ov[p.id];
+    if (!over) return;
+    CAMPOS_PROMO.forEach(campo => {
+      if (over[campo] !== undefined) p[campo] = over[campo];
+    });
+    if (over.activo === false) p._oculta = true;
+    else delete p._oculta; // reactivar si el admin la volvió a encender
+  });
+
+  // 2. Agregar promos custom creadas solo en Firebase (no están en PROMOS_DATA)
+  Object.keys(ov).forEach(key => {
+    const over = ov[key];
+    if (!over || !over._custom || over.activo === false) return;
+    if (PROMOS_DATA.find(p => p.id === key)) return; // no duplicar
+    PROMOS_DATA.push({ ...over, id: key });
+  });
+}
+
+// ── Helper: aplica overrides de cupones a CUPONES_DEL_DIA ────────────────
+function _aplicarCuponesOverride(ov) {
+  if (!ov || typeof ov !== 'object') return;
+  [0, 1, 2, 3, 4, 5, 6].forEach(dia => {
+    if (!ov[dia]) return;
+    if (ov[dia].activo === false) {
+      CUPONES_DEL_DIA[dia] = null;
+    } else {
+      CUPONES_DEL_DIA[dia] = { ...CUPONES_DEL_DIA[dia], ...ov[dia] };
+    }
+  });
+}
+
+// ── Función principal ─────────────────────────────────────────────────────
 async function cargarMenuOverrides() {
- if (!window.db) { console.warn("cargarMenuOverrides: db no disponible, saltando."); return; }
- try {
- db.collection("config_menu").doc("overrides")
- .onSnapshot(snap => {
- if (snap.exists) menuOverrides = snap.data();
- else menuOverrides = {};
- renderMenu(); // re-render con nuevos datos
- });
- } catch(e) { console.warn("Menu overrides no disponible:", e); }
- // Cargar overrides de promos
- try {
- const snapPromos = await db.collection('config_menu').doc('promos_override').get();
- if (snapPromos.exists) {
- const ov = snapPromos.data();
- // Actualizar promos base
- PROMOS_DATA.forEach(p => {
- if (ov[p.id]) {
- if (ov[p.id].p !== undefined) p.p = ov[p.id].p;
- if (ov[p.id].pOriginal !== undefined) p.pOriginal = ov[p.id].pOriginal;
- if (ov[p.id].diaVenta !== undefined) p.diaVenta = ov[p.id].diaVenta;
- if (ov[p.id].n !== undefined) p.n = ov[p.id].n;
- if (ov[p.id].d !== undefined) p.d = ov[p.id].d;
- if (ov[p.id].img !== undefined) p.img = ov[p.id].img;
- if (ov[p.id].activo === false) p._oculta = true;
- }
- });
- // Agregar promos custom (creadas desde admin)
- Object.keys(ov).forEach(key => {
- if (!PROMOS_DATA.find(p => p.id === key) && ov[key]._custom && ov[key].activo !== false) {
- PROMOS_DATA.push({ ...ov[key], id: key });
- }
- });
- }
- } catch(e) { console.warn("Promos override no disponible:", e); }
- // Cargar overrides de cupones
- try {
- const snapCupones = await db.collection('config_menu').doc('cupones_override').get();
- if (snapCupones.exists) {
- const ov = snapCupones.data();
- [0,1,2,3,4,5,6].forEach(dia => {
- if (ov[dia] && ov[dia].activo !== false) {
- CUPONES_DEL_DIA[dia] = { ...CUPONES_DEL_DIA[dia], ...ov[dia] };
- } else if (ov[dia] && ov[dia].activo === false) {
- CUPONES_DEL_DIA[dia] = null;
- }
- });
- }
- } catch(e) { console.warn("Cupones override no disponible:", e); }
+  if (!window.db) {
+    console.warn('[MenuOverrides] db no disponible, saltando.');
+    return;
+  }
+
+  // ── Fallback por timeout ──────────────────────────────────────────────
+  // Si Firebase tarda más de 6s, renderizamos con datos hardcodeados
+  // para que el cliente nunca vea el menú o las promos en blanco.
+  const _fallbackTimer = setTimeout(() => {
+    console.warn('[MenuOverrides] Timeout 6s — renderizando con datos base.');
+    if (typeof renderMenu === 'function') renderMenu();
+    if (typeof renderPromosCatalog === 'function') renderPromosCatalog();
+  }, 6000);
+
+  // ── 1. onSnapshot de precios/disponibilidad (se registra UNA SOLA VEZ) ─
+  if (!_menuOverridesListenerActivo) {
+    try {
+      db.collection('config_menu').doc('overrides')
+        .onSnapshot(
+          snap => {
+            menuOverrides = snap.exists ? snap.data() : {};
+            console.log('[MenuOverrides] overrides actualizado:', Object.keys(menuOverrides).length, 'entradas');
+            if (typeof renderMenu === 'function') renderMenu();
+          },
+          err => {
+            // Fallo de permisos u otro error: el menú igual se renderiza
+            console.warn('[MenuOverrides] onSnapshot error (overrides):', err.code || err.message);
+            menuOverrides = {};
+            if (typeof renderMenu === 'function') renderMenu();
+          }
+        );
+      _menuOverridesListenerActivo = true;
+    } catch (e) {
+      console.warn('[MenuOverrides] No se pudo registrar listener de overrides:', e.message);
+      menuOverrides = {};
+      if (typeof renderMenu === 'function') renderMenu();
+    }
+  }
+
+  // ── 2. Cargar promos y cupones EN PARALELO ────────────────────────────
+  // Promise.allSettled garantiza que un fallo de permisos en una consulta
+  // no cancela la otra ni detiene el flujo de la app.
+  const [resultPromos, resultCupones] = await Promise.allSettled([
+    db.collection('config_menu').doc('promos_override').get(),
+    db.collection('config_menu').doc('cupones_override').get(),
+  ]);
+
+  clearTimeout(_fallbackTimer); // Firebase respondió → cancelar fallback
+
+  // ── 3. Aplicar overrides de promos ───────────────────────────────────
+  if (resultPromos.status === 'fulfilled') {
+    const snap = resultPromos.value;
+    if (snap.exists) {
+      _aplicarPromosOverride(snap.data());
+      console.log('[MenuOverrides] promos_override cargado ✓');
+    } else {
+      console.log('[MenuOverrides] promos_override: documento vacío, usando datos base.');
+    }
+  } else {
+    // Permisos insuficientes u error de red: PROMOS_DATA hardcodeado
+    // permanece intacto → el cliente sigue viendo las promos base.
+    console.warn('[MenuOverrides] promos_override no disponible:', resultPromos.reason?.code || resultPromos.reason?.message);
+  }
+
+  // ── 4. Aplicar overrides de cupones ──────────────────────────────────
+  if (resultCupones.status === 'fulfilled') {
+    const snap = resultCupones.value;
+    if (snap.exists) {
+      _aplicarCuponesOverride(snap.data());
+      console.log('[MenuOverrides] cupones_override cargado ✓');
+    } else {
+      console.log('[MenuOverrides] cupones_override: documento vacío, usando datos base.');
+    }
+  } else {
+    console.warn('[MenuOverrides] cupones_override no disponible:', resultCupones.reason?.code || resultCupones.reason?.message);
+  }
+
+  // ── 5. Refrescar UI de promos y cupones ──────────────────────────────
+  // renderMenu() solo actualiza la carta de productos. Necesitamos también:
+  //   · renderPromosCatalog() → panel de Promos (tab-promos)
+  //   · actualizarVistasPerfil() → cupon-del-dia-box y cupones-semana-box
+  try {
+    if (typeof renderPromosCatalog === 'function') renderPromosCatalog();
+  } catch (e) {
+    console.warn('[MenuOverrides] renderPromosCatalog falló:', e.message);
+  }
+  try {
+    if (typeof actualizarVistasPerfil === 'function') actualizarVistasPerfil();
+  } catch (e) {
+    console.warn('[MenuOverrides] actualizarVistasPerfil falló:', e.message);
+  }
 }
 
 // 2. CARRITO PERSISTENTE 
@@ -2501,19 +2629,22 @@ function renderPedidoEnCurso() {
 // 5. SISTEMA DE RESEÑAS — usa el modal de opinión unificado
 
 // 6. ESTADÍSTICAS DE VENTAS 
-async function registrarVentaStats(items, total, sucursal) {
+async function registrarVentaStats(items, total, sucursalId) {
  try {
  const hoy = new Date();
  const key = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}-${String(hoy.getDate()).padStart(2,'0')}`;
  const hora = hoy.getHours();
+ // FIX: el doc del día es compartido por TODAS las sucursales.
+ // Antes se guardaba { sucursal: string } a nivel raíz y el último pedido
+ // pisaba el campo, mezclando datos de distintas sucursales.
+ // Ahora cada venta lleva su sucursalId dentro del objeto, sin campo raíz.
  const ref = db.collection("stats_ventas").doc(key);
- // Usamos un array de ventas para agregación simple
  await ref.set({
  fecha: key,
- sucursal,
  ventas: firebase.firestore.FieldValue.arrayUnion({
  hora,
  total,
+ sucursalId,                            // FIX: dentro del objeto, no a nivel raíz
  items: items.map(i => ({ id: i.id, n: i.n, cant: i.cant, precio: i.totalItem })),
  ts: Date.now()
  })
@@ -2680,8 +2811,8 @@ function admIniciar() {
  let query;
  if (rango) {
  // Consulta con rango de fecha
+ // FIX: segunda cláusula era ">=rango.inicio" duplicado — debe ser "<=rango.fin"
  query = db.collection("pedidos_v2")
- .where("fecha", ">=", rango.inicio)
  .where("fecha", ">=", rango.inicio)
  .where("fecha", "<=", rango.fin);
  } else if (_admModoHistorial) {
@@ -2768,8 +2899,15 @@ function admPedidosFiltrados() {
  let lista = [...admPedidos];
 
  // Filtro sucursal
+ // FIX: usar sucursalId (exacto) cuando existe. Fallback a .includes() para
+ // pedidos históricos que todavía no tienen el campo sucursalId.
  const sucVal = document.getElementById('adm-suc-filtro')?.value || '';
- if (sucVal) lista = lista.filter(p => (p.sucursal || '').includes(sucVal));
+ if (sucVal) {
+   lista = lista.filter(p =>
+     p.sucursalId === sucVal ||
+     (!p.sucursalId && (p.sucursal || '').includes(sucVal))
+   );
+ }
 
  // Filtro estado/tipo
  if (admFiltroEst !== 'Todos') {
@@ -2829,11 +2967,14 @@ function admRenderCard(p) {
  const num = admNumero(p.id);
  const res = (p.items || []).map(i => `${i.cant}x ${i.n}`).join(', ');
 
+ // FIX: strings deben coincidir EXACTAMENTE con SUC_MAP[x].n para que el
+ // filtro "MOVER A" funcione correctamente (antes 'RN9 972,Funes ' tenía
+ // coma sin espacio y trailing space, causando que Funes nunca se filtrara).
  const SUCURSALES_OPTS = [
  'PELLEGRINI 1149, Rosario Centro',
  'Rondeau 2430, Rosario Norte',
  'San Martin 1808, Rosario Sur',
- 'RN9 972,Funes '
+ 'RN9 972, Funes'
  ];
  const otrosSuc = SUCURSALES_OPTS.filter(s => s !== p.sucursal);
  const moverOpts = otrosSuc.map(s => {
@@ -4389,7 +4530,11 @@ window.admAgregarCodigoPromo = async () => {
 
 
 async function admCargarDashboard() {
- const p = admPedidos;
+ // FIX: usar _filtrarPedidosParaMetricas para excluir Anulado/Cancelado.
+ // Antes se usaba admPedidos directamente y los cancelados inflaban totales.
+ const p = typeof _filtrarPedidosParaMetricas === 'function'
+   ? _filtrarPedidosParaMetricas(admPedidos)
+   : admPedidos;
  const g = id => document.getElementById(id);
  const cash = p.reduce((a,x) => a+(x.total||0), 0);
  if(g('dash-total')) g('dash-total').innerText = p.length;

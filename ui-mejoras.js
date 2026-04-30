@@ -972,12 +972,16 @@ function actualizarBadgePromos() {
       entries.forEach(entry => {
         if (!entry.isIntersecting) return;
         const el = entry.target;
+        const bgSrc = el.dataset.bg;
+        // Validación: no cargar si la URL está ausente o es literalmente "undefined"
+        if (!bgSrc || bgSrc === 'undefined') { obs.unobserve(el); return; }
         const img = new Image();
         img.onload = () => {
-          el.style.backgroundImage = `url('${el.dataset.bg}')`;
+          el.style.backgroundImage = `url('${bgSrc}')`;
           el.classList.add('lazy-bg-loaded');
         };
-        img.src = el.dataset.bg;
+        img.onerror = () => { obs.unobserve(el); }; // silenciar error 404
+        img.src = bgSrc;
         obs.unobserve(el);
       });
     }, { rootMargin: '200px 0px' }); // pre-cargar 200px antes de entrar en vista

@@ -271,6 +271,13 @@ async function _verificarRolConClaims(user) {
 }
 
 function _concederAccesoAdmin() {
+  // Verificar que el PIN fue validado en esta sesión antes de abrir el panel
+  if (!sessionStorage.getItem('_mfa_ok')) {
+    console.warn('[Auth] Google OK pero PIN no verificado. Acceso denegado.');
+    alert('Por seguridad, primero ingresá el PIN de acceso.');
+    return;
+  }
+  window.__IS_ADMIN__ = true;
   const loginScreen = document.getElementById('adm-login-screen');
   const adminApp    = document.getElementById('adm-app');
   if (loginScreen) loginScreen.style.display = 'none';
@@ -279,6 +286,10 @@ function _concederAccesoAdmin() {
   if (typeof admFechaHoy === 'function') admFechaHoy();
   if (typeof admIniciar === 'function') admIniciar();
   else if (typeof admInit === 'function') admInit();
+  setTimeout(() => {
+    const firstTab = document.querySelector('.adm-tab');
+    if (typeof admSwitchTab === 'function' && firstTab) admSwitchTab('pedidos', firstTab);
+  }, 150);
 }
 
 /**

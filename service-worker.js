@@ -168,7 +168,8 @@ self.addEventListener('fetch', event => {
     fetch(request)
       .then(response => {
         if (response.ok) {
-          caches.open(CACHE_NAME).then(c => c.put(request, response.clone()));
+          const toCache = response.clone();
+          caches.open(CACHE_NAME).then(c => c.put(request, toCache));
         }
         return response;
       })
@@ -178,43 +179,10 @@ self.addEventListener('fetch', event => {
 
 // ═══════════════════════════════════════════════════════════════════
 //  MEJORA 5 — Soporte WebP/AVIF en cache + optimización de assets
-//  Detecta si el cliente soporta WebP y prioriza esos formatos.
+//  NOTA: Esta lógica está integrada en el handler principal de arriba
+//  para evitar doble respondWith en el mismo FetchEvent (causaba
+//  "Response body is already used"). Este bloque es solo documentación.
 // ═══════════════════════════════════════════════════════════════════
-
-// Interceptar solicitudes de imágenes para servir WebP si está cacheado
-self.addEventListener('fetch', event => {
-  const { request } = event;
-  const url = new URL(request.url);
-
-  // Solo imágenes externas (i.ibb.co y similares)
-  if (request.method !== 'GET') return;
-  if (!url.hostname.includes('i.ibb.co')) return;
-
-  // Verificar si el cliente acepta WebP
-  const acceptHeader = request.headers.get('Accept') || '';
-  const clientSupportsWebP = acceptHeader.includes('image/webp');
-  const clientSupportsAVIF = acceptHeader.includes('image/avif');
-
-  event.respondWith(
-    caches.open(IMG_CACHE).then(async cache => {
-      // Intentar versión WebP primero si el cliente la soporta
-      if (clientSupportsAVIF || clientSupportsWebP) {
-        const webpUrl = request.url.replace(/\.(jpg|jpeg|png)$/i, '.webp');
-        const cachedWebP = await cache.match(webpUrl);
-        if (cachedWebP) return cachedWebP;
-      }
-
-      // Fallback al formato original
-      const cached = await cache.match(request);
-      if (cached) return cached;
-
-      try {
-        const fresh = await fetch(request);
-        if (fresh.ok) cache.put(request, fresh.clone());
-        return fresh;
-      } catch {
-        return new Response('', { status: 503 });
-      }
-    })
-  );
-});
+// La detección WebP/AVIF fue fusionada al paso 3 del handler principal.
+// Un segundo addEventListener('fetch') sobre las mismas URLs genera
+// conflicto porque solo el primer respondWith() es válido por evento.

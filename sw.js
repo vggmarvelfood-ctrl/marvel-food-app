@@ -168,7 +168,12 @@ self.addEventListener('fetch', event => {
     fetch(request)
       .then(response => {
         if (response.ok) {
-          caches.open(CACHE_NAME).then(c => c.put(request, response.clone()));
+          // IMPORTANTE: clonar ANTES de retornar para evitar
+          // "Response body is already used" cuando la promesa
+          // de caches.open resuelve después de que el browser
+          // ya empezó a consumir el response original.
+          const toCache = response.clone();
+          caches.open(CACHE_NAME).then(c => c.put(request, toCache));
         }
         return response;
       })

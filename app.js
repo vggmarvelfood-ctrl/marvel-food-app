@@ -818,7 +818,7 @@ window.toggleExt = (id) => {
  const _ejsScript = document.createElement('script');
  _ejsScript.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js';
  _ejsScript.onload = () => {
- if (window.emailjs) emailjs.init('sATMMVYtIbZLT1tMD');
+ if (window.emailjs) emailjs.init({ publicKey: 'sATMMVYtIbZLT1tMD' });
  };
  _ejsScript.onerror = () => { window._ejsLoaded = false; }; // permitir reintento
  document.head.appendChild(_ejsScript);

@@ -76,15 +76,19 @@ try {
  // batch() añadido: admLimpiarDia lo necesita para borrado masivo atómico 
  function _batchCompat(rawDb) {
  const ops = [];
- return {
- delete: (colOrRef) => {
+ // BUGFIX: arrow functions no tienen 'this' propio — en modo estricto devuelven
+ // undefined, rompiendo el encadenamiento (solo la primera op se acumulaba en ops).
+ // Se usa una referencia explicita '_batch' con metodos regulares para que
+ // 'return _batch' siempre apunte al objeto correcto sin importar el contexto.
+ const _batch = {
+ delete: function(colOrRef) {
  // Acepta tanto el resultado de db.collection().doc() como una ref directa
  const ref = colOrRef._ref || colOrRef;
  ops.push({ type: 'delete', ref });
- return this;
+ return _batch;
  },
- set: (colOrRef, data, opts) => { ops.push({ type: 'set', ref: colOrRef._ref || colOrRef, data, opts }); return this; },
- update: (colOrRef, data) => { ops.push({ type: 'update', ref: colOrRef._ref || colOrRef, data }); return this; },
+ set: function(colOrRef, data, opts) { ops.push({ type: 'set', ref: colOrRef._ref || colOrRef, data, opts }); return _batch; },
+ update: function(colOrRef, data) { ops.push({ type: 'update', ref: colOrRef._ref || colOrRef, data }); return _batch; },
  commit: async () => {
  // Firestore SDK v9 no tiene WriteBatch en esta forma; emulamos con Promise.all en chunks de 500
  const { writeBatch, doc: _doc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
@@ -100,6 +104,7 @@ try {
  }
  }
  };
+ return _batch;
  }
  window.db = {
  collection: (path) => _colCompat(_rawDb, path),

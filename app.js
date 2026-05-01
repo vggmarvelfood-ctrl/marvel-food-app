@@ -2705,67 +2705,26 @@ window.addEventListener('hashchange', function() {
  }
 });
 
-// PIN 
-// Admin Auth — SHA-256 hash + rate-limit + lockout 
-const _ADM_HASH = "1134c0a7d44fdae1afd7f1f64e2789496784095ca0a050947d659c256d331d34";
-let _admFailCount = 0;
-let _admLockUntil = 0;
-
-async function _sha256(str) {
- const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
- return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-}
-
-async function admCheckPin() {
- const input = document.getElementById('adm-pin');
- const pinFeedback = document.getElementById('adm-pin-feedback');
- if (!input) return;
- const now = Date.now();
-
- // Lockout check
- if (now < _admLockUntil) {
- const seg = Math.ceil((_admLockUntil - now) / 1000);
- if (pinFeedback) { pinFeedback.textContent = `Bloqueado ${seg}s. Demasiados intentos.`; pinFeedback.style.color='#ef4444'; }
- input.value = '';
- return;
- }
-
- const hash = await _sha256(input.value.trim());
- if (hash === _ADM_HASH) {
- _admFailCount = 0;
- sessionStorage.setItem('_mfa_ok', hash.slice(0,16));
- window.__IS_ADMIN__ = true;
- input.value = '';
+// Admin Auth — Google Auth único factor
+// PIN eliminado: el hash SHA-256 hardcodeado en el bundle era crackeable
+// offline en segundos (espacio de búsqueda ~10^6). El acceso real lo
+// controla firebase-config.js → _verificarRolConClaims() que verifica
+// custom claims o el campo rol:'admin' en Firestore/usuarios/{uid}.
+// _mfa_ok se setea aquí para que el heartbeat de más abajo lo detecte.
+function admCheckPin() {
  const pf = document.getElementById('adm-pin-feedback');
- // PIN correcto → lanzar Google Login (popup) para crear sesión Firebase Auth.
- // Sin sesión Auth, las reglas de Firestore (esAdmin()) rechazan todo.
- // El warning COOP del popup es inofensivo — no bloquea nada.
+ if (pf) { pf.textContent = 'Iniciando sesión con Google...'; pf.style.color = '#10b981'; }
+ // Marcar sesión ANTES del popup para que el heartbeat no la invalide
+ // mientras el popup de Google está abierto.
+ sessionStorage.setItem('_mfa_ok', 'google-auth');
  if (typeof admGoogleLogin === 'function') {
-   if (pf) { pf.textContent = 'PIN correcto ✓ — autenticá tu cuenta Google...'; pf.style.color = '#10b981'; }
    admGoogleLogin();
  } else {
-   // Fallback: firebase-config.js no cargó aún
-   if (pf) { pf.textContent = 'PIN correcto.'; pf.style.color = '#10b981'; }
-   document.getElementById('adm-login-screen').style.display = 'none';
-   document.getElementById('adm-app').style.display = 'block';
-   admFechaHoy(); admIniciar();
-   setTimeout(() => { admSwitchTab('pedidos', document.querySelector('.adm-tab')); }, 100);
- }
- } else {
- input.value = '';
- _admFailCount++;
- input.value = '';
- const _delays = [0,0,0,15000,15000,60000,60000,60000,300000];
- const _delay = _delays[Math.min(_admFailCount, _delays.length-1)];
- if (_delay > 0) _admLockUntil = Date.now() + _delay;
- const _extra = _admFailCount >= 3 ? ` (intento ${_admFailCount})` : '';
- const _pf = document.getElementById('adm-pin-feedback');
- if (_pf) { _pf.textContent = `PIN incorrecto${_extra}.`; _pf.style.color='#ef4444'; }
- input.placeholder = 'Reintentá...';
- input.style.borderColor = '#ef4444';
- setTimeout(() => { input.placeholder = 'PIN de acceso'; input.style.borderColor = ''; const pf=document.getElementById('adm-pin-feedback'); if(pf) pf.textContent=''; }, 3000);
+   if (pf) { pf.textContent = 'Error: Firebase no cargó. Recargá la página.'; pf.style.color = '#ef4444'; }
+   sessionStorage.removeItem('_mfa_ok');
  }
 }
+
 
 function admLogout() {
  sessionStorage.removeItem('_mfa_ok');

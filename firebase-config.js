@@ -3,7 +3,8 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebas
 import {
  getFirestore, collection, doc,
  getDoc, getDocs, addDoc, updateDoc, deleteDoc, setDoc,
- onSnapshot, query, where, orderBy, limit, serverTimestamp
+ onSnapshot, query, where, orderBy, limit,
+ serverTimestamp, arrayUnion, arrayRemove, increment
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import {
  getAuth, signInWithPopup, GoogleAuthProvider,
@@ -108,7 +109,7 @@ try {
  // Compatibilidad con firebase.firestore.FieldValue.serverTimestamp() 
  window.firebase = {
  firestore: {
- FieldValue: { serverTimestamp: () => serverTimestamp() }
+ FieldValue: { serverTimestamp: () => serverTimestamp(), arrayUnion: (...items) => arrayUnion(...items), arrayRemove: (...items) => arrayRemove(...items), increment: (n) => increment(n) }
  }
  };
 
@@ -307,5 +308,5 @@ try {
 } catch(e) {
   console.error('[Firebase] Error de inicialización modular:', e);
   window.db = null;
-  window.firebase = { firestore: { FieldValue: { serverTimestamp: () => null } } };
+  window.firebase = { firestore: { FieldValue: { serverTimestamp: () => null, arrayUnion: (...i) => i, arrayRemove: (...i) => i, increment: (n) => n } } };
 }

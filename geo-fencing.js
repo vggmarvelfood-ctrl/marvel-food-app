@@ -1,6 +1,6 @@
 // geo-fencing.js — Panel admin de zonas de envío con Leaflet + Firebase
 // GeoFencing Admin Panel 
-let _gfPendingFile = null;
+// _gfPendingFile lives inside the IIFE below — outer decl removed (shadowing bug fix).
 const _GF_ADMINS = ['ulises', 'leticia'];
 
 // Context-aware getElementById: when the floating modal (gf-import-panel) is
@@ -34,64 +34,45 @@ window.admAbrirGeoFencing = function() {
 
 window.admCerrarGeoFencing = function() {
  document.getElementById('gf-import-panel').style.display = 'none';
- _gfPendingFile = null;
+  // Reset file input so IIFE's _gfPendingFile won't carry over to next open.
+  const fi = document.getElementById('gf-kml-input'); if (fi) fi.value = '';
 };
 
 function gfHandleFile(evt) {
+ // Delegate to the IIFE version which manages its own _gfPendingFile.
+ // At call time the IIFE has already run, so window.gfHandleFile IS the correct one.
+ // Avoid infinite recursion: only delegate if window.gfHandleFile is not this function.
+ if (window.gfHandleFile && window.gfHandleFile !== gfHandleFile) {
+   window.gfHandleFile(evt);
+   return;
+ }
+ // Fallback (should never happen after IIFE runs)
  const file = evt.target.files[0];
  if (!file) return;
- _gfPendingFile = file;
  gfEl('gf-drop-label').textContent = ' ' + file.name + ' listo';
  gfEl('gf-drop-zone').style.borderColor = '#10b981';
  const btn = gfEl('gf-btn-sync');
- btn.disabled = false;
- btn.style.background = '#f59e0b';
- btn.style.color = '#000';
- btn.style.cursor = 'pointer';
+ if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; }
 }
 
 function gfHandleDrop(evt) {
+ // Delegate to the IIFE version (which has correct _gfPendingFile scope).
+ if (window.gfHandleDrop && window.gfHandleDrop !== gfHandleDrop) {
+   window.gfHandleDrop(evt);
+   return;
+ }
  evt.preventDefault();
  evt.currentTarget.style.borderColor = '#333';
  evt.currentTarget.style.background = '';
  const file = Array.from(evt.dataTransfer.files).find(f => f.name.endsWith('.kml') || f.name.endsWith('.geojson') || f.name.endsWith('.json')
  );
  if (!file) { gfShowResult('Solo se aceptan archivos .kml o .geojson', 'error'); return; }
- // Simular cambio de input
- const dt = new DataTransfer();
- dt.items.add(file);
- document.getElementById('gf-kml-input').files = dt.files;
  gfHandleFile({ target: { files: [file] } });
 }
 
-async function gfRunSync() {
- if (!_gfPendingFile) { gfShowResult('Seleccioná un archivo KML o GeoJSON primero.', 'warn'); return; }
- const user = _gfCurrentAdmin();
- if (!_GF_ADMINS.includes(user)) { gfShowResult('Sin permisos de administración.', 'error'); return; }
-
- const btn = gfEl('gf-btn-sync');
- btn.textContent = ' Importando…';
- btn.disabled = true;
-
- try {
- const result = await window.syncMapData(_gfPendingFile, { name: user });
- if (result.ok) {
- gfShowResult(
- ` ${result.imported} zonas importadas · ${result.skipped} omitidas${result.errors.length ? ' · ' + result.errors.length + ' errores' : ''}`,
- 'success'
- );
- window.gfInvalidateCache();
- gfCargarStats();
- } else {
- gfShowResult(' Error: ' + result.error, 'error');
- }
- } catch(e) {
- gfShowResult(' ' + e.message, 'error');
- } finally {
- btn.textContent = 'Sincronizar con Firebase';
- btn.disabled = false;
- }
-}
+// gfRunSync: delegated to window.gfRunSync defined inside the IIFE below.
+// The outer stub is intentionally removed to prevent it from overwriting
+// the correct implementation that has the full KML/GeoJSON import logic.
 
 function gfShowResult(msg, type) {
  const el = document.getElementById('gf-import-result');

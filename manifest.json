@@ -13,6 +13,12 @@
       "src": "https://i.ibb.co/99ZnNCv2/marvellogo-1776049384955.jpg",
       "sizes": "192x192",
       "type": "image/jpeg"
+    },
+    {
+      "src": "https://i.ibb.co/99ZnNCv2/marvellogo-1776049384955.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
     }
   ]
 }

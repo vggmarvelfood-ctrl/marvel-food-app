@@ -4,15 +4,10 @@
 // Tarea 1: Unificación de Script (Integration Doc §6)
 // 
 window.CONFIG = {
- firebase: {
- apiKey: "AIzaSyAeRlE9S5pnEUuhxRXoOX6lMX4Ryky0uSI",
- authDomain: "marvel-food-fa570.firebaseapp.com",
- projectId: "marvel-food-fa570",
- storageBucket: "marvel-food-fa570.firebasestorage.app",
- messagingSenderId: "351263580699",
- appId: "1:351263580699:web:9ba99708a021e5eabecebe",
- measurementId: "G-Z7X80SVSX6"
- },
+ // AVISO resuelto: credenciales Firebase eliminadas de aquí.
+ // Fuente de verdad única: firebase-config.js (inicializa el SDK).
+ // Si necesitás acceder al config: window._firebaseConfig (expuesto por firebase-config.js).
+ firebase: null, // placeholder — no usar; el SDK ya está inicializado por firebase-config.js
  emailjs: {
  publicKey: 'sATMMVYtIbZLT1tMD',
  serviceId: 'service_mf',
@@ -38,6 +33,29 @@ window.CONFIG = {
  specialAccessKeywords: ['barrio privado', 'golf club', 'countries', 'country']
  }
 };
+
+
+// ── GUARD DE ORDEN DE CARGA ────────────────────────────────────────────────
+// zona-verificacion.js depende de símbolos definidos en app.js (ZONA_INFO_UI,
+// sucursalMasCercana, sucursalParaPunto, puntoDentroDePoligono, ZONA_POLIGONOS)
+// y de la variable _gfFireCache del IIFE en geo-fencing.js.
+// Si alguno falta, el error es inmediato y legible en lugar de un fallo silencioso.
+// NOTA: _gfZonesCache era un nombre incorrecto — la variable real es _gfFireCache
+// en geo-fencing.js; es privada del IIFE y no se puede exponer directamente.
+// El guard de abajo usa window.determinarSucursal (sí expuesto) como proxy.
+(function _checkLoadOrder() {
+  var missing = [];
+  if (typeof ZONA_INFO_UI === 'undefined')           missing.push('ZONA_INFO_UI (app.js)');
+  if (typeof sucursalMasCercana !== 'function')      missing.push('sucursalMasCercana (app.js)');
+  if (typeof sucursalParaPunto !== 'function')       missing.push('sucursalParaPunto (app.js)');
+  if (typeof puntoDentroDePoligono !== 'function')   missing.push('puntoDentroDePoligono (app.js)');
+  if (missing.length) {
+    console.error(
+      '[zona-verificacion] Error de orden de carga. Faltan: ' + missing.join(', ') + '.\n' +
+      'Asegurate de que app.js se cargue ANTES que zona-verificacion.js en el HTML.'
+    );
+  }
+})();
 
 // 
 // GEO-FENCING v3 — MÓDULO DINÁMICO (reemplaza polígonos estáticos)
@@ -273,24 +291,16 @@ async function verificarDireccion(direccion, localidadOverride) {
  const { lat, lng } = coords;
  _coordsVerificadas = { lat, lng };
 
- // v3: usar Firebase+Turf si disponible, fallback a estático 
+ // BUGFIX: _gfZonesCache nunca existió (era un nombre incorrecto; la variable
+ // real es _gfFireCache, privada del IIFE de geo-fencing.js). La condición
+ // siempre era falsa y el bloque Turf nunca corría. Ahora usamos la API pública
+ // window.determinarSucursal() que ya encapsula Firebase+Turf+fallback.
  let enZonaActual, sucCubre;
- if (_gfZonesCache && window.turf) {
- const punto = turf.point([lng, lat]);
- enZonaActual = false; sucCubre = null;
- for (const f of _gfZonesCache.features) {
- if (!f.geometry) continue;
- try {
- const poly = f.geometry.type === 'MultiPolygon'
- ? turf.multiPolygon(f.geometry.coordinates)
- : turf.polygon(f.geometry.coordinates);
- if (turf.booleanPointInPolygon(punto, poly)) {
- sucCubre = f.properties.sucursal;
- if (f.properties.sucursal === sucId) enZonaActual = true;
- break;
- }
- } catch(_) {}
- }
+ if (typeof window.determinarSucursal === 'function') {
+ // Llamada asíncrona ya resuelta arriba vía validarPedidoParaEnvio;
+ // aquí usamos el fallback estático síncrono para no duplicar awaits.
+ enZonaActual = puntoDentroDePoligono(lat, lng, ZONA_POLIGONOS[sucId]);
+ sucCubre = sucursalParaPunto(lat, lng);
  } else {
  enZonaActual = puntoDentroDePoligono(lat, lng, ZONA_POLIGONOS[sucId]);
  sucCubre = sucursalParaPunto(lat, lng);

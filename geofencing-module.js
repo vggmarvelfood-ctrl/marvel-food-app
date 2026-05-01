@@ -1,4 +1,20 @@
 /**
+ * ⚠️  ARCHIVO LEGACY — NO CARGAR EN PRODUCCIÓN ⚠️
+ *
+ * Este módulo (GeoFencing v1) fue reemplazado por el IIFE dentro de geo-fencing.js.
+ * Diferencias clave que lo hacen incompatible con el sistema actual:
+ *   - Usa google.maps.Map + DrawingManager (el sistema activo usa Leaflet)
+ *   - Su syncMapData() guardaba geometry como objeto JS; el activo lo serializa a string
+ *   - Su determinarSucursal() no tiene el fallback GeoJSON embebido
+ *
+ * Si necesitás restaurar funcionalidad de este archivo, migrá a geo-fencing.js.
+ * Para eliminar definitivamente: borrar este archivo y asegurarte de que NO aparezca
+ * en ningún <script> tag del HTML.
+ *
+ * Última revisión: 2026-04 — marcado como deprecado.
+ */
+
+/**
  * ============================================================
  *  MARVEL FOOD — MÓDULO DE GEO-FENCING DINÁMICO v2.0
  *  Reemplaza los polígonos estáticos de ZONA_POLIGONOS por

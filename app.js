@@ -1752,7 +1752,7 @@ function _peoCerrarYRedirigir(overlay, url) {
  if(tabId === 'tab-pedidos') renderHistorialPedidos();
  if(tabId === 'tab-opiniones') cargarOpinionesPub();
  if(tabId === 'tab-zonas') renderZonasCards();
- if(tabId === 'tab-ayuda') { const n=document.querySelector('.nav-item[onclick*=tab-zonas]'); if(n){document.querySelectorAll('.tab-page').forEach(p=>p.classList.add('hidden')); document.getElementById('tab-zonas').classList.remove('hidden'); document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active')); n.classList.add('active');} return; }
+ // tab-ayuda now has its own nav button — no redirect needed.
 
  window.scrollTo(0,0);
  };

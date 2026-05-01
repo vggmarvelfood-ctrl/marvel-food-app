@@ -3,6 +3,19 @@
 let _gfPendingFile = null;
 const _GF_ADMINS = ['ulises', 'leticia'];
 
+// Context-aware getElementById: when the floating modal (gf-import-panel) is
+// open, resolves to the "-m" suffixed variant of the element so the modal's
+// controls are targeted instead of the sidebar's identically-named ones.
+// Falls back to the plain ID when the modal is closed (sidebar context).
+function gfEl(id) {
+  const modal = document.getElementById('gf-import-panel');
+  if (modal && modal.style.display === 'flex') {
+    const modalEl = document.getElementById(id + '-m');
+    if (modalEl) return modalEl;
+  }
+  return document.getElementById(id);
+}
+
 function _gfCurrentAdmin() {
  // Detectar usuario admin activo desde el sistema de admin del index
  const admUser = (window._admCurrentUser || window.admCurrentUser || '').toString().toLowerCase();
@@ -28,9 +41,9 @@ function gfHandleFile(evt) {
  const file = evt.target.files[0];
  if (!file) return;
  _gfPendingFile = file;
- document.getElementById('gf-drop-label').textContent = ' ' + file.name + ' listo';
- document.getElementById('gf-drop-zone').style.borderColor = '#10b981';
- const btn = document.getElementById('gf-btn-sync');
+ gfEl('gf-drop-label').textContent = ' ' + file.name + ' listo';
+ gfEl('gf-drop-zone').style.borderColor = '#10b981';
+ const btn = gfEl('gf-btn-sync');
  btn.disabled = false;
  btn.style.background = '#f59e0b';
  btn.style.color = '#000';
@@ -56,7 +69,7 @@ async function gfRunSync() {
  const user = _gfCurrentAdmin();
  if (!_GF_ADMINS.includes(user)) { gfShowResult('Sin permisos de administración.', 'error'); return; }
 
- const btn = document.getElementById('gf-btn-sync');
+ const btn = gfEl('gf-btn-sync');
  btn.textContent = ' Importando…';
  btn.disabled = true;
 
@@ -516,9 +529,9 @@ window.gfHandleFile = function(evt) {
  const file = evt.target.files[0];
  if (!file) return;
  _gfPendingFile = file;
- document.getElementById('gf-drop-label').textContent = 'OK: ' + file.name;
- document.getElementById('gf-drop-zone').style.borderColor = '#10b981';
- const btn = document.getElementById('gf-btn-sync');
+ gfEl('gf-drop-label').textContent = 'OK: ' + file.name;
+ gfEl('gf-drop-zone').style.borderColor = '#10b981';
+ const btn = gfEl('gf-btn-sync');
  if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; }
 };
 
@@ -536,7 +549,7 @@ window.gfRunSync = async function() {
  if (!_gfPendingFile) { gfFeedback('Selecciona un archivo KML o GeoJSON primero.', 'warn'); return; }
  if (!window.db) { gfFeedback('Firebase no disponible.', 'error'); return; }
 
- const btn = document.getElementById('gf-btn-sync');
+ const btn = gfEl('gf-btn-sync');
  if (btn) { btn.disabled = true; btn.textContent = 'Importando...'; }
 
  const isGeoJSONFile = _gfPendingFile.name.endsWith('.geojson') || _gfPendingFile.name.endsWith('.json');
@@ -561,7 +574,7 @@ window.gfRunSync = async function() {
  geoJSON = toGeoJSON.kml(kmlDOM);
  }
 
- const overwrite = document.getElementById('gf-overwrite')?.checked !== false;
+ const overwrite = gfEl('gf-overwrite')?.checked !== false;
  let imported = 0, skipped = 0;
  const errors = [];
 

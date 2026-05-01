@@ -1206,35 +1206,6 @@ window.procesarPedido = async () => {
  const docRef = await db.collection("pedidos_v2").add(_pedidoLimpio);
  const pedidoId = docRef.id;
 
- // Auditoría de ventas en colección 'orders' (Tarea 3) 
- // Registro liviano para alimentar el dashboard de ventas futuro.
- // No bloquea el flujo: cualquier error se captura silenciosamente.
- (async function _registrarOrdenAuditoria() {
- try {
- if (!window.db) return;
- await db.collection(
- (window.CONFIG?.collections?.orders) || 'orders'
- ).add({
- pedidoId,
- sucursal: ordenDatos.sucursal,
- sucursalId: ordenDatos.sucursalId,   // FIX: agregar ID corto para queries exactas
- tipo: ordenDatos.tipo,
- total: total,
- subtotal: sub,
- descuento: montoDescuento,
- pago: pago,
- itemCount: carrito.length,
- gps: ordenDatos.gps,
- // Productos (sólo nombre + cantidad para estadísticas)
- productos: carritoSnapshot.map(i => ({ n: i.n, cant: i.cant, precio: i.p })),
- zona: (typeof _wsSucursalDetectada !== 'undefined' ? _wsSucursalDetectada : null),
- fecha: firebase.firestore.FieldValue.serverTimestamp(),
- fechaISO: new Date().toISOString(),
- });
- } catch(e) {
- console.warn('[Auditoría] No se pudo registrar en orders:', e.message);
- }
- })();
 
  // Guardar pedidoId para seguimiento en tiempo real
  // Guardar dirección para pre-cargar la próxima vez
@@ -1283,6 +1254,34 @@ window.procesarPedido = async () => {
 
  // Capturar snapshot del carrito ANTES de vaciarlo (lo usa el mensaje de WhatsApp)
  const carritoSnapshot = carrito.slice();
+
+ // Auditoría de ventas en colección 'orders'
+ // Movido DESPUÉS de carritoSnapshot para evitar "Cannot access before initialization"
+ (async function _registrarOrdenAuditoria() {
+ try {
+ if (!window.db) return;
+ await db.collection(
+ (window.CONFIG?.collections?.orders) || 'orders'
+ ).add({
+ pedidoId,
+ sucursal: ordenDatos.sucursal,
+ sucursalId: ordenDatos.sucursalId,
+ tipo: ordenDatos.tipo,
+ total: total,
+ subtotal: sub,
+ descuento: montoDescuento,
+ pago: pago,
+ itemCount: carritoSnapshot.length,
+ gps: ordenDatos.gps,
+ productos: carritoSnapshot.map(i => ({ n: i.n, cant: i.cant, precio: i.p })),
+ zona: (typeof _wsSucursalDetectada !== 'undefined' ? _wsSucursalDetectada : null),
+ fecha: firebase.firestore.FieldValue.serverTimestamp(),
+ fechaISO: new Date().toISOString(),
+ });
+ } catch(e) {
+ console.warn('[Auditoría] No se pudo registrar en orders:', e.message);
+ }
+ })();
 
  // Limpiar cupón y carrito persistente
  cuponAplicado = null;

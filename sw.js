@@ -1,22 +1,28 @@
 // ============================================================
-//  Marvel Food — Service Worker v6
-//  Estrategia: Cache-First para activos estáticos e imágenes
-//              Network-First para Firebase / API
+//  Marvel Food — Service Worker v9
+//  Cambios respecto a v8:
+//  - diagnostics.js agregado a SHELL_ASSETS (ahora es archivo externo)
+//  - íconos de PWA cambiados a rutas locales /icons/ (ya no dependen de ImgBB)
+//  - íconos locales agregados al precache de IMG_CACHE
 // ============================================================
 
-const CACHE_NAME   = 'marvel-food-v8';
-const IMG_CACHE    = 'marvel-food-img-v8';
+const CACHE_NAME   = 'marvel-food-v9';
+const IMG_CACHE    = 'marvel-food-img-v9';
 
 // Activos del shell de la app (siempre disponibles offline)
 const SHELL_ASSETS = [
   './',
   './index.html',
   './manifest.json',
+  './diagnostics.js',
 ];
 
 // Imágenes críticas del menú (hero + productos principales)
 // Se precargan en la instalación para carga instantánea
 const PRECACHE_IMAGES = [
+  // Íconos PWA locales (ya no dependen de ImgBB)
+  '/icon-192.png',
+  '/icon-512.png',
   // Hero slider
   'https://i.ibb.co/CsY32Zpc/Hulk-6.jpg',
   'https://i.ibb.co/sp9f92tD/DSC04607.jpg',
@@ -86,13 +92,13 @@ const NETWORK_ONLY = [
 self.addEventListener('install', event => {
   event.waitUntil(
     Promise.all([
-      // Shell de la app
+      // Shell de la app (incluyendo diagnostics.js)
       caches.open(CACHE_NAME).then(cache =>
         cache.addAll(SHELL_ASSETS).catch(e =>
           console.warn('[SW] Shell precache parcial:', e)
         )
       ),
-      // Imágenes del menú (cada una en silencio si falla — CDN externa)
+      // Imágenes del menú + íconos PWA locales
       caches.open(IMG_CACHE).then(cache =>
         Promise.allSettled(
           PRECACHE_IMAGES.map(url =>
@@ -129,6 +135,7 @@ self.addEventListener('fetch', event => {
   if (NETWORK_ONLY.some(domain => url.hostname.includes(domain))) return;
 
   // 3. Imágenes: Cache-First con fallback a red y almacenamiento en caché
+  //    Incluye los íconos PWA locales (/icons/)
   if (/\.(jpg|jpeg|png|gif|webp|svg|ico)$/i.test(url.pathname) ||
       url.hostname === 'i.ibb.co') {
     event.respondWith(
@@ -156,7 +163,7 @@ self.addEventListener('fetch', event => {
   }
 
   // 5. Shell de la app: Network-First con fallback al caché
-  //    (para que index.html siempre tenga el código más reciente)
+  //    (para que index.html y diagnostics.js siempre tengan el código más reciente)
   event.respondWith(
     fetch(request)
       .then(response => {

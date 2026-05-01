@@ -1,3 +1,19 @@
+// ⚠️  ARCHIVO MUERTO — NO SE REGISTRA EN LA APP ⚠️
+//
+// El service worker activo es sw.js (v8), registrado en sw-pwa.js.
+// Este archivo (v7) NO se carga en ningún lado y tiene diferencias
+// respecto al activo: las fuentes de Google se cachean aquí con
+// Cache-First, lo cual genera respuestas opacas que rompen la carga
+// del CSS (ERR_FAILED). sw.js corrige esto dejando las fuentes pasar
+// directo a la red.
+//
+// Para eliminar definitivamente: borrar este archivo.
+// Para distinguirlo visualmente: el CACHE_NAME aquí es 'marvel-food-v7';
+// el activo usa 'marvel-food-v8'.
+//
+// Última revisión: 2026-04 — marcado como dead code.
+// ============================================================
+
 // ============================================================
 //  Marvel Food — Service Worker v6
 //  Estrategia: Cache-First para activos estáticos e imágenes

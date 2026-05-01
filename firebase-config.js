@@ -196,11 +196,33 @@ try {
 
  window._fcmGetToken = async function() {
  try {
+ // Verificar que haya un SW activo (controlling) antes de pedir el token.
+ // Si no hay SW controlando la página, subscribe() falla con
+ // "no active Service Worker". Esperar registro + activación completa.
+ if (!navigator.serviceWorker.controller) {
+   // Esperar hasta 8s a que el SW tome control (puede tardar en primera carga)
+   await new Promise((resolve, reject) => {
+     const timeout = setTimeout(() => reject(new Error('SW controller timeout')), 8000);
+     navigator.serviceWorker.addEventListener('controllerchange', () => {
+       clearTimeout(timeout);
+       resolve();
+     }, { once: true });
+   });
+ }
  // Race con timeout para evitar que navigator.serviceWorker.ready cuelgue en Android
  const reg = await Promise.race([
- navigator.serviceWorker.ready,
- new Promise((_, rej) => setTimeout(() => rej(new Error('SW ready timeout')), 10000))
+   navigator.serviceWorker.ready,
+   new Promise((_, rej) => setTimeout(() => rej(new Error('SW ready timeout')), 10000))
  ]);
+ // Verificar que el SW registrado esté activo (state === 'activated')
+ const sw = reg.active || reg.installing || reg.waiting;
+ if (!sw || sw.state === 'installing') {
+   await new Promise((resolve) => {
+     sw.addEventListener('statechange', function handler(e) {
+       if (e.target.state === 'activated') { sw.removeEventListener('statechange', handler); resolve(); }
+     });
+   });
+ }
  const token = await getToken(messaging, { vapidKey: FCM_VAPID_KEY, serviceWorkerRegistration: reg });
  return token || null;
  } catch(e) {

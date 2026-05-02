@@ -773,4 +773,8 @@ window.determinarSucursal = async function(lat, lng) {
  return null;
 };
 
+
+  // Exponer GeoJSON como global para zona-verificacion.js + geo-compat functions
+  window._gfGeojson = GF_GEOJSON;
+
 })(); // end IIFE

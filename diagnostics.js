@@ -43,8 +43,7 @@
  console.log('Logs limpiados');
  };
 })();
-</script>
-<script>
+
 // Detector de conexión en tiempo real 
 (function() {
  function setBanner(isOffline) {

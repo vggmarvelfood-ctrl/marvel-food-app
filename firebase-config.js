@@ -147,8 +147,8 @@ try {
    if (btn) { btn.disabled = true; btn.textContent = 'Conectando...'; }
    try {
      const result = await signInWithPopup(_auth, _googleProvider);
-     console.log('[Auth] UID:', result.user.uid);
-     await _verificarRol(result.user.uid);
+     console.log('[Auth] Google OK. UID:', result.user.uid);
+     // No llamar _verificarRol aquí: adm-pin-system.js mostrará el PIN dialog
    } catch (err) {
      console.error('[Auth] Error login:', err);
      if (err.code === 'auth/unauthorized-domain') {

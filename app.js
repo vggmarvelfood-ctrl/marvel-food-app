@@ -725,7 +725,7 @@ window.openModal = (p) => {
  // Seteamos textos e imagen
  document.getElementById('m-title').innerText = p.n;
  document.getElementById('m-desc').innerText = p.d;
- document.getElementById('m-img').style.backgroundImage = `url('${p.img}')`;
+ document.getElementById('m-img').style.backgroundImage = (p.img && p.img !== 'undefined') ? `url('${p.img}')` : 'none';
  document.getElementById('m-qty').innerText = "1";
  document.getElementById('m-obs').value = "";
 
@@ -3624,7 +3624,7 @@ function admEditar(id) {
  if (selSuc) selSuc.value = p.sucursal || '';
 
  document.getElementById('adm-e-items').innerHTML = (p.items || []).map((item, idx) => `
- <div class="adm-edit-item" id="adm-ei-${idx}"><input type="number" min="1" value="${item.cant}" onchange="admRecalc()" id="adm-eq-${idx}"><div style="flex:1;"><div class="eil">${item.n}</div><div class="eip">$${Math.round((item.totalItem || 0) / item.cant).toLocaleString('es-AR')} c/u</div></div><button class="adm-del-item" onclick="admDelItem(${idx})">×</button></div>`).join('');
+ <div class="adm-edit-item" id="adm-ei-${idx}"><input type="number" min="1" value="${parseInt(item.cant) || 1}" onchange="admRecalc()" id="adm-eq-${idx}"><div style="flex:1;"><div class="eil">${item.n}</div><div class="eip">$${Math.round((item.totalItem || 0) / item.cant).toLocaleString('es-AR')} c/u</div></div><button class="adm-del-item" onclick="admDelItem(${idx})">×</button></div>`).join('');
 
  admRecalc();
  document.getElementById('adm-modal-edit').classList.add('open');
@@ -4133,8 +4133,7 @@ function admRenderPromos() {
  const diaLabel = p.diaVenta !== null && p.diaVenta !== undefined ? DIAS[p.diaVenta] : 'Todos los días';
  const descuento = p.pOriginal > p.p ? Math.round((1 - p.p / p.pOriginal) * 100) : 0;
  html += `
- <div style="background:var(--surface);border:1px solid ${activo ? 'var(--border)' : '#ef444444'};border-radius:12px;margin-bottom:10px;overflow:hidden;"><div style="display:flex;gap:10px;padding:12px;"><img src="${p.img || ''}" loading="lazy" decoding="async" width="60" height="60" style="width:60px;height:60px;object-fit:cover;border-radius:8px;flex-shrink:0;background:#333;"
- onerror="this.style.background='#333';this.src=''"><div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:800;color:${activo ? 'var(--white)' : '#666'};margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.n}</div><div style="font-size:10px;color:#9ca3af;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.d || ''}</div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:11px;color:#9ca3af;text-decoration:line-through;">$${(p.pOriginal||0).toLocaleString('es-AR')}</span><span style="font-size:14px;font-weight:800;color:#10b981;">$${(p.p||0).toLocaleString('es-AR')}</span> ${descuento > 0 ? `<span style="background:rgba(16,185,129,.15);color:#10b981;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;">-${descuento}%</span>` : ''}
+ <div style="background:var(--surface);border:1px solid ${activo ? 'var(--border)' : '#ef444444'};border-radius:12px;margin-bottom:10px;overflow:hidden;"><div style="display:flex;gap:10px;padding:12px;">${(p.img && p.img !== 'undefined') ? `<img src="${p.img}" loading="lazy" decoding="async" width="60" height="60" style="width:60px;height:60px;object-fit:cover;border-radius:8px;flex-shrink:0;background:#333;" onerror="this.style.display='none'">` : `<div style="width:60px;height:60px;border-radius:8px;flex-shrink:0;background:#333;font-size:20px;display:flex;align-items:center;justify-content:center;"></div>`}<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:800;color:${activo ? 'var(--white)' : '#666'};margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.n}</div><div style="font-size:10px;color:#9ca3af;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.d || ''}</div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:11px;color:#9ca3af;text-decoration:line-through;">$${(p.pOriginal||0).toLocaleString('es-AR')}</span><span style="font-size:14px;font-weight:800;color:#10b981;">$${(p.p||0).toLocaleString('es-AR')}</span> ${descuento > 0 ? `<span style="background:rgba(16,185,129,.15);color:#10b981;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;">-${descuento}%</span>` : ''}
  <span style="background:rgba(245,158,11,.12);color:var(--primary);font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;"> ${diaLabel}</span></div></div><div style="display:flex;flex-direction:column;align-items:center;gap:4px;"><label class="adm-toggle" title="${activo ? 'Desactivar' : 'Activar'}"><input type="checkbox" ${activo ? 'checked' : ''} onchange="admTogglePromo('${p.id}')"><span class="adm-toggle-slider"></span></label><span style="font-size:9px;color:${activo ? '#10b981' : '#ef4444'};font-weight:700;">${activo ? 'ON' : 'OFF'}</span></div></div><div style="display:flex;gap:0;border-top:1px solid var(--border);"><button onclick="admAbrirFormPromo('${p.id}')"
  style="flex:1;padding:8px;background:transparent;border:none;border-right:1px solid var(--border);color:var(--primary);font-size:12px;font-weight:700;cursor:pointer;"> Editar
  </button> ${!p._base ? `

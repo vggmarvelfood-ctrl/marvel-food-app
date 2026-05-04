@@ -453,17 +453,27 @@ try {
  }
 
  /**
-  * Route Guard: oculta el panel admin si no hay sesión activa.
+  * Route Guard: si se pierde la sesión mientras el panel de app está abierto,
+  * vuelve al login. NO oculta admin-root completo porque contiene la pantalla
+  * de login que el usuario necesita ver para autenticarse.
   */
  function _routeGuard() {
   const adminRoot = document.getElementById('admin-root');
   if (!adminRoot) return;
   onAuthStateChanged(_auth, (user) => {
-   if (!user && adminRoot.style.display !== 'none') {
-    console.warn('[RouteGuard] Panel admin visible sin sesión. Ocultando.');
-    adminRoot.style.display = 'none';
+   if (!user) {
+    // Solo actuar si el usuario estaba dentro del panel de app (no en el login)
+    const adminApp   = document.getElementById('adm-app');
     const loginScreen = document.getElementById('adm-login-screen');
-    if (loginScreen) loginScreen.style.display = 'block';
+    const appVisible  = adminApp && adminApp.style.display !== 'none';
+    if (appVisible) {
+     console.warn('[RouteGuard] Sesión perdida. Volviendo al login admin.');
+     adminApp.style.display = 'none';
+     if (loginScreen) loginScreen.style.display = 'block';
+     sessionStorage.removeItem('_mfa_ok');
+     window.__IS_ADMIN__ = false;
+    }
+    // Si el usuario ve el login screen no hay nada que ocultar
    }
   });
  }

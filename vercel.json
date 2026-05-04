@@ -1,6 +1,17 @@
 {
   "rewrites": [
-    { "source": "/admin", "destination": "/index.html" },
+    { "source": "/admin",  "destination": "/index.html" },
     { "source": "/admin/", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin-allow-popups"
+        }
+      ]
+    }
   ]
 }

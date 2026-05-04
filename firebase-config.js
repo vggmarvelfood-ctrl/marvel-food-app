@@ -61,9 +61,14 @@ function _qb(colRef, constraints) {
 }
 
 // Wrapper de documento (reemplaza doc().get(), doc().update(), etc.)
+// ✅ FIX: _ref expone la DocumentReference nativa para que _batchCompat.delete()
+//    pueda pasarla a writeBatch.delete() correctamente. Sin esto, batch.delete()
+//    recibía el objeto wrapper en lugar del DocumentReference real, causando
+//    "Provided document reference is from a different Firestore instance".
 function _docCompat(rawDb, colPath, id) {
  const ref = doc(rawDb, colPath, id);
  return {
+  _ref: ref,   // ← referencia nativa — usada por _batchCompat
   get: () => getDoc(ref).then(_patchSnap),
   update: (data) => updateDoc(ref, data),
   set: (data, opts) => setDoc(ref, data, opts || {}),

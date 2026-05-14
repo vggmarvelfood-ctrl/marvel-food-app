@@ -261,6 +261,10 @@ const SUC_MAP = {
  "B.P. Kentucky": 4300,
  "B.P. Palvear / Palos Verdes": 4300,
  "B.P. Barrio Vida / Lagoon": 4000
+ } },
+ Cafferata: { n: "Cafferata y Urquiza, Rosario", wsp: "5493413315885", mapImg: "", locs: {
+  "Rosario (Zona Cafferata)": 2000,
+  "Alto Rosario / Puerto Norte": 2000
  } }
  };
 
@@ -271,7 +275,8 @@ const ZONA_INFO_UI = {
  Centro: { label: "Rosario Centro", direccion: "Pellegrini 1149, Rosario" },
  Norte:  { label: "Rosario Norte",  direccion: "Rondeau 2430, Rosario" },
  Sur:    { label: "Rosario Sur",    direccion: "San Martín 1808, Rosario" },
- Funes:  { label: "Funes",          direccion: "RN9 972, Funes" }
+ Funes:  { label: "Funes",          direccion: "RN9 972, Funes" },
+ Cafferata: { label: "Cafferata",   direccion: "Cafferata y Urquiza, Rosario" }
 };
 
 const MENU = [

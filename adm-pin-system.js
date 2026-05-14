@@ -165,7 +165,10 @@
       feedback.textContent = '✓ ' + resultado.mensaje;
       
       // Guardar en sessionStorage
-      sessionStorage.setItem('_mfa_ok', '1');
+      // BUGFIX: geo-fencing.js (_gfSessionOk) exige tok.length >= 8; '1' solo
+      // tiene 1 carácter y causa el error "Sesion expirada" al intentar cargar
+      // zonas en el panel admin. 'pin-verified' (12 chars) pasa la validación.
+      sessionStorage.setItem('_mfa_ok', 'pin-verified');
       
       // Limpiar input
       input.value = '';

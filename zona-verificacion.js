@@ -17,7 +17,8 @@ window.CONFIG = {
  Centro: { id: 'Centro', nombre: 'Pellegrini', wsp: '5493415256090' },
  Norte: { id: 'Norte', nombre: 'Rondeau', wsp: '5493415256090' },
  Sur: { id: 'Sur', nombre: 'San Martin', wsp: '5493415256090' },
- Funes: { id: 'Funes', nombre: 'Funes', wsp: '5493416107498' }
+ Funes: { id: 'Funes', nombre: 'Funes', wsp: '5493416107498' },
+ Cafferata: { id: 'Cafferata', nombre: 'Cafferata', wsp: '5493413315885' }
  },
  admins: ['ulises', 'leticia'],
  collections: {
@@ -54,6 +55,10 @@ window.CONFIG = {
       '[zona-verificacion] Error de orden de carga. Faltan: ' + missing.join(', ') + '.\n' +
       'Asegurate de que app.js se cargue ANTES que zona-verificacion.js en el HTML.'
     );
+  }
+  // Verificar que geo-static.js incluye Cafferata en ZONA_POLIGONOS
+  if (typeof ZONA_POLIGONOS !== 'undefined' && !('Cafferata' in ZONA_POLIGONOS)) {
+    console.warn('[zona-verificacion] ZONA_POLIGONOS no tiene clave "Cafferata". Actualizá geo-static.js.');
   }
 })();
 
@@ -151,6 +156,8 @@ const LOCALIDAD_A_SUCURSAL = {
  'barrio palvear':'Funes','barrio lagoon':'Funes','barrio vida':'Funes',
  'palos verdes':'Funes','san marino':'Funes',
  'rosario':'Centro','rosario centro':'Centro','rosario capital':'Centro',
+ 'cafferata':'Cafferata','zona cafferata':'Cafferata','barrio cafferata':'Cafferata',
+ 'puerto norte':'Cafferata','alto rosario':'Cafferata',
 };
 
 const GEO_CONTEXTO = {

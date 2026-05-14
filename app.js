@@ -367,7 +367,8 @@ const HORARIOS_SUCURSALES = {
  Centro: { m_start: "11:30", m_end: "16:00", n_start: "19:00", n_end: "23:30" },
  Norte: { m_start: "11:30", m_end: "16:00", n_start: "19:00", n_end: "23:30" },
  Sur: { m_start: "11:30", m_end: "15:00", n_start: "19:00", n_end: "23:00" },
- Funes: { m_start: "11:30", m_end: "16:00", n_start: "19:00", n_end: "23:00" }
+ Funes: { m_start: "11:30", m_end: "16:00", n_start: "19:00", n_end: "23:00" },
+ Cafferata: { m_start: "11:30", m_end: "16:00", n_start: "19:00", n_end: "23:30" }
 };
 
 // NUEVO: Función para evaluar la hora real y renderizar el cartel
@@ -381,6 +382,8 @@ window.actualizarEstadoLocal = () => {
  if (!sucId) { banner.innerHTML = ''; return; }
 
  const h = HORARIOS_SUCURSALES[sucId];
+ // Guard: sucursal sin horarios configurados (nueva sucursal o valor inesperado)
+ if (!h) { banner.innerHTML = ''; return; }
  const now = new Date();
  const currentMinutes = now.getHours() * 60 + now.getMinutes();
  

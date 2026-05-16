@@ -206,55 +206,75 @@ function _parsearDireccionCompleta(rawDir, rawLoc) {
 }
 
 async function _geocodificar(direccion, localidad) {
- const bbox = '-61.3,-33.25,-60.2,-32.7';
- // Generar múltiples variantes de consulta para mayor cobertura
- const contextos = [];
- if (localidad && localidad.trim()) {
- const locNorm = localidad.trim();
- contextos.push(locNorm + ' Santa Fe Argentina');
- // Si la localidad no menciona Rosario, agregar también Rosario como alternativa
- if (!_normalizarTexto(locNorm).includes('rosario')) {
- contextos.push('Rosario Santa Fe Argentina');
- }
- } else {
- contextos.push('Rosario Santa Fe Argentina');
- contextos.push('Santa Fe Argentina');
- }
+  // MEJORA 2 — Caché de geocodificación (TTL 30 días, ahorra llamadas a API)
+  const cacheKey = ('geo_' + (direccion || '') + '_' + (localidad || '')).toLowerCase().replace(/\s+/g, '_');
+  try {
+    const geoCache = JSON.parse(localStorage.getItem('mf_geo_cache') || '{}');
+    const ahora = Date.now();
+    if (geoCache[cacheKey] && (ahora - geoCache[cacheKey].ts < 30 * 24 * 60 * 60 * 1000)) {
+      return geoCache[cacheKey].coords;
+    }
+  } catch(e) {}
 
- for (const contexto of contextos) {
- const q = encodeURIComponent(direccion + ' ' + contexto);
- // Intento 1: Photon (Komoot) — muy bueno para Argentina
- try {
- const r = await fetch(`https://photon.komoot.io/api/?q=${q}&limit=3&bbox=${bbox}`, { signal: AbortSignal.timeout(6000) });
- if (r.ok) {
- const d = await r.json();
- if (d.features && d.features.length) {
- // Preferir resultados dentro del bbox
- const valido = d.features.find(f => {
- const [lng, lat] = f.geometry.coordinates;
- return lat >= -33.26 && lat <= -32.7 && lng >= -61.3 && lng <= -60.2;
- });
- if (valido) {
- const [lng, lat] = valido.geometry.coordinates;
- return { lat, lng };
- }
- }
- }
- } catch(e) {}
- // Intento 2: Nominatim (OSM) — más lento pero muy completo
- try {
- const q2 = encodeURIComponent(direccion + ', ' + contexto);
- const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${q2}&format=json&limit=3&countrycodes=ar&viewbox=-61.3,-32.7,-60.2,-33.26&bounded=1`, {
- signal: AbortSignal.timeout(6000),
- headers: { 'Accept-Language': 'es', 'User-Agent': 'MarvelFood/1.0' }
- });
- if (r.ok) {
- const d = await r.json();
- if (d && d.length) return { lat: parseFloat(d[0].lat), lng: parseFloat(d[0].lon) };
- }
- } catch(e) {}
- }
- return null;
+  const bbox = '-61.3,-33.25,-60.2,-32.7';
+  // Generar múltiples variantes de consulta para mayor cobertura
+  const contextos = [];
+  if (localidad && localidad.trim()) {
+    const locNorm = localidad.trim();
+    contextos.push(locNorm + ' Santa Fe Argentina');
+    // Si la localidad no menciona Rosario, agregar también Rosario como alternativa
+    if (!_normalizarTexto(locNorm).includes('rosario')) {
+      contextos.push('Rosario Santa Fe Argentina');
+    }
+  } else {
+    contextos.push('Rosario Santa Fe Argentina');
+    contextos.push('Santa Fe Argentina');
+  }
+
+  // Función helper para guardar en caché y retornar
+  function _saveAndReturn(coords) {
+    try {
+      const cache2 = JSON.parse(localStorage.getItem('mf_geo_cache') || '{}');
+      cache2[cacheKey] = { coords, ts: Date.now() };
+      localStorage.setItem('mf_geo_cache', JSON.stringify(cache2));
+    } catch(e) {}
+    return coords;
+  }
+
+  for (const contexto of contextos) {
+    const q = encodeURIComponent(direccion + ' ' + contexto);
+    // Intento 1: Photon (Komoot) — muy bueno para Argentina
+    try {
+      const r = await fetch(`https://photon.komoot.io/api/?q=${q}&limit=3&bbox=${bbox}`, { signal: AbortSignal.timeout(6000) });
+      if (r.ok) {
+        const d = await r.json();
+        if (d.features && d.features.length) {
+          // Preferir resultados dentro del bbox
+          const valido = d.features.find(f => {
+            const [lng, lat] = f.geometry.coordinates;
+            return lat >= -33.26 && lat <= -32.7 && lng >= -61.3 && lng <= -60.2;
+          });
+          if (valido) {
+            const [lng, lat] = valido.geometry.coordinates;
+            return _saveAndReturn({ lat, lng });
+          }
+        }
+      }
+    } catch(e) {}
+    // Intento 2: Nominatim (OSM) — más lento pero muy completo
+    try {
+      const q2 = encodeURIComponent(direccion + ', ' + contexto);
+      const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${q2}&format=json&limit=3&countrycodes=ar&viewbox=-61.3,-32.7,-60.2,-33.26&bounded=1`, {
+        signal: AbortSignal.timeout(6000),
+        headers: { 'Accept-Language': 'es', 'User-Agent': 'MarvelFood/1.0' }
+      });
+      if (r.ok) {
+        const d = await r.json();
+        if (d && d.length) return _saveAndReturn({ lat: parseFloat(d[0].lat), lng: parseFloat(d[0].lon) });
+      }
+    } catch(e) {}
+  }
+  return null;
 }
 
 function _mostrarAlertaZona(sucSugerida, textoDir, sucActualId, razon) {

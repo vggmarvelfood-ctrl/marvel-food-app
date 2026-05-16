@@ -367,8 +367,7 @@ const HORARIOS_SUCURSALES = {
  Centro: { m_start: "11:30", m_end: "16:00", n_start: "19:00", n_end: "23:30" },
  Norte: { m_start: "11:30", m_end: "16:00", n_start: "19:00", n_end: "23:30" },
  Sur: { m_start: "11:30", m_end: "15:00", n_start: "19:00", n_end: "23:00" },
- Funes: { m_start: "11:30", m_end: "16:00", n_start: "19:00", n_end: "23:00" },
- Cafferata: { m_start: "11:30", m_end: "16:00", n_start: "19:00", n_end: "23:30" }
+ Funes: { m_start: "11:30", m_end: "16:00", n_start: "19:00", n_end: "23:00" }
 };
 
 // NUEVO: Función para evaluar la hora real y renderizar el cartel
@@ -382,8 +381,6 @@ window.actualizarEstadoLocal = () => {
  if (!sucId) { banner.innerHTML = ''; return; }
 
  const h = HORARIOS_SUCURSALES[sucId];
- // Guard: sucursal sin horarios configurados (nueva sucursal o valor inesperado)
- if (!h) { banner.innerHTML = ''; return; }
  const now = new Date();
  const currentMinutes = now.getHours() * 60 + now.getMinutes();
  
@@ -1096,6 +1093,9 @@ window.procesarPedido = async () => {
  const dir = document.getElementById('c-dir').value;
  if(isDelivery && !dir) return alert("Completá la dirección (calle y número) para el envío.");
  if(isDelivery && !loc) return alert("Completá la localidad (Rosario, Funes, Gálvez...) para el envío.");
+ // Validación de formato (refuerzo server-side aunque el botón ya lo controla)
+ if(isDelivery && dir && !validarDireccion(dir.trim())) return alert('La dirección debe tener el formato "Calle Número" (ej: Pellegrini 1149)');
+ if(tel && !validarTelefono(tel.trim())) return alert('El teléfono no es válido. Ingresá un número de WhatsApp argentino (ej: 3416107498)');
 
  const pago = document.getElementById('p-metodo').value;
  const vuelto = parseFloat(document.getElementById('p-vuelto').value) || 0;
@@ -1357,11 +1357,79 @@ window.procesarPedido = async () => {
  }
 
  } catch (e) {
- document.body.style.cursor = 'default';
- console.error("Error en Firebase:", e);
- alert("Error al guardar el pedido: " + e.message);
- }
+    document.body.style.cursor = 'default';
+    console.error("Error en Firebase:", e);
+    // MEJORA 1: Si hay error de red, guardar en cola offline
+    if (!navigator.onLine || (e.code && e.code === 'unavailable') || (e.message && e.message.toLowerCase().includes('network'))) {
+      try {
+        const pedidoOffline = { ...ordenDatos, fechaISO: new Date().toISOString(), _offline: true };
+        delete pedidoOffline.fecha;
+        pedidosPendientes.push(pedidoOffline);
+        guardarPedidosPendientes();
+        alert("⚠️ Sin conexión. Tu pedido fue guardado y se enviará automáticamente cuando vuelva la red.");
+      } catch(e2) {
+        alert("Error al guardar el pedido: " + e.message);
+      }
+    } else {
+      alert("Error al guardar el pedido: " + e.message);
+    }
+  }
 };
+
+// ═══════════════════════════════════════════════════════════════════
+//  MEJORA 1 — Cola de pedidos offline
+//  Evita pérdida de pedidos cuando no hay conexión a internet
+// ═══════════════════════════════════════════════════════════════════
+
+let pedidosPendientes = [];
+
+function cargarPedidosPendientes() {
+  try {
+    const saved = localStorage.getItem('mf_pending_orders');
+    if (saved) pedidosPendientes = JSON.parse(saved);
+  } catch(e) {}
+}
+
+function guardarPedidosPendientes() {
+  try {
+    localStorage.setItem('mf_pending_orders', JSON.stringify(pedidosPendientes));
+  } catch(e) {}
+}
+
+async function reintentarPedidosPendientes() {
+  if (!window.db || pedidosPendientes.length === 0) return;
+  const pendientes = [...pedidosPendientes];
+  pedidosPendientes = [];
+  guardarPedidosPendientes();
+  let enviados = 0;
+  for (const pedido of pendientes) {
+    try {
+      const pedidoFinal = { ...pedido, fecha: firebase.firestore.FieldValue.serverTimestamp() };
+      delete pedidoFinal._offline;
+      await db.collection("pedidos_v2").add(pedidoFinal);
+      enviados++;
+    } catch(e) {
+      pedidosPendientes.push(pedido);
+      guardarPedidosPendientes();
+    }
+  }
+  if (enviados > 0) {
+    console.log(`[Offline] ${enviados} pedido(s) sincronizado(s).`);
+    try {
+      const toast = document.createElement('div');
+      toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#10b981;color:#fff;padding:12px 20px;border-radius:30px;font-weight:700;font-size:13px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.4);';
+      toast.textContent = `✅ ${enviados} pedido(s) offline sincronizado(s)`;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 4000);
+    } catch(e) {}
+  }
+}
+
+window.addEventListener('online', reintentarPedidosPendientes);
+window.addEventListener('load', () => {
+  cargarPedidosPendientes();
+  reintentarPedidosPendientes();
+});
 
 // 
 // FLUJO DE CARRITO EN 2 PASOS
@@ -1615,41 +1683,64 @@ window.aplicarZonaOverride = function(sucursal) {
 };
 
 // Validar datos y habilitar/deshabilitar botón final
+// ── Validadores de formato (checkout) ─────────────────────────────────────
+function validarDireccion(dir) {
+  // Formato esperado: "Calle Número" (ej: "Pellegrini 1149")
+  const regex = /^[A-Za-záéíóúñÑ\s]+ \d+$/;
+  return regex.test(dir.trim());
+}
+
+function validarTelefono(tel) {
+  // Teléfono argentino: solo dígitos, 8-14 chars
+  const soloDigitos = tel.replace(/\D/g, '');
+  const regex = /^(54|9)?(341|342|343|332|336|337|338|339|351|352|353|354|355|356|358|359|361|362|363|364|365|366|367|368|369|371|372|373|374|375|376|377|378|379|381|382|383|384|385|386|387|388|389|391|392|393|394|395|396|397|398|399)\d{6,8}$/;
+  return regex.test(soloDigitos);
+}
+
 window.validarDatosEnvio = function() {
- const btn = document.getElementById('btn-final-enviar');
- const hint = document.getElementById('btn-enviar-hint');
- if (!btn) return;
+  const btn = document.getElementById('btn-final-enviar');
+  const hint = document.getElementById('btn-enviar-hint');
+  if (!btn) return;
 
- const nombre = (document.getElementById('c-nombre')?.value || '').trim();
- const tel = (document.getElementById('c-tel')?.value || '').trim();
- const esEntrega = isDelivery;
+  const nombre = (document.getElementById('c-nombre')?.value || '').trim();
+  const tel = (document.getElementById('c-tel')?.value || '').trim();
+  const esEntrega = isDelivery;
 
- const razones = [];
- if (!nombre) razones.push('nombre');
- if (!tel) razones.push('WhatsApp');
+  const razones = [];
 
- if (esEntrega) {
- const dir = (document.getElementById('c-dir')?.value || '').trim();
- const loc = (document.getElementById('c-loc')?.value || '').trim();
- if (!dir) razones.push('dirección');
- if (!loc) razones.push('localidad');
- if (!_checkoutSucursalDetectada && !document.getElementById('main-sucursal')?.value) razones.push('zona de cobertura');
- if (_checkoutFueraDeCoberturaActivo) razones.push('zona sin cobertura');
- }
+  // Nombre: al menos dos palabras
+  const palabras = nombre.split(/\s+/).filter(p => p.length > 0);
+  if (!nombre || palabras.length < 2) razones.push('nombre completo (al menos dos palabras)');
 
- if (razones.length === 0) {
- btn.disabled = false;
- btn.style.background = 'var(--primary)';
- btn.style.color = '#000';
- btn.style.cursor = 'pointer';
- if (hint) hint.textContent = '';
- } else {
- btn.disabled = true;
- btn.style.background = '#333';
- btn.style.color = '#666';
- btn.style.cursor = 'not-allowed';
- if (hint) hint.textContent = 'Completá: ' + razones.join(', ');
- }
+  // Teléfono: validar formato argentino
+  if (!tel) razones.push('WhatsApp');
+  else if (!validarTelefono(tel)) razones.push('WhatsApp válido (ej: 3416107498)');
+
+  if (esEntrega) {
+    const dir = (document.getElementById('c-dir')?.value || '').trim();
+    const loc = (document.getElementById('c-loc')?.value || '').trim();
+
+    if (!dir) razones.push('dirección');
+    else if (!validarDireccion(dir)) razones.push('dirección en formato "Calle Número"');
+
+    if (!loc) razones.push('localidad');
+    if (!_checkoutSucursalDetectada && !document.getElementById('main-sucursal')?.value) razones.push('zona de cobertura');
+    if (_checkoutFueraDeCoberturaActivo) razones.push('zona sin cobertura');
+  }
+
+  if (razones.length === 0) {
+    btn.disabled = false;
+    btn.style.background = 'var(--primary)';
+    btn.style.color = '#000';
+    btn.style.cursor = 'pointer';
+    if (hint) hint.textContent = '';
+  } else {
+    btn.disabled = true;
+    btn.style.background = '#333';
+    btn.style.color = '#666';
+    btn.style.cursor = 'not-allowed';
+    if (hint) hint.textContent = 'Completá: ' + razones.join(', ');
+  }
 };
 
 // 
@@ -2839,6 +2930,27 @@ function admFiltroEstado(f, btn) {
  admRenderPedidos();
 }
 
+// MEJORA 5 — Exportación de pedidos a CSV
+window.admExportarCSV = function() {
+  const lista = admPedidosFiltrados();
+  if (!lista.length) return alert('No hay pedidos para exportar.');
+  let csv = 'Pedido,Cliente,Tel,Fecha,Sucursal,Tipo,Estado,Total,Items\n';
+  lista.forEach(p => {
+    const items = (p.items || []).map(i => `${i.cant}x ${i.n}`).join(' | ');
+    const cliente = (p.cliente || '').replace(/,/g, ' ');
+    const tel = (p.tel || '').replace(/,/g, ' ');
+    const sucursal = (p.sucursal || '').replace(/,/g, ' ');
+    csv += `${admNumero(p.id)},${cliente},${tel},${admFmt(p.fecha)},${sucursal},${p.tipo||''},${p.estado||''},${p.total||0},"${items}"\n`;
+  });
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `pedidos_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
 function admPedidosFiltrados() {
  let lista = [...admPedidos];
 
@@ -3504,9 +3616,9 @@ window._integTestPropio = async function() {
  }
 };
 
-// Hook _integNotificar: tambien enviar a sistema propio 
-const _origIntegNotificar = window._integNotificar || function(){};
-// Override will be set after _integNotificar is defined below
+// MEJORA 3 — _integNotificar ya está definida arriba; esta línea obsoleta fue eliminada.
+// (La línea "const _origIntegNotificar = window._integNotificar || function(){};" 
+//  creaba una referencia circular porque _integNotificar aún no existía en ese punto.)
 
 window._integGuardar = function(mostrarToast) {
  const cfg = {
@@ -3782,6 +3894,28 @@ function admImprimir(id) {
  'COMPARTIR CAPITÁN AMÉRICA':503, 'COMPARTIR CAPITAN AMERICA':503, 'COMPARTI CAPITAN A':503,
  'COMPARTIR IRON MAN':504, 'COMPARTI IRON MAN':504,
  'COMPARTIR PETER PARKER':505, 'COMPARTI PETER PARKER':505,
+    // MEJORA 4 — Códigos agregados (Veggie Choclo completos + variantes faltantes)
+    // Veggie choclo variantes adicionales
+    'HULK CHOCLO':41, 'HULK VEGGIE CHOCLO':41,
+    'NATASHA VEGGIE CHOCLO':42,
+    'CAPITAN AMERICA VEGGIE CHOCLO':43, 'CAP AMERICA CHOCLO':43,
+    'IRON MAN VEGGIE CHOCLO':44,
+    'PETER PARKER VEGGIE CHOCLO':45,
+    'BLACK PANTHER VEGGIE CHOCLO':47, 'BLACK PANTHER CHOCLO':47,
+    'DOCTOR STRANGE CHOCLO':48, 'DR STRANGE CHOCLO':48,
+    'CAPITANA MARVEL CHOCLO':51, 'CAP MARVEL CHOCLO':51,
+    'LOKI VEGGIE CHOCLO':53,
+    'WANDA VEGGIE CHOCLO':55,
+    'VISION VEGGIE CHOCLO':56,
+    // Sándwiches y extras adicionales
+    'CHEESE BURGER':17, 'CHISBURGER':17, 'CHEESEBURGER':17,
+    'GALVEZ':67, 'SANDWICH GALVEZ':67,
+    'MENU KIDS':70, 'KIDS':70,
+    // Promos compartir adicionales
+    'COMPARTI IRON':504,
+    'COMPARTIR BLACK PANTHER':507, 'COMPARTI BLACK PANTHER':507,
+    'COMPARTIR LOKI':513, 'COMPARTI LOKI':513,
+    'COMPARTIR WANDA':515, 'COMPARTI WANDA':515,
  };
 
  // Busca código: primero exacto, luego el match MÁS LARGO (evita que "HULK" matchee "HULK VEGGIE")
@@ -5012,4 +5146,46 @@ document.getElementById('admin-root') && document.getElementById('admin-root').a
     }
   };
 
+})();
+
+// ── Validación en tiempo real: teléfono y dirección ───────────────────────
+// Solo dígitos en el campo de teléfono + re-validar formulario al escribir
+(function _checkoutRealTimeValidation() {
+  function _bindCheckoutInputs() {
+    const cTel = document.getElementById('c-tel');
+    const cDir = document.getElementById('c-dir');
+    const cNombre = document.getElementById('c-nombre');
+
+    if (cTel && !cTel._rvBound) {
+      cTel._rvBound = true;
+      cTel.addEventListener('input', function() {
+        // Permitir solo dígitos
+        this.value = this.value.replace(/\D/g, '');
+        if (typeof validarDatosEnvio === 'function') validarDatosEnvio();
+      });
+    }
+    if (cDir && !cDir._rvBound) {
+      cDir._rvBound = true;
+      cDir.addEventListener('input', function() {
+        if (typeof validarDatosEnvio === 'function') validarDatosEnvio();
+      });
+    }
+    if (cNombre && !cNombre._rvBound) {
+      cNombre._rvBound = true;
+      cNombre.addEventListener('input', function() {
+        if (typeof validarDatosEnvio === 'function') validarDatosEnvio();
+      });
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _bindCheckoutInputs);
+  } else {
+    _bindCheckoutInputs();
+  }
+
+  // Re-bindear cuando se abra el carrito (los inputs pueden crearse dinámicamente)
+  document.addEventListener('cart:toggle', function() {
+    setTimeout(_bindCheckoutInputs, 300);
+  });
 })();

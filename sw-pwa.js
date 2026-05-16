@@ -27,7 +27,6 @@ function _pwaMostrarBanner() {
  const banner = document.getElementById('pwa-install-banner');
  if (!banner) return;
 
- // En iOS: cambiar texto del botón a instrucciones nativas
  if (_pwaEsIOS()) {
    const btnInstall = document.getElementById('pwa-btn-install');
    if (btnInstall) {
@@ -43,7 +42,7 @@ function _pwaOcultarBanner() {
  banner.classList.remove('visible');
 }
 
-// Toast de progreso (descargando / completado) 
+// Toast de progreso
 function _pwaToast(msg, tipo) {
  let el = document.getElementById('pwa-progress-toast');
  if (!el) {
@@ -73,24 +72,19 @@ function _pwaToastHide() {
 window.addEventListener('beforeinstallprompt', (e) => {
  e.preventDefault();
  _pwaPrompt = e;
- // Mostrar banner siempre (a los 2s de cargar la página)
  setTimeout(_pwaMostrarBanner, 2000);
 });
 
 // iOS: no hay beforeinstallprompt → mostrar banner con instrucciones nativas
-// Solo si no está ya instalada y el usuario no lo descartó antes
 (function _pwaIOSFallback() {
  if (_pwaEsInstalada()) return;
  if (!_pwaEsIOS()) return;
- // Mostrar a los 3 segundos en iOS
  setTimeout(function() {
    if (!_pwaEsInstalada()) _pwaMostrarBanner();
  }, 3000);
 })();
 
 // Evento: se abre el carrito → mostrar banner PWA
-// Escucha el CustomEvent 'cart:toggle' que dispara toggleCart en app.js
-// Sin monkeypatching — evita cadena de redefiniciones frágiles
 document.addEventListener('cart:toggle', () => {
  const cv = document.getElementById('cart-view');
  if (cv && cv.classList.contains('open') && !_pwaEsInstalada() && _pwaPrompt) {
@@ -109,7 +103,6 @@ window.addEventListener('appinstalled', () => {
 
 // Botón "Instalar" del banner 
 window.pwaTriggerInstall = async () => {
- // iOS: mostrar instrucciones nativas (no hay API de instalación)
  if (_pwaEsIOS()) {
    _pwaToast(
      '📱 En Safari: tocá <strong>compartir</strong> (□↑) → <strong>"Agregar a pantalla de inicio"</strong>',
@@ -120,7 +113,6 @@ window.pwaTriggerInstall = async () => {
  }
 
  if (!_pwaPrompt) {
- // Sin prompt nativo (ya instalada / navegador no compatible)
  _pwaToast(' Tocá el menú del navegador → "Agregar a pantalla de inicio"', 'info');
  setTimeout(() => _pwaToastHide(), 5000);
  return;
@@ -139,12 +131,9 @@ window.pwaTriggerInstall = async () => {
 // Botón cerrar (X) del banner 
 window.pwaDismissBanner = () => {
  _pwaOcultarBanner();
- // No guardamos en localStorage → reaparece en la próxima sesión
 };
 
-// Registro del Service Worker 
-// Ocultar splash cuando la página esté lista 
-// OPTIMIZACIÓN: Splash se oculta cuando el contenido está REALMENTE listo 
+// Registro del Service Worker
 (function() {
  let _splashHidden = false;
 
@@ -154,11 +143,9 @@ window.pwaDismissBanner = () => {
  const splash = document.getElementById('app-splash');
  if (!splash) return;
  splash.classList.add('hide');
- // Remover del DOM para liberar memoria
  setTimeout(() => { if (splash.parentNode) splash.parentNode.removeChild(splash); }, 700);
  }
 
- // Estrategia: ocultar cuando el menú esté renderizado O a los 4s máximo
  let _splashTimeout = null;
 
  function scheduleHide(delay) {
@@ -166,7 +153,6 @@ window.pwaDismissBanner = () => {
  _splashTimeout = setTimeout(hideSplash, delay || 500);
  }
 
- // DOMContentLoaded: el HTML está parseado, podemos comenzar
  if (document.readyState === 'loading') {
  document.addEventListener('DOMContentLoaded', function() {
  scheduleHide(400);
@@ -175,10 +161,8 @@ window.pwaDismissBanner = () => {
  scheduleHide(400);
  }
 
- // Fallback absoluto: a los 4s sí o sí (reducido de 5s)
  setTimeout(hideSplash, 4000);
 
- // Hook: ocultar cuando Firebase esté listo + menú renderizado
  document.addEventListener('firebase:ready', function() {
  scheduleHide(300);
  });
@@ -186,23 +170,21 @@ window.pwaDismissBanner = () => {
 
 if ('serviceWorker' in navigator) {
  window.addEventListener('load', () => {
- navigator.serviceWorker.register('./sw.js?v=9')
+ navigator.serviceWorker.register('./sw.js?v=10')
  .then(r => console.log('[SW] Registrado. Scope:', r.scope))
  .catch(e => console.warn('[SW] Error:', e));
  });
 }
 
 // Nav-cats: ocultar al bajar, mostrar al subir 
-// OPTIMIZACIÓN: nav-cats cacheada fuera del scroll para no consultar DOM cientos de veces/seg 
 (function() {
- // Cachear el elemento UNA SOLA VEZ al iniciar
  let navCats = null;
  let lastY = 0;
  let ticking = false;
 
  function initNavCatsScroll() {
  navCats = document.querySelector('.nav-cats');
- if (!navCats) return; // Si no existe en esta página, salir limpiamente
+ if (!navCats) return;
 
  window.addEventListener('scroll', () => {
  if (ticking) return;

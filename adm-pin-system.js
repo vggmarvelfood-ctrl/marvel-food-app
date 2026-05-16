@@ -9,14 +9,16 @@
   //  CONFIGURACIÓN
   // ═══════════════════════════════════════════════════════════════════
   
-  // ⚠️ CAMBIAR ESTE PIN POR UNO SEGURO Y GUARDARLO EN LUGAR SEGURO
-  // Para más seguridad, podría almacenarse en Firebase o como variable de entorno
-  const PIN_CORRECTO = '1234'; // ← MODIFICAR AQUÍ
-  
-  // Número de intentos permitidos antes de bloqueo temporal
+  // PIN almacenado como SHA-256 en Firestore → colección 'config_security' / doc 'admin_pin' / campo 'hash'
+  // Para generar el hash de tu PIN, ejecutá en consola del navegador (una vez):
+  //   const pin = 'TU_PIN_AQUI';
+  //   const data = new TextEncoder().encode(pin);
+  //   const buf = await crypto.subtle.digest('SHA-256', data);
+  //   console.log(Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join(''));
+  // Luego guardá ese hex en Firestore: config_security → admin_pin → hash: "el_hex"
+  let pinHashFromFirestore = null;
+
   const MAX_INTENTOS = 3;
-  
-  // Tiempo de bloqueo en milisegundos (5 minutos)
   const TIEMPO_BLOQUEO = 5 * 60 * 1000;
 
   // ═══════════════════════════════════════════════════════════════════
@@ -32,21 +34,17 @@
 
   function estaBloqueo() {
     if (!tiempoBloqueo) return false;
-    
     const ahora = Date.now();
     if (ahora < tiempoBloqueo) {
       const segundosRestantes = Math.ceil((tiempoBloqueo - ahora) / 1000);
       return segundosRestantes;
     }
-    
-    // El bloqueo expiró
     tiempoBloqueo = null;
     intentosFallidos = 0;
     return false;
   }
 
-  function validarPIN(pinIngresado) {
-    // Verificar bloqueo
+  async function validarPIN(pinIngresado) {
     const bloqueo = estaBloqueo();
     if (bloqueo) {
       return {
@@ -56,24 +54,22 @@
       };
     }
 
-    // Validar PIN
-    if (pinIngresado === PIN_CORRECTO) {
-      // PIN correcto - resetear intentos
+    const encoder = new TextEncoder();
+    const data = encoder.encode(pinIngresado);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+    if (hashHex === pinHashFromFirestore) {
       intentosFallidos = 0;
       tiempoBloqueo = null;
-      
-      return {
-        valido: true,
-        mensaje: 'PIN correcto. Acceso concedido.'
-      };
+      return { valido: true, mensaje: 'PIN correcto. Acceso concedido.' };
     }
 
-    // PIN incorrecto - incrementar contador
     intentosFallidos++;
     
     if (intentosFallidos >= MAX_INTENTOS) {
       tiempoBloqueo = Date.now() + TIEMPO_BLOQUEO;
-      
       return {
         valido: false,
         mensaje: `Demasiados intentos fallidos. Bloqueado por 5 minutos.`,
@@ -98,8 +94,6 @@
     
     if (pinSection) {
       pinSection.style.display = 'block';
-      
-      // Animar entrada
       pinSection.style.opacity = '0';
       pinSection.style.transform = 'translateY(-10px)';
       
@@ -107,23 +101,17 @@
         pinSection.style.transition = 'all 0.3s ease';
         pinSection.style.opacity = '1';
         pinSection.style.transform = 'translateY(0)';
-        
-        // Focus en input
         const input = document.getElementById('adm-pin-input');
         if (input) input.focus();
       }, 50);
     }
     
-    // Ocultar botón de Google
-    if (googleBtn) {
-      googleBtn.style.display = 'none';
-    }
+    if (googleBtn) googleBtn.style.display = 'none';
   }
 
   function ocultarSeccionPIN() {
     const pinSection = document.getElementById('adm-pin-section');
     const googleBtn = document.getElementById('adm-google-btn');
-    
     if (pinSection) pinSection.style.display = 'none';
     if (googleBtn) googleBtn.style.display = 'block';
   }
@@ -132,7 +120,7 @@
   //  FUNCIÓN PRINCIPAL DE VERIFICACIÓN
   // ═══════════════════════════════════════════════════════════════════
 
-  window.admVerifyPin = function() {
+  window.admVerifyPin = async function() {
     const input = document.getElementById('adm-pin-input');
     const feedback = document.getElementById('adm-pin-feedback');
     const btnVerificar = document.querySelector('#adm-pin-section button');
@@ -150,55 +138,36 @@
       return;
     }
 
-    // Deshabilitar botón durante validación
     if (btnVerificar) {
       btnVerificar.disabled = true;
       btnVerificar.textContent = 'Verificando...';
     }
 
-    // Validar PIN
-    const resultado = validarPIN(pinIngresado);
+    const resultado = await validarPIN(pinIngresado);
     
     if (resultado.valido) {
-      // ✅ PIN CORRECTO
       feedback.style.color = '#10b981';
       feedback.textContent = '✓ ' + resultado.mensaje;
-      
-      // Guardar en sessionStorage
-      // BUGFIX: geo-fencing.js (_gfSessionOk) exige tok.length >= 8; '1' solo
-      // tiene 1 carácter y causa el error "Sesion expirada" al intentar cargar
-      // zonas en el panel admin. 'pin-verified' (12 chars) pasa la validación.
+      // BUGFIX: geo-fencing.js (_gfSessionOk) exige tok.length >= 8
+      // 'pin-verified' (12 chars) pasa la validación correctamente
       sessionStorage.setItem('_mfa_ok', 'pin-verified');
-      
-      // Limpiar input
       input.value = '';
-      
-      // Recargar página para que _concederAccesoAdmin se ejecute
-      setTimeout(() => {
-        window.location.reload();
-      }, 800);
+      setTimeout(() => { window.location.reload(); }, 800);
       
     } else {
-      // ❌ PIN INCORRECTO
       feedback.style.color = '#ef4444';
       feedback.textContent = '✗ ' + resultado.mensaje;
-      
-      // Limpiar input
       input.value = '';
       
-      // Re-habilitar botón (si no está bloqueado)
       if (btnVerificar && !resultado.bloqueado) {
         btnVerificar.disabled = false;
         btnVerificar.textContent = 'VERIFICAR PIN';
       }
       
-      // Si está bloqueado, actualizar botón
       if (btnVerificar && resultado.bloqueado) {
         btnVerificar.disabled = true;
         btnVerificar.textContent = 'BLOQUEADO';
         btnVerificar.style.background = '#ef4444';
-        
-        // Revertir estilo después del bloqueo
         setTimeout(() => {
           btnVerificar.disabled = false;
           btnVerificar.textContent = 'VERIFICAR PIN';
@@ -206,7 +175,6 @@
         }, TIEMPO_BLOQUEO);
       }
       
-      // Focus para nuevo intento
       input.focus();
     }
   };
@@ -215,7 +183,6 @@
   //  PARCHEAR admGoogleLogin PARA MOSTRAR PIN DESPUÉS DE GOOGLE
   // ═══════════════════════════════════════════════════════════════════
 
-  // Esperar a que admGoogleLogin esté disponible
   function patchGoogleLogin() {
     if (typeof window.admGoogleLogin !== 'function') {
       setTimeout(patchGoogleLogin, 200);
@@ -226,16 +193,10 @@
     
     window.admGoogleLogin = async function() {
       try {
-        // Ejecutar login original
         await originalGoogleLogin();
-        
-        // Si llegó aquí, el login con Google fue exitoso
-        // Mostrar formulario de PIN
         mostrarSeccionPIN();
-        
       } catch (err) {
         console.error('[PIN] Error en login Google:', err);
-        // No mostrar PIN si falló Google
       }
     };
   }
@@ -244,20 +205,56 @@
   //  INICIALIZACIÓN
   // ═══════════════════════════════════════════════════════════════════
 
-  function inicializar() {
-    // Verificar si ya tiene sesión de PIN válida
+  async function cargarPinHash() {
+    if (!window.db) {
+      // En producción: si db no está disponible, mostrar error y no hacer fallback
+      if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+        console.error('[PIN] db no disponible en producción. Sistema PIN no inicializado.');
+        pinHashFromFirestore = null;
+        return;
+      }
+      // Solo en desarrollo: usar hash de fallback
+      pinHashFromFirestore = '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f94d87b3c7d2';
+      console.warn('[PIN] Modo desarrollo: usando hash de fallback.');
+      return;
+    }
+    try {
+      const doc = await db.collection('config_security').doc('admin_pin').get();
+      if (doc.exists) {
+        pinHashFromFirestore = doc.data().hash;
+        console.log('[PIN] Hash cargado desde Firestore.');
+      } else {
+        console.error('[PIN] No se encontró documento admin_pin en Firestore.');
+        pinHashFromFirestore = null;
+      }
+    } catch(e) {
+      console.error('[PIN] Error cargando hash desde Firestore:', e);
+      pinHashFromFirestore = null;
+    }
+  }
+
+  async function inicializar() {
     if (sessionStorage.getItem('_mfa_ok')) {
       console.log('[PIN] Sesión PIN válida detectada');
       return;
     }
 
-    // Parchear función de login Google
-    patchGoogleLogin();
-    
-    console.log('[PIN] Sistema de autenticación 2FA inicializado');
+    // Esperar a que Firebase esté listo
+    function _init() {
+      cargarPinHash().then(() => {
+        patchGoogleLogin();
+        console.log('[PIN] Sistema de autenticación 2FA inicializado');
+      });
+    }
+
+    if (window._firebaseOk) {
+      _init();
+    } else {
+      document.addEventListener('firebase:ready', function() { _init(); }, { once: true });
+      setTimeout(function() { if (!window._firebaseOk) _init(); }, 3000);
+    }
   }
 
-  // Ejecutar cuando el DOM esté listo
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', inicializar);
   } else {
@@ -269,19 +266,10 @@
   // ═══════════════════════════════════════════════════════════════════
 
   if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-    // Resetear bloqueo desde consola (solo desarrollo)
     window.admResetPinLock = function() {
       intentosFallidos = 0;
       tiempoBloqueo = null;
       console.log('[PIN] Bloqueo reseteado');
-    };
-
-    // Cambiar PIN desde consola (solo desarrollo)
-    window.admChangePinDev = function(nuevoPin) {
-      if (typeof nuevoPin === 'string' && nuevoPin.length >= 4) {
-        console.warn('[PIN] Cambio de PIN temporal - recargá la página para revertir');
-        window._tempPin = nuevoPin;
-      }
     };
   }
 

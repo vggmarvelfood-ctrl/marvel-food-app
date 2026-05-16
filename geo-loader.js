@@ -22,7 +22,7 @@ window._loadGeoLibs = function() {
     } else { check(); }
   });
 };
-// Pre-cargar libs en background cuando el browser esté idle (no bloquea nada)
+// Pre-cargar libs en background cuando el browser esté idle
 if (window.requestIdleCallback) {
   requestIdleCallback(function() { window._loadGeoLibs(); }, { timeout: 5000 });
 } else {
